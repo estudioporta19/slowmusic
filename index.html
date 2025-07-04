@@ -265,7 +265,7 @@
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #e74c3c, #c0392b); /* Preenchimento vermelho */
-            border-radius: 5px;
+            border-radius: 5_px;
             transition: width 0.1s ease;
         }
 
@@ -334,7 +334,7 @@
                 <button id="speedPreset05" class="upload-btn" style="background: #3498db; margin-right: 10px;">0.5x</button>
                 <button id="speedPreset10" class="upload-btn" style="background: #2ecc71;">1x</button>
             </div>
-            
+
             <div class="progress-bar" id="progressBar">
                 <div class="progress-fill" id="progressFill"></div>
                 <div class="loop-markers" id="loopMarkers"></div>
@@ -364,7 +364,7 @@
         </div>
 
         <div class="grid" id="cellGrid">
-            </div>
+        </div>
 
         <audio id="audioPlayer" preload="metadata"></audio>
     </div>
@@ -382,6 +382,10 @@
         const globalFileInput = document.getElementById('globalFileInput');
         const globalUploadBtn = document.getElementById('globalUploadBtn');
         const globalUploadStatus = document.getElementById('globalUploadStatus');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const speedPreset05 = document.getElementById('speedPreset05');
+        const speedPreset10 = document.getElementById('speedPreset10');
         const totalCells = 20; // Definir o número total de células
 
         // Criar as células dinamicamente
@@ -516,14 +520,32 @@
             document.getElementById(`playBtn${cellNumber}`).textContent = '⏸️ Pausar'; // Mudar texto para Pausar
             
             // Aplicar velocidade atual
-            const speed = document.getElementById('speedSlider').value;
+            const speed = speedSlider.value;
             audioPlayer.playbackRate = parseFloat(speed);
         }
 
+        // Função para aplicar a velocidade
+        function applySpeed(speed) {
+            speedSlider.value = speed;
+            speedValue.textContent = speed + 'x';
+            if (currentAudio) {
+                currentAudio.playbackRate = speed;
+            }
+        }
+
+        // Event listeners para os botões de preset
+        speedPreset05.addEventListener('click', () => {
+            applySpeed(0.5);
+        });
+
+        speedPreset10.addEventListener('click', () => {
+            applySpeed(1.0);
+        });
+
         // Controle de velocidade
-        document.getElementById('speedSlider').addEventListener('input', function(e) {
+        speedSlider.addEventListener('input', function(e) {
             const speed = parseFloat(e.target.value);
-            document.getElementById('speedValue').textContent = speed + 'x';
+            speedValue.textContent = speed + 'x';
             if (currentAudio) {
                 currentAudio.playbackRate = speed;
             }
@@ -670,6 +692,7 @@
             clearLoop();
             progressFill.style.width = '0%';
             document.getElementById('currentTime').textContent = '0:00';
+            document.getElementById('totalTime').textContent = '0:00';
         });
 
         // Clique na barra de progresso para navegar

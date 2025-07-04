@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player de Áudio com Células</title>
+    <title>Player de Áudio Compacto</title>
     <style>
+        /* CSS será inserido aqui */
         * {
             margin: 0;
             padding: 0;
@@ -12,251 +13,264 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #1a1a1a; /* Fundo preto mais suave */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte mais formal */
+            background-color: #121212; /* Fundo ainda mais escuro */
             min-height: 100vh;
-            padding: 20px;
-            color: white; /* Letras brancas */
+            padding: 15px; /* Padding reduzido */
+            color: #E0E0E0; /* Letras brancas suaves */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Alinhar ao topo */
         }
 
         .container {
-            max-width: 1300px; /* Aumentado para acomodar 5 colunas */
+            max-width: 1000px; /* Largura máxima reduzida para mais compacto */
             margin: 0 auto;
-            background: rgba(30, 30, 30, 0.9); /* Fundo do container mais escuro e opaco */
-            backdrop-filter: blur(5px); /* Efeito de blur mais subtil */
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); /* Sombra mais intensa */
-            border: 1px solid rgba(255, 255, 255, 0.1); /* Borda suave */
+            background: #1E1E1E; /* Fundo do container escuro */
+            border-radius: 8px; /* Cantos menos arredondados */
+            padding: 20px; /* Padding reduzido */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); /* Sombra mais subtil */
+            border: 1px solid #333; /* Borda mais discreta */
+            width: 100%; /* Ocupar largura disponível até o max-width */
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.8em;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6); /* Sombra de texto mais escura */
-            color: #e0e0e0; /* Título ligeiramente acinzentado para contraste */
+            margin-bottom: 25px; /* Margem reduzida */
+            font-size: 2em; /* Tamanho da fonte reduzido */
+            color: #F0F0F0;
+            text-shadow: none; /* Remover sombra do texto */
         }
 
-        /* Estilos para o novo botão de upload global */
         .global-upload-section {
             text-align: center;
-            margin-bottom: 25px;
-            padding: 15px;
-            background: rgba(40, 40, 40, 0.8);
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px; /* Margem reduzida */
+            padding: 10px; /* Padding reduzido */
+            background: #282828;
+            border-radius: 6px; /* Cantos menos arredondados */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
-        .upload-btn { /* Reutilizado para o botão global e os dentro das células */
-            background: linear-gradient(45deg, #e74c3c, #c0392b); /* Vermelho vibrante */
+        .upload-btn, .preset-btn {
+            background: #8B0000; /* Vermelho escuro */
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
+            padding: 8px 18px; /* Padding reduzido */
+            border-radius: 4px; /* Cantos mais retos */
             cursor: pointer;
-            font-size: 1em;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            font-size: 0.9em; /* Tamanho da fonte reduzido */
+            font-weight: 600; /* Mais negrito */
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin: 0 5px; /* Espaçamento entre botões */
         }
 
-        .upload-btn:hover {
-            background: linear-gradient(45deg, #c0392b, #a03025);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+        .upload-btn:hover, .preset-btn:hover {
+            background: #A00000; /* Vermelho ligeiramente mais claro no hover */
+            transform: translateY(-1px); /* Efeito de elevação mínimo */
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .file-name {
+            font-size: 0.8em; /* Fonte ainda menor */
+            color: #B0B0B0;
+            margin-left: 10px;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* 5 colunas responsivas */
-            gap: 15px; /* Espaçamento menor entre células */
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Células ligeiramente menores */
+            gap: 10px; /* Espaçamento ainda menor */
+            margin-bottom: 25px; /* Margem reduzida */
         }
 
         .cell {
-            background: rgba(40, 40, 40, 0.8); /* Fundo da célula mais escuro */
-            border-radius: 12px; /* Cantos um pouco menos arredondados */
-            padding: 15px; /* Padding menor */
-            border: 1px solid rgba(255, 255, 255, 0.1); /* Borda suave */
-            transition: all 0.3s ease;
+            background: #282828; /* Fundo da célula escuro */
+            border-radius: 6px; /* Cantos menos arredondados */
+            padding: 12px; /* Padding reduzido */
+            border: 1px solid #444; /* Borda mais escura */
+            transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
             position: relative;
             overflow: hidden;
-            display: flex; /* Para centralizar conteúdo */
+            display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Espaçamento entre header, nome e botão */
+            justify-content: space-between;
+            min-height: 100px; /* Altura mínima para células */
         }
 
         .cell:hover {
-            background: rgba(60, 60, 60, 0.9); /* Escurece no hover */
-            transform: translateY(-3px); /* Efeito de elevação mais subtil */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); /* Sombra mais pronunciada */
+            background: #3A3A3A; /* Escurece no hover */
+            transform: none; /* Remover elevação no hover */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
         .cell.active {
-            background: rgba(70, 70, 70, 0.95); /* Célula ativa mais escura */
-            border-color: #e74c3c; /* Borda vermelha para ativa */
-            box-shadow: 0 0 25px rgba(231, 76, 60, 0.5); /* Sombra vermelha para ativa */
+            background: #3A3A3A; /* Célula ativa mais escura */
+            border-color: #8B0000; /* Borda vermelha escura para ativa */
+            box-shadow: 0 0 15px rgba(139, 0, 0, 0.4); /* Sombra vermelha mais subtil */
         }
 
         .cell-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px; /* Margem menor */
+            margin-bottom: 8px; /* Margem menor */
         }
 
         .cell-number {
-            font-size: 1.1em; /* Tamanho da fonte ligeiramente menor */
+            font-size: 1em; /* Tamanho da fonte ligeiramente menor */
             font-weight: bold;
-            color: #e74c3c; /* Número da célula em vermelho */
-        }
-
-        .file-input {
-            display: none;
+            color: #8B0000; /* Número da célula em vermelho escuro */
         }
 
         .file-name {
-            font-size: 0.85em; /* Fonte um pouco menor */
-            margin-bottom: 10px;
-            color: #ccc; /* Nome do ficheiro em cinzento claro */
+            font-size: 0.75em; /* Fonte ainda menor */
+            margin-bottom: 8px;
+            color: #B0B0B0;
             word-break: break-all;
-            flex-grow: 1; /* Para ocupar espaço disponível */
+            flex-grow: 1;
         }
 
         .play-btn {
             width: 100%;
-            background: linear-gradient(45deg, #e74c3c, #c0392b); /* Vermelho vibrante */
+            background: #8B0000; /* Vermelho escuro */
             color: white;
             border: none;
-            padding: 10px;
-            border-radius: 20px; /* Menos arredondado que o upload-btn */
+            padding: 8px; /* Padding reduzido */
+            border-radius: 4px; /* Cantos mais retos */
             cursor: pointer;
-            font-size: 0.95em;
-            font-weight: bold;
-            margin-top: auto; /* Empurra o botão para o fundo da célula */
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            font-size: 0.85em; /* Tamanho da fonte reduzido */
+            font-weight: 600;
+            margin-top: auto;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .play-btn:hover {
-            background: linear-gradient(45deg, #c0392b, #a03025);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+            background: #A00000;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
         }
 
         .play-btn:disabled {
-            background: #444; /* Cinzento escuro para disabled */
+            background: #333; /* Cinzento escuro para disabled */
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
-            color: #888;
+            color: #777;
         }
 
         .controls {
-            background: rgba(40, 40, 40, 0.8);
-            border-radius: 10px;
-            padding: 20px;
+            background: #282828;
+            border-radius: 6px;
+            padding: 15px; /* Padding reduzido */
             margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid #444;
         }
 
         .control-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px; /* Margem reduzida */
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap; /* Para quebrar linha em telas pequenas */
         }
 
         .control-group label {
-            display: block;
-            margin-bottom: 8px; /* Margem aumentada */
-            font-weight: bold;
-            color: #e0e0e0;
+            margin-bottom: 0; /* Remover margem inferior */
+            margin-right: 10px;
+            font-weight: normal; /* Menos negrito */
+            color: #E0E0E0;
+            white-space: nowrap; /* Não quebrar a linha */
+        }
+
+        .speed-controls {
+            display: flex;
+            align-items: center;
+            flex-grow: 1; /* Ocupar espaço disponível */
+            flex-wrap: wrap;
         }
 
         .slider {
-            width: 100%;
-            height: 8px; /* Slider mais alto */
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.2); /* Fundo do slider mais suave */
+            width: 100%; /* Ocupar a largura total disponível */
+            height: 6px; /* Slider mais fino */
+            border-radius: 3px;
+            background: #444; /* Fundo do slider mais escuro */
             outline: none;
             -webkit-appearance: none;
+            margin-right: 10px; /* Espaçamento entre slider e botões */
+            flex-grow: 1;
         }
 
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 22px; /* Polegar maior */
-            height: 22px;
+            width: 18px; /* Polegar menor */
+            height: 18px;
             border-radius: 50%;
-            background: #e74c3c; /* Polegar vermelho */
+            background: #8B0000; /* Polegar vermelho escuro */
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6); /* Sombra vermelha */
+            box-shadow: 0 0 8px rgba(139, 0, 0, 0.5); /* Sombra mais subtil */
         }
 
         .slider::-moz-range-thumb {
-            width: 22px;
-            height: 22px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
-            background: #e74c3c;
+            background: #8B0000;
             cursor: pointer;
             border: none;
-            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+            box-shadow: 0 0 8px rgba(139, 0, 0, 0.5);
         }
 
         .keyboard-shortcuts {
-            background: rgba(40, 40, 40, 0.8);
-            border-radius: 10px;
-            padding: 20px;
+            background: #282828;
+            border-radius: 6px;
+            padding: 15px;
             margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid #444;
         }
 
         .keyboard-shortcuts h3 {
-            color: #e0e0e0;
-            margin-bottom: 15px;
+            color: #F0F0F0;
+            margin-bottom: 12px;
+            font-size: 1.1em; /* Título menor */
         }
 
         .shortcut-info {
             display: flex;
-            flex-wrap: wrap; /* Para quebrar linha se não houver espaço */
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 10px; /* Espaçamento entre os atalhos */
+            font-size: 0.85em; /* Fonte menor */
         }
-        .shortcut-info span {
-            margin-right: 15px; /* Espaçamento entre os atalhos */
-            margin-bottom: 8px;
-        }
-
+        
         .key {
-            background: rgba(60, 60, 60, 0.8); /* Fundo da tecla mais escuro */
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-family: monospace;
+            background: #444; /* Fundo da tecla mais escuro */
+            padding: 3px 8px; /* Padding reduzido */
+            border-radius: 3px;
+            font-family: 'Consolas', monospace; /* Fonte mais técnica */
             font-weight: bold;
-            color: #e0e0e0;
-            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            color: #E0E0E0;
+            box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
         }
 
         .loop-indicator {
-            background: rgba(40, 40, 40, 0.8);
-            border-radius: 10px;
-            padding: 15px;
+            background: #282828;
+            border-radius: 6px;
+            padding: 12px; /* Padding reduzido */
             text-align: center;
             margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid #444;
+            font-size: 0.9em; /* Fonte menor */
         }
 
         .loop-active {
-            background: rgba(231, 76, 60, 0.2); /* Fundo vermelho suave para loop ativo */
-            border: 2px solid #e74c3c; /* Borda vermelha para loop ativo */
+            background: rgba(139, 0, 0, 0.2); /* Fundo vermelho escuro suave para loop ativo */
+            border: 1px solid #8B0000; /* Borda vermelha escura para loop ativo */
         }
 
         .progress-bar {
             width: 100%;
-            height: 10px; /* Barra de progresso mais alta */
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            margin: 10px 0;
+            height: 8px; /* Barra de progresso mais fina */
+            background: #444;
+            border-radius: 4px;
+            margin: 8px 0; /* Margem reduzida */
             cursor: pointer;
             position: relative;
             overflow: hidden;
@@ -264,8 +278,8 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #e74c3c, #c0392b); /* Preenchimento vermelho */
-            border-radius: 5px;
+            background: #8B0000; /* Preenchimento vermelho escuro */
+            border-radius: 4px;
             transition: width 0.1s ease;
         }
 
@@ -273,8 +287,8 @@
             position: absolute;
             top: 0;
             height: 100%;
-            background: rgba(255, 255, 0, 0.2); /* Marcador de loop amarelo suave */
-            border-radius: 5px;
+            background: rgba(255, 255, 0, 0.15); /* Marcador de loop amarelo mais suave */
+            border-radius: 4px;
             display: none;
             pointer-events: none;
         }
@@ -283,19 +297,11 @@
         .loop-markers::after {
             content: '';
             position: absolute;
-            top: -5px; /* Ajuste para que a linha fique fora da barra */
-            bottom: -5px; /* Ajuste para que a linha fique fora da barra */
-            width: 2px;
-            background-color: #f1c40f; /* Cor amarela mais vibrante para as linhas */
+            top: -3px; /* Ajuste para que a linha fique fora da barra */
+            bottom: -3px; /* Ajuste para que a linha fique fora da barra */
+            width: 1px; /* Linha mais fina */
+            background-color: #FFD700; /* Cor amarela dourada para as linhas */
             z-index: 1;
-        }
-
-        .loop-markers::before {
-            left: 0;
-        }
-
-        .loop-markers::after {
-            right: 0;
         }
 
         .loop-markers.active {
@@ -305,18 +311,18 @@
         .time-display {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9em;
+            font-size: 0.8em; /* Fonte menor */
             margin-top: 5px;
-            color: #ccc;
+            color: #B0B0B0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎵 Player de Áudio com Células</h1>
+        <h1>🎵 Player de Áudio</h1>
         
         <div class="global-upload-section">
-            <input type="file" id="globalFileInput" accept="audio/mp3" multiple style="display: none;">
+            <input type="file" id="globalFileInput" accept="audio/mp3,audio/wav,audio/ogg" multiple style="display: none;">
             <button id="globalUploadBtn" class="upload-btn">
                 ⬆️ Carregar Múltiplos Ficheiros
             </button>
@@ -325,8 +331,12 @@
 
         <div class="controls">
             <div class="control-group">
-                <label for="speedSlider">Velocidade de Reprodução: <span id="speedValue">1.0x</span></label>
-                <input type="range" id="speedSlider" class="slider" min="0.25" max="2" step="0.25" value="1">
+                <label for="speedSlider">Velocidade: <span id="speedValue">1.00x</span></label>
+                <div class="speed-controls">
+                    <input type="range" id="speedSlider" class="slider" min="0.25" max="2" step="0.01" value="1">
+                    <button id="presetHalfSpeedBtn" class="preset-btn">0.5x</button>
+                    <button id="presetNormalSpeedBtn" class="preset-btn">1x</button>
+                </div>
             </div>
             
             <div class="progress-bar" id="progressBar">
@@ -376,6 +386,10 @@
         const globalFileInput = document.getElementById('globalFileInput');
         const globalUploadBtn = document.getElementById('globalUploadBtn');
         const globalUploadStatus = document.getElementById('globalUploadStatus');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValueSpan = document.getElementById('speedValue');
+        const presetHalfSpeedBtn = document.getElementById('presetHalfSpeedBtn');
+        const presetNormalSpeedBtn = document.getElementById('presetNormalSpeedBtn');
         const totalCells = 20; // Definir o número total de células
 
         // Criar as células dinamicamente
@@ -446,6 +460,7 @@
             for (let i = 0; i < files.length && cellIndex <= totalCells; i++) {
                 const file = files[i];
 
+                // Adicionado suporte a mais tipos de áudio
                 if (!file.type.startsWith('audio/')) {
                     console.warn(`Ficheiro "${file.name}" não é um ficheiro de áudio. Ignorando.`);
                     continue; // Pular para o próximo ficheiro
@@ -510,18 +525,36 @@
             document.getElementById(`playBtn${cellNumber}`).textContent = '⏸️ Pausar'; // Mudar texto para Pausar
             
             // Aplicar velocidade atual
-            const speed = document.getElementById('speedSlider').value;
+            const speed = speedSlider.value;
             audioPlayer.playbackRate = parseFloat(speed);
         }
 
         // Controle de velocidade
-        document.getElementById('speedSlider').addEventListener('input', function(e) {
+        speedSlider.addEventListener('input', function(e) {
             const speed = parseFloat(e.target.value);
-            document.getElementById('speedValue').textContent = speed + 'x';
+            speedValueSpan.textContent = speed.toFixed(2) + 'x'; // Formatar para 2 casas decimais
             if (currentAudio) {
                 currentAudio.playbackRate = speed;
             }
         });
+
+        // Presets de velocidade
+        presetHalfSpeedBtn.addEventListener('click', () => {
+            speedSlider.value = 0.5;
+            speedValueSpan.textContent = '0.50x';
+            if (currentAudio) {
+                currentAudio.playbackRate = 0.5;
+            }
+        });
+
+        presetNormalSpeedBtn.addEventListener('click', () => {
+            speedSlider.value = 1.0;
+            speedValueSpan.textContent = '1.00x';
+            if (currentAudio) {
+                currentAudio.playbackRate = 1.0;
+            }
+        });
+
 
         // Atalhos do teclado
         document.addEventListener('keydown', function(e) {

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slow Music!</title>
     <style>
-        /* CSS será inserido aqui */
+        /* CSS */
         * {
             margin: 0;
             padding: 0;
@@ -75,11 +75,7 @@
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
         }
 
-        .file-name {
-            font-size: 0.8em;
-            color: #B0B0B0;
-            margin-left: 10px;
-        }
+        /* Removido .file-name (fora das células) pois será usado apenas dentro */
 
         .grid {
             display: grid;
@@ -116,8 +112,6 @@
             box-shadow: 0 0 15px rgba(128, 0, 0, 0.5); /* Sombra vermelha mais subtil */
         }
 
-        /* Removido .cell-header e .cell-number pois não são mais necessários */
-
         .cell .file-name { /* Ajuste para o nome do ficheiro dentro da célula */
             font-size: 0.85em; /* Ligeiramente maior para ser mais legível */
             margin-bottom: 0; /* Remover margem inferior */
@@ -125,8 +119,6 @@
             word-break: break-word; /* Quebra de palavra para nomes longos */
             flex-grow: 0; /* Não crescer, apenas ocupar o espaço necessário */
         }
-
-        /* Removido .play-btn pois não há mais um botão explícito */
 
         .controls {
             background: #1A1A1A;
@@ -258,21 +250,32 @@
             position: absolute;
             top: 0;
             height: 100%;
-            background: rgba(255, 255, 0, 0.15);
+            background: rgba(255, 255, 0, 0.15); /* Cor de fundo do "bloco" quando o loop está ativo */
             border-radius: 4px;
             display: none;
             pointer-events: none;
+            /* Transições para o marcador de loop */
+            transition: left 0.1s linear, width 0.1s linear; 
         }
 
+        /* Estilos para as linhas verticais do loop. Precisam de estar aqui no CSS */
         .loop-markers::before,
         .loop-markers::after {
             content: '';
             position: absolute;
-            top: -3px;
-            bottom: -3px;
+            top: -3px; 
+            bottom: -3px; 
             width: 1px;
-            background-color: #FFD700;
+            background-color: #FFD700; /* Cor amarela dourada para as linhas */
             z-index: 1;
+        }
+
+        .loop-markers::before {
+            left: 0;
+        }
+
+        .loop-markers::after {
+            right: 0;
         }
 
         .loop-markers.active {
@@ -345,6 +348,7 @@
     </div>
 
     <script>
+        // JavaScript
         let currentAudio = null;
         let audioFiles = {}; // Guarda { cellNumber: fileURL }
         let currentCell = null; // Guarda o número da célula ativa
@@ -463,7 +467,6 @@
                 } else {
                     currentAudio.pause();
                 }
-                // Não há botão para atualizar texto, a classe 'active' já indica o estado
                 return;
             }
 
@@ -540,7 +543,6 @@
                         } else {
                             currentAudio.pause();
                         }
-                        // Apenas a classe 'active' na célula indica o estado
                     }
                     break;
             }
@@ -556,13 +558,16 @@
                 document.getElementById('pointA').textContent = formatTime(currentTime);
             } else {
                 document.getElementById('pointB').textContent = formatTime(currentTime);
-                // Quando define o ponto B, ativa o loop
-                if (loopPoints.start !== null) {
-                    activateLoop();
-                }
             }
             
-            updateLoopDisplay();
+            // Se ambos os pontos estiverem definidos, ative o loop.
+            // Caso contrário, apenas atualize a exibição e os marcadores.
+            if (loopPoints.start !== null && loopPoints.end !== null) {
+                activateLoop();
+            } else {
+                updateLoopDisplay();
+                updateLoopMarkers(); // Chama para mostrar o ponto A mesmo sem o B
+            }
         }
 
         function activateLoop() {
@@ -586,7 +591,9 @@
             document.getElementById('pointA').textContent = '--';
             document.getElementById('pointB').textContent = '--';
             updateLoopDisplay();
-            loopMarkers.classList.remove('active');
+            loopMarkers.classList.remove('active'); // Garante que o marcador é removido
+            loopMarkers.style.width = '0%'; // Redefine a largura
+            loopMarkers.style.left = '0%'; // Redefine a posição
         }
 
         function updateLoopDisplay() {
@@ -594,6 +601,7 @@
             const loopStatus = document.getElementById('loopStatus');
             const loopPointsDiv = document.getElementById('loopPoints');
             
+            // O status "Ativado" só aparece se isLooping for true (start e end definidos)
             if (isLooping) {
                 loopIndicator.classList.add('loop-active');
                 loopStatus.textContent = 'Ativado';
@@ -601,23 +609,47 @@
             } else {
                 loopIndicator.classList.remove('loop-active');
                 loopStatus.textContent = 'Desativado';
-                loopPointsDiv.style.display = 'none';
+                
+                // Mostrar os pontos A e B se apenas um deles estiver definido
+                if (loopPoints.start !== null || loopPoints.end !== null) {
+                    loopPointsDiv.style.display = 'block';
+                } else {
+                    loopPointsDiv.style.display = 'none';
+                }
             }
         }
 
         function updateLoopMarkers() {
-            if (!currentAudio || !isLooping || !currentAudio.duration || isNaN(currentAudio.duration)) {
+            if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) {
                 loopMarkers.classList.remove('active');
                 return;
             }
             
             const duration = currentAudio.duration;
-            const startPercent = (loopPoints.start / duration) * 100;
-            const endPercent = (loopPoints.end / duration) * 100;
             
-            loopMarkers.style.left = startPercent + '%';
-            loopMarkers.style.width = (endPercent - startPercent) + '%';
-            loopMarkers.classList.add('active');
+            // Se apenas o ponto A for definido, mostre apenas uma linha no ponto A
+            if (loopPoints.start !== null && loopPoints.end === null) {
+                const startPercent = (loopPoints.start / duration) * 100;
+                loopMarkers.style.left = startPercent + '%';
+                loopMarkers.style.width = '1px'; // Apenas uma linha fina
+                loopMarkers.classList.add('active');
+                loopMarkers.style.backgroundColor = 'transparent'; // Fundo transparente
+                // Não precisamos manipular os pseudo-elementos aqui, eles são controlados pelo CSS
+            } 
+            // Se ambos os pontos A e B forem definidos (e isLooping for true), mostre a área do loop
+            else if (loopPoints.start !== null && loopPoints.end !== null) { // isLooping é verificado na activateLoop
+                const startPercent = (loopPoints.start / duration) * 100;
+                const endPercent = (loopPoints.end / duration) * 100;
+                
+                loopMarkers.style.left = startPercent + '%';
+                loopMarkers.style.width = (endPercent - startPercent) + '%';
+                loopMarkers.classList.add('active');
+                loopMarkers.style.backgroundColor = 'rgba(255, 255, 0, 0.15)'; // Fundo do bloco
+            } 
+            // Se nenhum ponto ou apenas o ponto B estiver definido sem o A, esconda o marcador
+            else {
+                loopMarkers.classList.remove('active');
+            }
         }
 
         // Atualizar barra de progresso

@@ -9,9 +9,6 @@ let isCurrentlyPlaying = false; // Novo estado para controlar se está a tocar a
 let loopPoints = { start: null, end: null };
 let isLooping = false;
 
-// Remove a linha para audioPlayerHtml pois não é usada
-// const audioPlayerHtml = document.getElementById('audioPlayer'); 
-
 const progressBar = document.getElementById('progressBar');
 const progressFill = document.getElementById('progressFill');
 const loopMarkers = document.getElementById('loopMarkers');
@@ -196,8 +193,6 @@ function stopCurrentAudio(fullStop = false) {
         currentCell = null; // Também deve ser nulo se não houver faixa selecionada
         lastPlaybackTime = 0; // Se for uma parada total, começa do zero
     } 
-    // Se não for uma parada total (ex: ao pausar, ou ao saltar), lastPlaybackTime já foi definido
-    // ou será ajustado na próxima chamada de playAudioInternal.
     
     progressFill.style.width = '0%';
     document.getElementById('currentTime').textContent = '0:00';
@@ -206,23 +201,26 @@ function stopCurrentAudio(fullStop = false) {
     stopBPMUpdate();
     currentBPMDisplay.textContent = '--';
 
-    // Desativar a célula visualmente se houver uma ativa E for uma parada completa
-    // Ou se houver uma célula ativa e não for uma parada completa, mas vamos mudar para outra faixa
-    if (fullStop || (currentCell !== null && !isCurrentlyPlaying)) { // `!isCurrentlyPlaying` verifica se acabou de pausar
+    // Desativar a célula visualmente se for uma parada completa ou se acabou de pausar
+    if (fullStop || (currentCell !== null && !isCurrentlyPlaying)) { 
         document.querySelectorAll('.cell.active').forEach(cell => cell.classList.remove('active'));
     }
 }
 
-function playAudio(cellNumber, startTime = 0) {
+async function playAudio(cellNumber, startTime = 0) {
     initAudioContext(); // Garante que o contexto está inicializado
     
+    // Sempre tenta retomar o AudioContext antes de qualquer reprodução
     if (audioContext.state === 'suspended') {
-        audioContext.resume().then(() => {
-            playAudioInternal(cellNumber, startTime);
-        }).catch(e => console.error("Erro ao retomar AudioContext:", e));
-    } else {
-        playAudioInternal(cellNumber, startTime);
+        try {
+            await audioContext.resume();
+            console.log("AudioContext resumed for playback.");
+        } catch (e) {
+            console.error("Erro ao retomar AudioContext para playAudio:", e);
+            return; // Não prossegue se não conseguir retomar o contexto
+        }
     }
+    playAudioInternal(cellNumber, startTime);
 }
 
 function playAudioInternal(cellNumber, startTime = 0) {
@@ -235,10 +233,9 @@ function playAudioInternal(cellNumber, startTime = 0) {
     const audioBuffer = cellData.audioBuffer;
 
     // Lógica para PAUSAR se a mesma célula estiver a tocar e não for um salto de tempo
-    // Um startTime diferente de 0 significa um "salto" na barra de progresso.
-    // Neste caso, não queremos pausar, mas sim reiniciar a reprodução no novo ponto.
+    // Um startTime diferente de lastPlaybackTime OU currentCell diferente significa um "salto" ou nova seleção.
+    // Nestes casos, queremos REINICIAR. Apenas pausamos se for o MESMO ponto.
     if (currentCell === cellNumber && isCurrentlyPlaying && startTime === lastPlaybackTime) {
-        // Se a mesma célula, a tocar, e não é um salto (mesmo startTime), então pausa.
         pausePlayback();
         return;
     }
@@ -287,29 +284,27 @@ function playAudioInternal(cellNumber, startTime = 0) {
     
     isCurrentlyPlaying = true; // Atualiza o estado para "a tocar"
 
-    startProgressUpdate(); // Inicia com o lastPlaybackTime como initialOffset
+    startProgressUpdate(); 
     startBPMUpdateInterval();
 }
 
 function pausePlayback() {
-    if (sourceNode && audioContext.state === 'running') {
+    if (sourceNode && audioContext.state === 'running' && isCurrentlyPlaying) { // Verifica também isCurrentlyPlaying
         // Calcular o tempo atual da faixa antes de pausar
         const elapsedTime = audioContext.currentTime - audioStartTimeContext;
         lastPlaybackTime = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
 
         sourceNode.stop();
         sourceNode.disconnect();
-        sourceNode = null; // O nó deve ser destruído ao pausar
+        sourceNode = null; 
 
-        // Apenas suspende se não houver outros nós a tocar ou para poupar recursos
-        // Não é estritamente necessário para a pausa do Web Audio API, mas é uma boa prática
         audioContext.suspend().then(() => {
             console.log('AudioContext suspended.');
         }).catch(e => console.error("Erro ao suspender AudioContext:", e));
         
         pauseProgressUpdate();
         stopBPMUpdate();
-        isCurrentlyPlaying = false; // Atualiza o estado para "pausado"
+        isCurrentlyPlaying = false; 
 
         // Remover a classe 'active' da célula ao pausar
         if (currentCell) {
@@ -318,7 +313,7 @@ function pausePlayback() {
     }
 }
 
-function resumePlayback() {
+async function resumePlayback() {
     // Se não houver célula selecionada ou dados de áudio, não faz nada
     if (!currentCell || !cellAudioData[currentCell]) {
         console.warn("Nenhuma célula ou dados de áudio para retomar a reprodução.");
@@ -331,16 +326,27 @@ function resumePlayback() {
         return;
     }
 
-    // Se não há sourceNode mas há um buffer carregado (terminou ou nunca foi reproduzido)
-    // ou se o contexto está suspenso, então tenta retomar a partir de lastPlaybackTime
-    if (!sourceNode && currentAudioBuffer || audioContext.state === 'suspended') {
-        playAudio(currentCell, lastPlaybackTime); // Retoma do lastPlaybackTime
-    } else if (!currentAudioBuffer && currentCell) { 
-        // Se a célula está selecionada mas o buffer foi limpo (ex: clearAllCells)
-        console.warn("AudioBuffer não está carregado para a célula atual.");
+    // Tenta retomar o AudioContext
+    if (audioContext.state === 'suspended') {
+        try {
+            await audioContext.resume();
+            console.log("AudioContext resumed for resumePlayback.");
+        } catch (e) {
+            console.error("Erro ao retomar AudioContext para resumePlayback:", e);
+            return;
+        }
+    }
+    
+    // Agora que o contexto está garantidamente 'running' (ou tentou ser retomado),
+    // tenta reproduzir do lastPlaybackTime.
+    if (currentAudioBuffer) { // Verifica se há um buffer carregado
+        playAudioInternal(currentCell, lastPlaybackTime); 
+    } else { 
+        console.warn("AudioBuffer não está carregado para a célula atual durante resumePlayback.");
         stopCurrentAudio(true); // Limpa completamente o estado.
     }
 }
+
 
 let progressInterval = null;
 let audioStartTimeContext = 0;
@@ -349,7 +355,7 @@ let audioOffsetPlayback = 0;
 function startProgressUpdate() {
     if (progressInterval) clearInterval(progressInterval);
 
-    // Resume o contexto se estiver suspenso para que o tempo do contexto avance.
+    // Garante que o AudioContext esteja em 'running' para que `currentTime` avance.
     if (audioContext && audioContext.state === 'suspended') {
         audioContext.resume().then(() => {
             console.log("AudioContext resumed for progress update.");
@@ -360,6 +366,7 @@ function startProgressUpdate() {
     audioOffsetPlayback = lastPlaybackTime; // Usa o lastPlaybackTime como ponto de partida
 
     progressInterval = setInterval(() => {
+        // Adiciona isCurrentlyPlaying para parar a atualização se a reprodução parou
         if (!sourceNode || audioContext.state !== 'running' || !currentAudioBuffer || !isCurrentlyPlaying) {
             clearInterval(progressInterval);
             return;
@@ -380,7 +387,7 @@ function startProgressUpdate() {
                     if (sourceNode) {
                         sourceNode.stop();
                         sourceNode.disconnect();
-                        sourceNode = null; // Important: Clear sourceNode
+                        sourceNode = null; 
                     }
                     playAudioInternal(currentCell, loopPoints.start); // Reinicia a reprodução do ponto A
                 }
@@ -417,7 +424,10 @@ function startBPMUpdateInterval() {
     const effectiveBPM = baseBPM * currentSpeed;
 
     const beatDurationSeconds = 60 / effectiveBPM;
-    const fourBeatDurationSeconds = beatDurationSeconds * 4;
+    // O intervalo para atualizar o BPM no display deve ser constante e não baseado no beat,
+    // apenas o cálculo do BPM efetivo usa a velocidade.
+    // Um intervalo mais razoável seria 1 segundo para atualização do display.
+    const updateIntervalMs = 1000; 
 
     currentBPMDisplay.textContent = effectiveBPM.toFixed(2);
 
@@ -430,11 +440,12 @@ function startBPMUpdateInterval() {
             currentBPMDisplay.textContent = '--';
         }
 
+        // Também para a atualização do BPM se não estiver a tocar
         if (!sourceNode || audioContext.state !== 'running' || !currentAudioBuffer || !isCurrentlyPlaying) {
             stopBPMUpdate();
             return;
         }
-    }, fourBeatDurationSeconds * 1000);
+    }, updateIntervalMs); // Use um intervalo fixo para o display
 }
 
 function stopBPMUpdate() {
@@ -451,7 +462,8 @@ speedSlider.addEventListener('input', function(e) {
     // Apenas recalcula e reinicia se houver áudio e estiver a tocar
     if (currentCell && cellAudioData[currentCell] && currentAudioBuffer && isCurrentlyPlaying) {
         // Calcular o tempo exato para reiniciar
-        const currentTimeInAudio = lastPlaybackTime + (audioContext.currentTime - audioStartTimeContext) * sourceNode.playbackRate.value;
+        const elapsedTime = audioContext.currentTime - audioStartTimeContext;
+        const currentTimeInAudio = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
         
         // Parar o nó existente para aplicar a nova velocidade recriando
         if (sourceNode) {
@@ -471,8 +483,7 @@ speedSlider.addEventListener('input', function(e) {
         const baseBPM = parseFloat(cellAudioData[currentCell].bpm);
         const effectiveBPM = baseBPM * speed;
         currentBPMDisplay.textContent = effectiveBPM.toFixed(2);
-        // Não é necessário reiniciar o intervalo aqui, pois playAudioInternal já o fará ou o input do slider recalcula
-        // startBPMUpdateInterval(); 
+        startBPMUpdateInterval(); // Reinicia o intervalo para refletir a nova velocidade
     } else {
         currentBPMDisplay.textContent = '--';
     }
@@ -541,26 +552,24 @@ resetPitchBtn.addEventListener('click', () => {
 
 document.addEventListener('keydown', function(e) {
     if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'BUTTON' || document.activeElement.tagName === 'SLIDER')) {
-        // Permitir que as teclas funcionem nos inputs, mas barra de espaço pode ser um problema
         if (e.key.toLowerCase() === ' ') {
-            e.preventDefault(); // Impede a barra de espaço de ativar botões
-            document.activeElement.blur(); // Remove o foco do elemento
-            // E continua para a lógica de play/pause global
+            e.preventDefault(); 
+            document.activeElement.blur(); 
         } else {
-            return; // Se não for barra de espaço, e o foco estiver num input/botão, sai da função
+            return; 
         }
     }
 
     switch(e.key.toLowerCase()) {
         case 'a':
-            if (sourceNode && currentAudioBuffer && isCurrentlyPlaying) { // Apenas permite definir loop points se estiver a tocar
+            if (sourceNode && currentAudioBuffer && isCurrentlyPlaying) { 
                 const elapsedTime = audioContext.currentTime - audioStartTimeContext;
                 const currentTheoreticalTime = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
                 setLoopPoint('start', currentTheoreticalTime);
             }
             break;
         case 'b':
-            if (sourceNode && currentAudioBuffer && isCurrentlyPlaying) { // Apenas permite definir loop points se estiver a tocar
+            if (sourceNode && currentAudioBuffer && isCurrentlyPlaying) { 
                 const elapsedTime = audioContext.currentTime - audioStartTimeContext;
                 const currentTheoreticalTime = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
                 setLoopPoint('end', currentTheoreticalTime);
@@ -570,7 +579,6 @@ document.addEventListener('keydown', function(e) {
             clearLoop();
             break;
         case ' ':
-            // A barra de espaço já foi prevenida no início da função
             if (currentCell && cellAudioData[currentCell]) {
                 if (isCurrentlyPlaying) {
                     pausePlayback();
@@ -587,7 +595,6 @@ function setLoopPoint(point, time) {
     
     loopPoints[point] = time;
     
-    // Garantir que os pontos de loop não excedem a duração total do áudio
     if (currentAudioBuffer.duration && time > currentAudioBuffer.duration) {
         loopPoints[point] = currentAudioBuffer.duration;
     } else if (time < 0) {
@@ -603,7 +610,6 @@ function setLoopPoint(point, time) {
     if (loopPoints.start !== null && loopPoints.end !== null) {
         activateLoop();
     } else {
-        // Se um dos pontos for nulo, apenas atualiza o display sem ativar o loop
         updateLoopDisplay();
         updateLoopMarkers();
     }
@@ -647,7 +653,6 @@ function updateLoopDisplay() {
         loopIndicator.classList.remove('loop-active');
         loopStatus.textContent = 'Desativado';
         
-        // Exibir os pontos se eles existirem, mesmo que o loop esteja desativado
         if (loopPoints.start !== null || loopPoints.end !== null) {
             loopPointsDiv.style.display = 'block';
         } else {
@@ -667,9 +672,9 @@ function updateLoopMarkers() {
     if (loopPoints.start !== null && loopPoints.end === null) {
         const startPercent = (loopPoints.start / duration) * 100;
         loopMarkers.style.left = startPercent + '%';
-        loopMarkers.style.width = '1px'; // Apenas uma linha para o ponto A
+        loopMarkers.style.width = '1px'; 
         loopMarkers.classList.add('active');
-        loopMarkers.style.backgroundColor = 'rgba(255, 255, 0, 0.5)'; // Ponto A visível
+        loopMarkers.style.backgroundColor = 'rgba(255, 255, 0, 0.5)'; 
     }
     else if (loopPoints.start !== null && loopPoints.end !== null) {
         const startPercent = (loopPoints.start / duration) * 100;
@@ -678,7 +683,7 @@ function updateLoopMarkers() {
         loopMarkers.style.left = startPercent + '%';
         loopMarkers.style.width = (endPercent - startPercent) + '%';
         loopMarkers.classList.add('active');
-        loopMarkers.style.backgroundColor = 'rgba(255, 255, 0, 0.15)'; // Intervalo do loop
+        loopMarkers.style.backgroundColor = 'rgba(255, 255, 0, 0.15)'; 
     }
     else {
         loopMarkers.classList.remove('active');
@@ -686,22 +691,32 @@ function updateLoopMarkers() {
 }
 
 function handleAudioEnded() {
-    // A célula deve ser desativada apenas se a reprodução realmente terminou, não se está em loop
     if (!isLooping && currentCell) {
         document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
     }
-    stopCurrentAudio(true); // Chamada para parada completa no fim da faixa
-    clearLoop(); // Limpa os pontos de loop no final
+    stopCurrentAudio(true); 
+    clearLoop(); 
     resetPitch();
     currentBPMDisplay.textContent = '--';
 }
 
-progressBar.addEventListener('click', function(e) {
+progressBar.addEventListener('click', async function(e) { // Marcado como async
     if (!currentAudioBuffer || isNaN(currentAudioBuffer.duration) || currentCell === null) {
-        // Se não houver áudio carregado ou nenhuma célula selecionada, sai.
+        console.warn("Não é possível saltar: nenhum áudio carregado ou célula selecionada.");
         return; 
     }
     
+    // Tenta retomar o AudioContext antes de qualquer operação
+    if (audioContext.state === 'suspended') {
+        try {
+            await audioContext.resume();
+            console.log("AudioContext resumed for progress bar click.");
+        } catch (error) {
+            console.error("Erro ao retomar AudioContext no click da barra de progresso:", error);
+            return; // Não prossegue se não conseguir retomar
+        }
+    }
+
     const rect = progressBar.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const percentage = clickX / rect.width;
@@ -724,11 +739,10 @@ document.getElementById('cellGrid').addEventListener('click', function(event) {
     if (cellElement) {
         const cellNumber = parseInt(cellElement.dataset.cellNumber);
         
-        // Se for a mesma célula e estiver a tocar, pausa
         if (cellNumber === currentCell && isCurrentlyPlaying) {
             pausePlayback();
         } else {
-            // Caso contrário (nova célula, ou mesma célula mas pausada/parada),
+            // Se for uma nova célula ou a mesma célula mas pausada/parada,
             // inicia a reprodução do início (0) para essa célula.
             playAudio(cellNumber, 0); 
         }
@@ -736,11 +750,9 @@ document.getElementById('cellGrid').addEventListener('click', function(event) {
     }
 });
 
-// Este código será executado APENAS quando o DOM estiver completamente carregado.
 document.addEventListener('DOMContentLoaded', () => {
     createCells();
     updateLoopDisplay();
-    // Adiciona um listener no corpo para inicializar AudioContext com a primeira interação
     document.body.addEventListener('click', initAudioContext, { once: true });
-    applyPitch(); // Aplica o pitch inicial (0 semitons)
+    applyPitch(); 
 });

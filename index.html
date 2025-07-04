@@ -497,10 +497,12 @@
         // Event listeners para os botões de preset
         speedPreset05.addEventListener('click', () => {
             applySpeed(0.5);
+            speedSlider.blur(); // Remover foco após clicar no preset
         });
 
         speedPreset10.addEventListener('click', () => {
             applySpeed(1.0);
+            speedSlider.blur(); // Remover foco após clicar no preset
         });
 
         // Controle de velocidade
@@ -512,8 +514,22 @@
             }
         });
 
+        // Remover foco do slider após a interação para permitir atalhos de teclado
+        speedSlider.addEventListener('mouseup', function() {
+            this.blur(); // 'this' refere-se ao próprio speedSlider
+        });
+        // Também para touch devices (para melhor compatibilidade em telemóveis/tablets)
+        speedSlider.addEventListener('touchend', function() {
+            this.blur();
+        });
+
         // Atalhos do teclado
         document.addEventListener('keydown', function(e) {
+            // Evita que os atalhos funcionem se um input estiver focado (como um input de texto futuro)
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
+                return;
+            }
+
             if (!currentAudio) return;
 
             switch(e.key.toLowerCase()) {

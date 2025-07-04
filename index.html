@@ -467,15 +467,14 @@
 
     <script>
         // JavaScript
-        let currentAudioBuffer = null; // Armazena o AudioBuffer do ficheiro atualmente carregado
-        let sourceNode = null; // O AudioBufferSourceNode para reprodução real
-        let audioContext = null; // O Web Audio API Context
-        let currentCell = null; // Guarda o número da célula ativa
+        let currentAudioBuffer = null; 
+        let sourceNode = null; 
+        let audioContext = null; 
+        let currentCell = null; 
         
         let loopPoints = { start: null, end: null };
         let isLooping = false;
         
-        // Referência ao elemento <audio> HTML para obter metadata e tempo (não para reprodução)
         const audioPlayerHtml = document.getElementById('audioPlayer'); 
 
         const progressBar = document.getElementById('progressBar');
@@ -487,7 +486,7 @@
         const speedSlider = document.getElementById('speedSlider');
         const speedValueSpan = document.getElementById('speedValue');
         const presetHalfSpeedBtn = document.getElementById('presetHalfSpeedBtn');
-        const presetNormalSpeedBtn = document = document.getElementById('presetNormalSpeedBtn');
+        const presetNormalSpeedBtn = document.getElementById('presetNormalSpeedBtn'); // Corrigido aqui
         const clearAllCellsBtn = document.getElementById('clearAllCellsBtn');
 
         const pitchInput = document.getElementById('pitchInput');
@@ -496,22 +495,22 @@
         const decreasePitchBtn = document.getElementById('decreasePitchBtn');
         const resetPitchBtn = document.getElementById('resetPitchBtn');
         
-        // Elementos para o mostrador de BPM
         const currentBPMDisplay = document.getElementById('currentBPM');
 
-        const totalCells = 20; // Definir o número total de células
+        const totalCells = 20; 
 
-        // Onde armazenamos os AudioBuffers e os BPM detetados para cada célula
-        let cellAudioData = {}; // Estrutura: { cellNumber: { audioBuffer: AudioBuffer, bpm: number | null } }
+        let cellAudioData = {}; 
 
-        // Variáveis para atualização dos BPM a cada 4 tempos
         let bpmUpdateInterval = null;
-        let lastBeatUpdate = 0; // Guarda o tempo em que o BPM foi atualizado pela última vez
 
         // Função para inicializar AudioContext
+        // Garantimos que só é chamada após a primeira interação do utilizador
         function initAudioContext() {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                // Desconecta o evento uma vez que o contexto foi inicializado
+                document.body.removeEventListener('click', initAudioContext, { once: true });
+                console.log('AudioContext inicializado após a interação do utilizador.');
             }
         }
 
@@ -528,13 +527,12 @@
             }
         }
 
-        // Acionar o input de ficheiro global
         globalUploadBtn.addEventListener('click', () => {
+            initAudioContext(); // Garante que o AudioContext está ativo antes de carregar
             globalFileInput.click();
-            globalUploadBtn.blur(); // Adicionado: Remove o foco do botão após o clique
+            globalUploadBtn.blur();
         });
 
-        // Lidar com o upload de múltiplos ficheiros
         globalFileInput.addEventListener('change', async (event) => {
             const files = event.target.files;
             if (files.length === 0) {
@@ -544,7 +542,7 @@
 
             globalUploadStatus.textContent = `A carregar ${files.length} ficheiro(s)...`;
             
-            clearAllCells(false); // Limpa as células, mas não o status de upload
+            clearAllCells(false); 
             
             let filesLoaded = 0;
             let cellIndex = 1;
@@ -557,40 +555,70 @@
                 }
 
                 try {
-                    // Carrega o ficheiro e o decodifica para um AudioBuffer
+                    // É crucial que o AudioContext esteja resumido ou inicializado aqui
+                    // para que decodeAudioData funcione
+                    if (audioContext && audioContext.state === 'suspended') {
+                        await audioContext.resume();
+                    } else if (!audioContext) {
+                        // Se por algum motivo não foi inicializado, tentamos aqui
+                        initAudioContext();
+                        if (audioContext && audioContext.state === 'suspended') {
+                           await audioContext.resume();
+                        }
+                    }
+
+                    if (!audioContext) {
+                         console.error("AudioContext não disponível. Não é possível decodificar áudio.");
+                         globalUploadStatus.textContent = `Erro: AudioContext não está pronto. Por favor, clique na página para ativá-lo e tente novamente.`;
+                         continue;
+                    }
+
                     const arrayBuffer = await file.arrayBuffer();
                     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
                     
-                    // Armazena o AudioBuffer e inicializa BPM como null
-                    cellAudioData[cellIndex] = { audioBuffer: audioBuffer, bpm: null }; 
+                    cellAudioData[cellIndex] = { audioBuffer: audioBuffer, bpm: null, fileName: file.name }; 
                     
                     document.getElementById(`fileName${cellIndex}`).textContent = file.name;
                     document.querySelector(`.cell[data-cell-number="${cellIndex}"]`).classList.add('has-file');
                     
                     filesLoaded++;
 
-                    // Iniciar deteção de BPM para este ficheiro (não bloquear o carregamento de outros)
+                    // Chamar a deteção de BPM
                     detectBPMForCell(cellIndex, file);
 
                 } catch (error) {
                     console.error(`Erro ao carregar ou decodificar ficheiro "${file.name}":`, error);
-                    globalUploadStatus.textContent = `Erro ao carregar ficheiro: ${file.name}.`;
+                    globalUploadStatus.textContent = `Erro ao carregar ficheiro: ${file.name}. Verifique a consola para mais detalhes.`;
                 }
                 cellIndex++;
             }
-            globalUploadStatus.textContent = `${filesLoaded} ficheiro(s) carregado(s) com sucesso.`;
-            event.target.value = ''; // Limpar o input
+            if (filesLoaded > 0) {
+                globalUploadStatus.textContent = `${filesLoaded} ficheiro(s) carregado(s) com sucesso.`;
+            } else {
+                globalUploadStatus.textContent = 'Nenhum ficheiro de áudio válido foi carregado.';
+            }
+            event.target.value = ''; 
         });
 
         async function detectBPMForCell(cellNumber, file) {
+            // Verifica se a biblioteca BPMDetective está disponível
+            if (typeof BPMDetective === 'undefined') {
+                console.warn('BPMDetective library not found. Cannot detect BPM.');
+                cellAudioData[cellNumber].bpm = null;
+                if (currentCell === cellNumber) {
+                    currentBPMDisplay.textContent = '--';
+                }
+                return;
+            }
+
+            console.log(`A iniciar deteção de BPM para célula ${cellNumber} (${file.name})...`);
             try {
-                // A biblioteca bpm-detective precisa do ArrayBuffer original do ficheiro
                 const arrayBuffer = await file.arrayBuffer();
-                const bpm = await BPMDetective.run(arrayBuffer); // Executa a deteção de BPM
+                const bpm = await BPMDetective.run(arrayBuffer); 
                 
-                cellAudioData[cellNumber].bpm = bpm.toFixed(2); // Armazena o BPM detetado
-                console.log(`BPM para célula ${cellNumber} (${file.name}): ${bpm.toFixed(2)}`);
-                // Se esta célula for a ativa, atualiza o mostrador de BPM
+                cellAudioData[cellNumber].bpm = bpm.toFixed(2); 
+                console.log(`BPM detetado para célula ${cellNumber} (${file.name}): ${bpm.toFixed(2)}`);
+                
                 if (currentCell === cellNumber) {
                     currentBPMDisplay.textContent = bpm.toFixed(2);
                 }
@@ -603,25 +631,20 @@
             }
         }
 
-
-        // Nova função para limpar todas as células
         function clearAllCells(resetStatus = true) {
-            stopCurrentAudio(); // Para e limpa o áudio atual
-            clearLoop(); // Limpa o loop
-            resetPitch(); // Reseta o pitch
+            stopCurrentAudio(); 
+            clearLoop(); 
+            resetPitch(); 
             
-            // Limpa os AudioBuffers e BPM armazenados
             cellAudioData = {}; 
-            currentBPMDisplay.textContent = '--'; // Limpa o mostrador de BPM
+            currentBPMDisplay.textContent = '--'; 
 
-            for (let i = 1; i <= totalCells; i++) {
-                document.getElementById(`fileName${i}`).textContent = 'Nenhum ficheiro carregado';
-                const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
-                if (cell) {
-                    cell.classList.remove('active');
-                    cell.classList.remove('has-file');
-                }
-            }
+            document.querySelectorAll('.cell').forEach(cell => {
+                const cellNumber = parseInt(cell.dataset.cellNumber);
+                document.getElementById(`fileName${cellNumber}`).textContent = 'Nenhum ficheiro carregado';
+                cell.classList.remove('active', 'has-file');
+            });
+
             if (resetStatus) {
                 globalUploadStatus.textContent = 'Todas as células limpas.';
             }
@@ -629,118 +652,128 @@
 
         clearAllCellsBtn.addEventListener('click', () => {
             clearAllCells(true);
-            clearAllCellsBtn.blur(); // Adicionado: Remove o foco do botão após o clique
+            clearAllCellsBtn.blur(); 
         });
 
-        // Função para parar o áudio atualmente a tocar
         function stopCurrentAudio() {
             if (sourceNode) {
                 sourceNode.stop();
                 sourceNode.disconnect();
                 sourceNode = null;
             }
-            // Garante que o elemento HTML audio também para (se estiver a ser usado)
             audioPlayerHtml.pause();
             audioPlayerHtml.currentTime = 0;
             currentAudioBuffer = null;
-            currentCell = null;
+            // Não resetar currentCell aqui, para permitir re-play do mesmo item
+            
             progressFill.style.width = '0%';
             document.getElementById('currentTime').textContent = '0:00';
             document.getElementById('totalTime').textContent = '0:00';
-            pauseProgressUpdate(); // Garante que o intervalo de atualização da barra para
-            stopBPMUpdate(); // Para a atualização de BPM
-            currentBPMDisplay.textContent = '--'; // Limpa o mostrador de BPM
+            pauseProgressUpdate(); 
+            stopBPMUpdate(); 
+            currentBPMDisplay.textContent = '--'; 
+
+            // Desativar a célula visualmente se houver uma ativa
+            document.querySelectorAll('.cell.active').forEach(cell => cell.classList.remove('active'));
         }
 
-        // Funções de reprodução de áudio
         function playAudio(cellNumber, startTime = 0) {
-            initAudioContext(); // Garante que o AudioContext está ativo
+            initAudioContext(); 
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    // Tentar reproduzir novamente depois de retomar o contexto
+                    playAudioInternal(cellNumber, startTime);
+                }).catch(e => console.error("Erro ao retomar AudioContext:", e));
+            } else {
+                playAudioInternal(cellNumber, startTime);
+            }
+        }
 
+        function playAudioInternal(cellNumber, startTime = 0) {
             const cellData = cellAudioData[cellNumber];
             if (!cellData || !cellData.audioBuffer) {
                 console.warn(`Nenhum AudioBuffer na célula ${cellNumber}.`);
+                stopCurrentAudio(); // Para a reprodução e limpa o UI
                 return;
             }
             const audioBuffer = cellData.audioBuffer;
 
             // Se o áudio já estiver a tocar e for o mesmo ficheiro, alternar play/pause
             if (currentCell === cellNumber && sourceNode && audioContext.state === 'running') {
-                pausePlayback(); // Usa a função de pausa existente
+                pausePlayback(); 
                 return;
             }
             
-            stopCurrentAudio(); // Parar qualquer áudio anterior
-            clearLoop(); // Limpar loop ao trocar de ficheiro
-            resetPitch(); // Resetar pitch ao trocar de ficheiro
+            // Só parar completamente o áudio se for uma nova célula
+            if (currentCell !== cellNumber) {
+                stopCurrentAudio(); 
+                clearLoop(); 
+                resetPitch(); 
+            }
             
             currentAudioBuffer = audioBuffer;
             currentCell = cellNumber;
 
-            // Atualiza o mostrador de BPM com o BPM detetado para a célula
             currentBPMDisplay.textContent = cellData.bpm !== null ? cellData.bpm : '--';
 
-            // Criar um novo sourceNode
             sourceNode = audioContext.createBufferSource();
             sourceNode.buffer = currentAudioBuffer;
             sourceNode.connect(audioContext.destination);
 
-            // Aplicar velocidade e pitch
             sourceNode.playbackRate.value = parseFloat(speedSlider.value);
             sourceNode.detune.value = parseInt(pitchInput.value) * 100;
 
-            // Adicionar evento 'ended' para o sourceNode (o único que realmente toca o áudio)
             sourceNode.onended = () => {
-                if (!isLooping) { // Apenas chama handleAudioEnded se não estiver em loop
+                if (!isLooping) {
                     handleAudioEnded();
                 }
             };
             
-            // Iniciar a reprodução do sourceNode
-            sourceNode.start(0, startTime); // startTime é para loops ou navegar na barra de progresso
-            sourceNode.lastOffset = startTime; // Armazenar o offset para quando for pausar/retomar
+            sourceNode.start(0, startTime); 
+            sourceNode.lastOffset = startTime; 
 
-            // Atualizar o elemento HTML audio (apenas para metadata e timeupdate)
             document.getElementById('totalTime').textContent = formatTime(currentAudioBuffer.duration);
             
-            // Atualizar a célula ativa no UI
-            document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('active')); // Remove de todos
-            document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active'); // Adiciona ao atual
+            document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('active')); 
+            document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active'); 
             
-            // Iniciar a atualização da barra de progresso e BPM
             startProgressUpdate(startTime);
-            startBPMUpdateInterval(); // Inicia o novo intervalo para BPM
+            startBPMUpdateInterval(); 
         }
 
         function pausePlayback() {
             if (sourceNode && audioContext.state === 'running') {
-                pauseProgressUpdate(); // Pausa o áudio e a atualização da barra
-                audioContext.suspend(); // Suspende o AudioContext
-                stopBPMUpdate(); // Para a atualização de BPM
+                pauseProgressUpdate(); 
+                audioContext.suspend(); 
+                stopBPMUpdate(); 
             }
         }
 
         function resumePlayback() {
             if (currentCell && cellAudioData[currentCell] && audioContext.state === 'suspended') {
-                audioContext.resume(); // Retoma o AudioContext
-                // Reinicia a reprodução do sourceNode do último offset
-                playAudio(currentCell, sourceNode ? sourceNode.lastOffset : 0); 
+                audioContext.resume().then(() => {
+                    playAudio(currentCell, sourceNode ? sourceNode.lastOffset : 0); 
+                }).catch(e => console.error("Erro ao retomar AudioContext para resumePlayback:", e));
+            } else if (currentCell && cellAudioData[currentCell] && !sourceNode) {
+                 // Caso o áudio tenha terminado mas a célula ainda esteja selecionada
+                 playAudio(currentCell, 0);
             }
         }
 
-        // Variáveis para a atualização da barra de progresso
         let progressInterval = null;
-        let audioStartTimeContext = 0; // O tempo do AudioContext quando o áudio começou a tocar
-        let audioOffsetPlayback = 0; // O offset dentro do buffer quando o áudio começou (em tempo de reprodução)
+        let audioStartTimeContext = 0; 
+        let audioOffsetPlayback = 0; 
 
         function startProgressUpdate(initialOffset = 0) {
             if (progressInterval) clearInterval(progressInterval);
 
             if (audioContext.state === 'suspended') {
-                audioContext.resume();
+                 // Tenta retomar se estiver suspenso para que o tempo do contexto avance
+                 audioContext.resume();
             }
 
             audioStartTimeContext = audioContext.currentTime;
-            audioOffsetPlayback = initialOffset; // Definir o offset inicial
+            audioOffsetPlayback = initialOffset; 
             
             progressInterval = setInterval(() => {
                 if (!sourceNode || audioContext.state !== 'running' || !currentAudioBuffer) {
@@ -748,7 +781,6 @@
                     return;
                 }
 
-                // Calcula o currentTime baseado no tempo do AudioContext e playbackRate
                 const elapsedTime = audioContext.currentTime - audioStartTimeContext;
                 const currentTheoreticalTime = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
 
@@ -758,12 +790,17 @@
                     
                     document.getElementById('currentTime').textContent = formatTime(currentTheoreticalTime);
                     
-                    // Verificar loop
                     if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
                         if (currentTheoreticalTime >= loopPoints.end) {
-                            stopCurrentAudio(); // Para o nó atual
-                            playAudio(currentCell, loopPoints.start); // Reinicia a partir do ponto A
+                            // Parar o nó atual e iniciar um novo do ponto de loop
+                            sourceNode.stop(); 
+                            sourceNode.disconnect();
+                            sourceNode = null; // Resetar para que playAudio crie um novo
+                            playAudio(currentCell, loopPoints.start); 
                         }
+                    } else if (currentTheoreticalTime >= currentAudioBuffer.duration) {
+                        // Se não há loop e o áudio termina naturalmente
+                        handleAudioEnded();
                     }
                 } else {
                     document.getElementById('currentTime').textContent = '0:00';
@@ -772,14 +809,12 @@
             }, 100);
         }
         
-        // Pausar a atualização da barra de progresso
         function pauseProgressUpdate() {
             if (progressInterval) {
                 clearInterval(progressInterval);
                 progressInterval = null;
             }
             if (sourceNode) {
-                // Guarda o offset atual para quando for retomar
                 const elapsedTime = audioContext.currentTime - audioStartTimeContext;
                 sourceNode.lastOffset = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
                 sourceNode.stop();
@@ -788,39 +823,38 @@
             }
         }
 
-        // --- Nova lógica para atualização de BPM a cada 4 tempos ---
         function startBPMUpdateInterval() {
-            stopBPMUpdate(); // Limpa qualquer intervalo anterior
+            stopBPMUpdate(); 
 
-            if (!currentCell || !cellAudioData[currentCell] || !cellAudioData[currentCell].bpm) {
+            if (!currentCell || !cellAudioData[currentCell] || cellAudioData[currentCell].bpm === null) {
                 currentBPMDisplay.textContent = '--';
                 return;
             }
 
             const baseBPM = parseFloat(cellAudioData[currentCell].bpm);
             const currentSpeed = parseFloat(speedSlider.value);
-            // Calcula o BPM efetivo (afetado pela velocidade)
             const effectiveBPM = baseBPM * currentSpeed; 
 
-            // Duração de um tempo em segundos
             const beatDurationSeconds = 60 / effectiveBPM; 
-            // Duração de 4 tempos em segundos
             const fourBeatDurationSeconds = beatDurationSeconds * 4;
 
-            // Atualiza o display imediatamente ao iniciar a reprodução
             currentBPMDisplay.textContent = effectiveBPM.toFixed(2);
             
-            // Define o intervalo de atualização baseado na duração de 4 tempos
-            // Multiplicamos por 1000 para converter de segundos para milissegundos
             bpmUpdateInterval = setInterval(() => {
+                // Não é necessário recalcular o effectiveBPM aqui, pois o evento 'input' do slider já o faz
+                // E queremos que ele "pisque" com o valor atual a cada 4 tempos
+                if (currentCell && cellAudioData[currentCell] && cellAudioData[currentCell].bpm !== null) {
+                    const currentSpeedDuringUpdate = parseFloat(speedSlider.value);
+                    const updatedEffectiveBPM = parseFloat(cellAudioData[currentCell].bpm) * currentSpeedDuringUpdate;
+                    currentBPMDisplay.textContent = updatedEffectiveBPM.toFixed(2);
+                } else {
+                     currentBPMDisplay.textContent = '--';
+                }
+
                 if (!sourceNode || audioContext.state !== 'running' || !currentAudioBuffer) {
                     stopBPMUpdate();
                     return;
                 }
-                // Recalcular o BPM efetivo em cada atualização, caso a velocidade mude
-                const currentSpeedDuringUpdate = parseFloat(speedSlider.value);
-                const updatedEffectiveBPM = baseBPM * currentSpeedDuringUpdate;
-                currentBPMDisplay.textContent = updatedEffectiveBPM.toFixed(2);
             }, fourBeatDurationSeconds * 1000); 
         }
 
@@ -830,18 +864,14 @@
                 bpmUpdateInterval = null;
             }
         }
-        // --- Fim da nova lógica para atualização de BPM ---
 
-
-        // Controle de velocidade
         speedSlider.addEventListener('input', function(e) {
             const speed = parseFloat(e.target.value);
             speedValueSpan.textContent = speed.toFixed(2) + 'x';
             if (sourceNode) {
                 sourceNode.playbackRate.value = speed;
             }
-            // Recalcula e atualiza o BPM imediatamente após mudar a velocidade
-            if (currentCell && cellAudioData[currentCell] && cellAudioData[currentCell].bpm) {
+            if (currentCell && cellAudioData[currentCell] && cellAudioData[currentCell].bpm !== null) {
                 const baseBPM = parseFloat(cellAudioData[currentCell].bpm);
                 const effectiveBPM = baseBPM * speed;
                 currentBPMDisplay.textContent = effectiveBPM.toFixed(2);
@@ -849,27 +879,25 @@
             } else {
                 currentBPMDisplay.textContent = '--';
             }
-            speedSlider.blur(); // Adicionado: Remove o foco do slider
+            speedSlider.blur(); 
         });
 
-        // Presets de velocidade
         presetHalfSpeedBtn.addEventListener('click', () => {
             speedSlider.value = 0.5;
-            speedSlider.dispatchEvent(new Event('input')); // Dispara o evento input para atualizar tudo
-            presetHalfSpeedBtn.blur(); // Adicionado: Remove o foco do botão
+            speedSlider.dispatchEvent(new Event('input')); 
+            presetHalfSpeedBtn.blur(); 
         });
 
         presetNormalSpeedBtn.addEventListener('click', () => {
             speedSlider.value = 1.0;
-            speedSlider.dispatchEvent(new Event('input')); // Dispara o evento input para atualizar tudo
-            presetNormalSpeedBtn.blur(); // Adicionado: Remove o foco do botão
+            speedSlider.dispatchEvent(new Event('input')); 
+            presetNormalSpeedBtn.blur(); 
         });
 
-        // Controlo de Pitch (Tom)
         function applyPitch() {
             if (sourceNode) {
                 const semitones = parseInt(pitchInput.value);
-                sourceNode.detune.value = semitones * 100; // detune é em cents
+                sourceNode.detune.value = semitones * 100; 
             }
         }
 
@@ -889,8 +917,8 @@
                 pitchInput.value = currentSemitones + 1;
                 pitchInput.dispatchEvent(new Event('input'));
             }
-            increasePitchBtn.blur(); // Adicionado: Remove o foco do botão
-            pitchInput.blur(); // Adicionado: Remove o foco do input
+            increasePitchBtn.blur(); 
+            pitchInput.blur(); 
         });
 
         decreasePitchBtn.addEventListener('click', () => {
@@ -899,27 +927,23 @@
                 pitchInput.value = currentSemitones - 1;
                 pitchInput.dispatchEvent(new Event('input'));
             }
-            decreasePitchBtn.blur(); // Adicionado: Remove o foco do botão
-            pitchInput.blur(); // Adicionado: Remove o foco do input
+            decreasePitchBtn.blur(); 
+            pitchInput.blur(); 
         });
         
         function resetPitch() {
             pitchInput.value = 0;
             pitchInput.dispatchEvent(new Event('input'));
-            pitchInput.blur(); // Adicionado: Remove o foco do input ao resetar
+            pitchInput.blur(); 
         }
 
         resetPitchBtn.addEventListener('click', () => {
             resetPitch();
-            resetPitchBtn.blur(); // Adicionado: Remove o foco do botão
+            resetPitchBtn.blur(); 
         });
 
-
-        // Atalhos do teclado
         document.addEventListener('keydown', function(e) {
-            // Se o foco estiver em qualquer input ou botão, não acionar atalhos de teclado (exceto para espaço, se necessário)
             if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'BUTTON')) {
-                // Permitir espaço para play/pause mesmo com foco num botão/input, mas remover o foco depois
                 if (e.key.toLowerCase() === ' ') {
                     document.activeElement.blur(); 
                 } else {
@@ -945,13 +969,13 @@
                 case 'x':
                     clearLoop();
                     break;
-                case ' ': // Espaço para play/pause
-                    e.preventDefault(); // Prevenir rolagem da página
+                case ' ': 
+                    e.preventDefault(); 
                     if (currentCell && cellAudioData[currentCell]) {
                         if (sourceNode && audioContext.state === 'running') {
-                            pausePlayback(); // Usa a função de pausa
+                            pausePlayback(); 
                         } else {
-                            resumePlayback(); // Usa a função de retomar
+                            resumePlayback(); 
                         }
                     }
                     break;
@@ -1052,18 +1076,16 @@
             }
         }
 
-        // Quando o áudio termina
         function handleAudioEnded() {
             if (currentCell) {
                 document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
             }
-            stopCurrentAudio(); // Garante que tudo é parado e limpo
+            stopCurrentAudio(); 
             clearLoop();
             resetPitch();
-            currentBPMDisplay.textContent = '--'; // Limpa o mostrador de BPM
+            currentBPMDisplay.textContent = '--'; 
         }
 
-        // Clique na barra de progresso para navegar
         progressBar.addEventListener('click', function(e) {
             if (!currentAudioBuffer || isNaN(currentAudioBuffer.duration)) return;
             
@@ -1073,10 +1095,10 @@
             const newTime = percentage * currentAudioBuffer.duration;
             
             if (currentCell !== null) {
-                stopCurrentAudio(); // Para o áudio atual
-                playAudio(currentCell, newTime); // Reinicia a partir do novo tempo
+                stopCurrentAudio(); 
+                playAudio(currentCell, newTime); 
             }
-            progressBar.blur(); // Adicionado: Remove o foco da barra de progresso
+            progressBar.blur(); 
         });
 
         function formatTime(seconds) {
@@ -1086,22 +1108,20 @@
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // Delegação de eventos para as células
         document.getElementById('cellGrid').addEventListener('click', function(event) {
             const cellElement = event.target.closest('.cell[data-cell-number]');
             if (cellElement) {
                 const cellNumber = parseInt(cellElement.dataset.cellNumber);
                 playAudio(cellNumber);
-                cellElement.blur(); // Adicionado: Remove o foco da célula clicada
+                cellElement.blur(); 
             }
         });
 
-        // Inicializar
         createCells();
         updateLoopDisplay();
-        // Garante que o AudioContext é inicializado quando o utilizador interage pela primeira vez
+        // Adiciona um listener no corpo para inicializar AudioContext com a primeira interação
         document.body.addEventListener('click', initAudioContext, { once: true });
-        applyPitch(); // Para garantir que o valor inicial (0) é aplicado
+        applyPitch(); 
     </script>
 </body>
 </html>

@@ -75,8 +75,6 @@
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
         }
 
-        /* Removido .file-name (fora das células) pois será usado apenas dentro */
-
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -126,6 +124,16 @@
             padding: 15px;
             margin-bottom: 20px;
             border: 1px solid #303030;
+            display: flex; /* Para alinhar os grupos de controlo */
+            flex-wrap: wrap; /* Permite quebrar linha */
+            gap: 15px; /* Espaçamento entre os grupos de controlo */
+        }
+        
+        .control-column { /* Nova classe para agrupar controles em colunas */
+            display: flex;
+            flex-direction: column;
+            flex: 1; /* Permite que as colunas ocupem espaço */
+            min-width: 200px; /* Largura mínima para evitar quebras excessivas */
         }
 
         .control-group {
@@ -143,28 +151,31 @@
             white-space: nowrap;
         }
 
-        .speed-controls {
+        .speed-controls, .pitch-controls { /* Unificar estilos para os controlos de slider/input + botões */
             display: flex;
             align-items: center;
             flex-grow: 1;
             flex-wrap: wrap;
+            gap: 5px; /* Espaço entre slider/input e botões */
         }
 
-        .slider {
-            width: 100%;
-            height: 6px;
+        .slider, .pitch-input { /* Estilo unificado para slider e input de pitch */
+            width: 100%; /* Ocupar a largura total disponível */
+            height: 6px; /* Slider mais fino */
             border-radius: 3px;
-            background: #404040; /* Fundo do slider mais escuro */
+            background: #404040; /* Fundo do slider/input mais escuro */
             outline: none;
             -webkit-appearance: none;
-            margin-right: 10px;
             flex-grow: 1;
+        }
+        
+        .slider::-webkit-slider-thumb, .pitch-input::-webkit-outer-spin-button, .pitch-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
+            width: 18px; /* Polegar menor */
             height: 18px;
             border-radius: 50%;
             background: #800000; /* Polegar vermelho escuro */
@@ -180,6 +191,36 @@
             cursor: pointer;
             border: none;
             box-shadow: 0 0 8px rgba(128, 0, 0, 0.6);
+        }
+
+        /* Estilos específicos para o input de pitch */
+        .pitch-input {
+            width: 60px; /* Largura fixa para o input de número */
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #505050;
+            color: #F0F0F0;
+            background-color: #303030;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .pitch-btn {
+            background: #600000; /* Vermelho ligeiramente diferente para botões de pitch */
+            color: white;
+            border: none;
+            padding: 6px 12px; /* Padding menor */
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .pitch-btn:hover {
+            background: #800000;
+            transform: translateY(-1px);
         }
 
         .keyboard-shortcuts {
@@ -304,23 +345,36 @@
         </div>
 
         <div class="controls">
-            <div class="control-group">
-                <label for="speedSlider">Velocidade: <span id="speedValue">1.00x</span></label>
-                <div class="speed-controls">
-                    <input type="range" id="speedSlider" class="slider" min="0.25" max="2" step="0.01" value="1">
-                    <button id="presetHalfSpeedBtn" class="preset-btn">0.5x</button>
-                    <button id="presetNormalSpeedBtn" class="preset-btn">1x</button>
+            <div class="control-column">
+                <div class="control-group">
+                    <label for="speedSlider">Velocidade: <span id="speedValue">1.00x</span></label>
+                    <div class="speed-controls">
+                        <input type="range" id="speedSlider" class="slider" min="0.25" max="2" step="0.01" value="1">
+                        <button id="presetHalfSpeedBtn" class="preset-btn">0.5x</button>
+                        <button id="presetNormalSpeedBtn" class="preset-btn">1x</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="pitchInput">Pitch: <span id="pitchValue">0 semitons</span></label>
+                    <div class="pitch-controls">
+                        <button id="decreasePitchBtn" class="pitch-btn">-</button>
+                        <input type="number" id="pitchInput" class="pitch-input" min="-12" max="12" step="1" value="0">
+                        <button id="increasePitchBtn" class="pitch-btn">+</button>
+                    </div>
                 </div>
             </div>
-            
-            <div class="progress-bar" id="progressBar">
-                <div class="progress-fill" id="progressFill"></div>
-                <div class="loop-markers" id="loopMarkers"></div>
-            </div>
-            
-            <div class="time-display">
-                <span id="currentTime">0:00</span>
-                <span id="totalTime">0:00</span>
+
+            <div class="control-column">
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                    <div class="loop-markers" id="loopMarkers"></div>
+                </div>
+                
+                <div class="time-display">
+                    <span id="currentTime">0:00</span>
+                    <span id="totalTime">0:00</span>
+                </div>
             </div>
         </div>
 
@@ -365,7 +419,32 @@
         const speedValueSpan = document.getElementById('speedValue');
         const presetHalfSpeedBtn = document.getElementById('presetHalfSpeedBtn');
         const presetNormalSpeedBtn = document.getElementById('presetNormalSpeedBtn');
+
+        // Novos elementos para controlo de pitch
+        let audioContext = null;
+        let sourceNode = null;
+        let semitoneShifter = null; // Node para controlo de pitch
+        const pitchInput = document.getElementById('pitchInput');
+        const pitchValueSpan = document.getElementById('pitchValue');
+        const increasePitchBtn = document.getElementById('increasePitchBtn');
+        const decreasePitchBtn = document.getElementById('decreasePitchBtn');
+
+
         const totalCells = 20; // Definir o número total de células
+
+        // Função para inicializar AudioContext (necessário para pitch)
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                // Criar um BiquadFilterNode para usar como shifter de pitch
+                semitoneShifter = audioContext.createBiquadFilter();
+                semitoneShifter.type = "allpass"; // Tipo de filtro que pode ser usado para pitch shifting
+                semitoneShifter.Q.value = 1; // Um valor de Q de 1 funciona bem para pitch shifting.
+                
+                // Conectar o shifter ao destino final
+                semitoneShifter.connect(audioContext.destination);
+            }
+        }
 
         // Criar as células dinamicamente
         function createCells() {
@@ -412,8 +491,14 @@
             
             // Parar qualquer áudio a tocar
             if (currentAudio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
+                // Se estiver a usar AudioContext, precisa de parar e fechar a fonte
+                if (sourceNode) {
+                    sourceNode.stop();
+                    sourceNode.disconnect();
+                    sourceNode = null;
+                }
+                audioPlayer.pause();
+                audioPlayer.currentTime = 0;
                 currentAudio = null;
                 currentCell = null;
                 clearLoop();
@@ -452,7 +537,7 @@
         });
 
         // Funções de reprodução de áudio
-        function playAudio(cellNumber) {
+        async function playAudio(cellNumber) {
             const newAudioSrc = audioFiles[cellNumber];
 
             if (!newAudioSrc) { // Se não há ficheiro na célula
@@ -460,17 +545,15 @@
                 return;
             }
 
-            // Se o áudio atual é o mesmo, alternar play/pause
-            if (currentAudio && currentAudio.src === newAudioSrc) {
-                if (currentAudio.paused) {
-                    currentAudio.play();
-                } else {
-                    currentAudio.pause();
-                }
-                return;
+            initAudioContext(); // Inicializa o AudioContext ao tentar tocar
+            
+            // Parar áudio anterior do AudioContext
+            if (sourceNode) {
+                sourceNode.stop();
+                sourceNode.disconnect();
+                sourceNode = null;
             }
-
-            // Parar áudio anterior e desmarcar célula
+            // Parar áudio anterior do elemento <audio> HTML5
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio.currentTime = 0;
@@ -479,19 +562,40 @@
                 }
             }
 
-            clearLoop(); // Limpar loop ao trocar de ficheiro
-
+            // O elemento <audio> HTML5 será usado como a fonte principal para a barra de progresso
+            // Mas o áudio real será roteado através do AudioContext para controlo de pitch.
             audioPlayer.src = newAudioSrc;
-            audioPlayer.load();
-            audioPlayer.play();
-            currentAudio = audioPlayer;
+            audioPlayer.load(); // Carrega o áudio no elemento <audio>
+
+            // Agora, crie um AudioBufferSourceNode a partir do ficheiro
+            const response = await fetch(newAudioSrc);
+            const arrayBuffer = await response.arrayBuffer();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+            sourceNode = audioContext.createBufferSource();
+            sourceNode.buffer = audioBuffer;
+            sourceNode.connect(semitoneShifter); // Conecta à cadeia de pitch
+            
+            // Adicionar eventos para o sourceNode para sincronizar com o elemento <audio>
+            sourceNode.onended = () => {
+                // Aumentar a tolerância para evitar duplos "ended"
+                if (audioPlayer.ended || Math.abs(audioPlayer.currentTime - audioPlayer.duration) < 0.1) {
+                    audioPlayer.pause(); // Garante que o elemento de áudio também para
+                    handleAudioEnded();
+                }
+            };
+            
+            sourceNode.start(0, audioPlayer.currentTime); // Iniciar a partir da posição atual do audioPlayer
+            audioPlayer.play(); // Iniciar o elemento <audio> para que timeupdate funcione
+
+            currentAudio = audioPlayer; // Continuar a usar o elemento audio para a barra de progresso
             currentCell = cellNumber;
             
             document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
             
-            // Aplicar velocidade atual
-            const speed = speedSlider.value;
-            audioPlayer.playbackRate = parseFloat(speed);
+            // Aplicar velocidade e pitch atuais
+            audioPlayer.playbackRate = parseFloat(speedSlider.value);
+            applyPitch();
         }
 
         // Controle de velocidade
@@ -500,6 +604,10 @@
             speedValueSpan.textContent = speed.toFixed(2) + 'x'; // Formatar para 2 casas decimais
             if (currentAudio) {
                 currentAudio.playbackRate = speed;
+                // Se estiver usando AudioContext para pitch, é importante que playbackRate afete o sourceNode também
+                if (sourceNode) {
+                    sourceNode.playbackRate.value = speed;
+                }
             }
         });
 
@@ -509,6 +617,9 @@
             speedValueSpan.textContent = '0.50x';
             if (currentAudio) {
                 currentAudio.playbackRate = 0.5;
+                if (sourceNode) {
+                    sourceNode.playbackRate.value = 0.5;
+                }
             }
         });
 
@@ -517,12 +628,58 @@
             speedValueSpan.textContent = '1.00x';
             if (currentAudio) {
                 currentAudio.playbackRate = 1.0;
+                if (sourceNode) {
+                    sourceNode.playbackRate.value = 1.0;
+                }
+            }
+        });
+
+        // Controlo de Pitch (Tom)
+        function applyPitch() {
+            if (semitoneShifter) {
+                const semitones = parseInt(pitchInput.value);
+                // A frequência de corte do allpass filter pode ser ajustada para pitch shifting
+                // Esta é uma fórmula aproximada para mapear semitons para frequência de filtro:
+                const frequency = 440 * Math.pow(2, semitones / 12); // A4 = 440Hz, escala temperada
+                semitoneShifter.frequency.value = frequency;
+            }
+        }
+
+        pitchInput.addEventListener('input', function() {
+            let semitones = parseInt(this.value);
+            if (isNaN(semitones)) semitones = 0;
+            // Limitar a 12 semitons para cima e para baixo
+            if (semitones > 12) semitones = 12;
+            if (semitones < -12) semitones = -12;
+            this.value = semitones;
+            pitchValueSpan.textContent = `${semitones} semitons`;
+            applyPitch();
+        });
+
+        increasePitchBtn.addEventListener('click', () => {
+            let currentSemitones = parseInt(pitchInput.value);
+            if (currentSemitones < 12) {
+                pitchInput.value = currentSemitones + 1;
+                pitchInput.dispatchEvent(new Event('input')); // Dispara o evento 'input' para atualizar o pitch
+            }
+        });
+
+        decreasePitchBtn.addEventListener('click', () => {
+            let currentSemitones = parseInt(pitchInput.value);
+            if (currentSemitones > -12) {
+                pitchInput.value = currentSemitones - 1;
+                pitchInput.dispatchEvent(new Event('input')); // Dispara o evento 'input' para atualizar o pitch
             }
         });
 
 
         // Atalhos do teclado
         document.addEventListener('keydown', function(e) {
+            // Se o foco estiver no input de pitch, não usar atalhos de teclado
+            if (document.activeElement === pitchInput) {
+                return;
+            }
+
             if (!currentAudio) return;
 
             switch(e.key.toLowerCase()) {
@@ -538,10 +695,16 @@
                 case ' ': // Espaço para play/pause
                     e.preventDefault(); // Prevenir rolagem da página
                     if (currentAudio) {
-                        if (currentAudio.paused) {
-                            currentAudio.play();
+                        if (audioPlayer.paused) { // Verifica o estado do elemento <audio>
+                            audioPlayer.play();
+                            if (sourceNode) sourceNode.start(0, audioPlayer.currentTime); // Recria e inicia o sourceNode
                         } else {
-                            currentAudio.pause();
+                            audioPlayer.pause();
+                            if (sourceNode) {
+                                sourceNode.stop(); // Para o sourceNode
+                                sourceNode.disconnect();
+                                sourceNode = null;
+                            }
                         }
                     }
                     break;
@@ -634,7 +797,7 @@
                 loopMarkers.style.width = '1px'; // Apenas uma linha fina
                 loopMarkers.classList.add('active');
                 loopMarkers.style.backgroundColor = 'transparent'; // Fundo transparente
-                // Não precisamos manipular os pseudo-elementos aqui, eles são controlados pelo CSS
+                // Os pseudo-elementos ::before e ::after ainda fornecem as linhas
             } 
             // Se ambos os pontos A e B forem definidos (e isLooping for true), mostre a área do loop
             else if (loopPoints.start !== null && loopPoints.end !== null) { // isLooping é verificado na activateLoop
@@ -665,6 +828,13 @@
                 if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
                     if (audioPlayer.currentTime >= loopPoints.end) {
                         audioPlayer.currentTime = loopPoints.start;
+                        // Se estiver a usar AudioContext, também precisa de reiniciar o sourceNode
+                        if (sourceNode) {
+                            sourceNode.stop();
+                            sourceNode.disconnect();
+                            sourceNode = null;
+                            playAudio(currentCell); // Reinicia o áudio da célula atual
+                        }
                     }
                 }
             }
@@ -677,7 +847,7 @@
         });
 
         // Quando o áudio termina
-        audioPlayer.addEventListener('ended', function() {
+        function handleAudioEnded() {
             if (currentCell) {
                 document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
             }
@@ -686,7 +856,15 @@
             clearLoop();
             progressFill.style.width = '0%';
             document.getElementById('currentTime').textContent = '0:00';
-        });
+            // Certificar que o sourceNode é limpo ao terminar
+            if (sourceNode) {
+                sourceNode.stop();
+                sourceNode.disconnect();
+                sourceNode = null;
+            }
+        }
+        audioPlayer.addEventListener('ended', handleAudioEnded);
+
 
         // Clique na barra de progresso para navegar
         progressBar.addEventListener('click', function(e) {
@@ -698,6 +876,13 @@
             const newTime = percentage * currentAudio.duration;
             
             currentAudio.currentTime = newTime;
+            // Se estiver a usar AudioContext, precisa de reiniciar o sourceNode na nova posição
+            if (sourceNode) {
+                sourceNode.stop();
+                sourceNode.disconnect();
+                sourceNode = null;
+                playAudio(currentCell); // Reinicia o áudio da célula atual
+            }
         });
 
         function formatTime(seconds) {
@@ -722,6 +907,10 @@
         // Inicializar
         createCells();
         updateLoopDisplay();
+        // Garante que o AudioContext é inicializado quando o utilizador interage pela primeira vez
+        document.body.addEventListener('click', initAudioContext, { once: true });
+        // Aplicar pitch inicial caso seja diferente de 0
+        applyPitch();
     </script>
 </body>
 </html>

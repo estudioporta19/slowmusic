@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player de Áudio com Células</title>
+    <title>Slow Music!</title>
     <style>
+        /* CSS */
         * {
             margin: 0;
             padding: 0;
@@ -12,251 +13,322 @@
         }
 
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #1a1a1a; /* Fundo preto mais suave */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000000; /* Fundo preto puro */
             min-height: 100vh;
-            padding: 20px;
-            color: white; /* Letras brancas */
+            padding: 15px;
+            color: #F0F0F0; /* Letras brancas para alto contraste */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
 
         .container {
-            max-width: 1300px; /* Aumentado para acomodar 5 colunas */
+            max-width: 1000px;
             margin: 0 auto;
-            background: rgba(30, 30, 30, 0.9); /* Fundo do container mais escuro e opaco */
-            backdrop-filter: blur(5px); /* Efeito de blur mais subtil */
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); /* Sombra mais intensa */
-            border: 1px solid rgba(255, 255, 255, 0.1); /* Borda suave */
+            background: #101010; /* Fundo do container ligeiramente menos preto */
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6); /* Sombra mais pronunciada no preto */
+            border: 1px solid #303030; /* Borda escura */
+            width: 100%;
+            position: relative; /* Para posicionar o BPM no canto */
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.8em;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6); /* Sombra de texto mais escura */
-            color: #e0e0e0; /* Título ligeiramente acinzentado para contraste */
+            margin-bottom: 25px;
+            font-size: 2.5em; /* Tamanho ligeiramente maior para o título */
+            color: #E0E0E0;
+            font-weight: 300; /* Mais leve */
+            letter-spacing: 2px; /* Espaçamento entre letras */
+            text-transform: uppercase; /* Maiúsculas */
+            border-bottom: 1px solid #303030; /* Linha discreta abaixo do título */
+            padding-bottom: 10px;
         }
 
-        /* Estilos para o novo botão de upload global */
+        /* Novo estilo para o mostrador de BPM */
+        .bpm-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #202020;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #FFD700; /* Amarelo dourado para os BPM */
+            border: 1px solid #404040;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .bpm-display span {
+            font-size: 0.8em; /* "BPM" menor */
+            color: #F0F0F0;
+        }
+
         .global-upload-section {
             text-align: center;
-            margin-bottom: 25px;
-            padding: 15px;
-            background: rgba(40, 40, 40, 0.8);
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #1A1A1A; /* Fundo da seção de upload */
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
         }
 
-        .upload-btn { /* Reutilizado para o botão global e os dentro das células */
-            background: linear-gradient(45deg, #e74c3c, #c0392b); /* Vermelho vibrante */
+        .upload-btn, .preset-btn, .clear-btn {
+            background: #800000; /* Vermelho escuro profundo */
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
+            padding: 8px 18px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 1em;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            margin: 0 5px;
         }
 
-        .upload-btn:hover {
-            background: linear-gradient(45deg, #c0392b, #a03025);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+        .upload-btn:hover, .preset-btn:hover, .clear-btn:hover {
+            background: #B00000; /* Vermelho ligeiramente mais claro no hover */
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .upload-instructions {
+            font-size: 0.8em;
+            color: #A0A0A0;
+            margin-top: 10px;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* 5 colunas responsivas */
-            gap: 15px; /* Espaçamento menor entre células */
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            margin-bottom: 25px;
         }
 
         .cell {
-            background: rgba(40, 40, 40, 0.8); /* Fundo da célula mais escuro */
-            border-radius: 12px; /* Cantos um pouco menos arredondados */
-            padding: 15px; /* Padding menor */
-            border: 1px solid rgba(255, 255, 255, 0.1); /* Borda suave */
-            transition: all 0.3s ease;
+            background: #1A1A1A; /* Fundo da célula */
+            border-radius: 6px;
+            padding: 12px;
+            border: 1px solid #303030;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
             position: relative;
             overflow: hidden;
-            display: flex; /* Para centralizar conteúdo */
+            display: flex;
             flex-direction: column;
-            justify-content: space-between; /* Espaçamento entre header, nome e botão */
+            justify-content: center; /* Centralizar conteúdo verticalmente */
+            align-items: center; /* Centralizar conteúdo horizontalmente */
+            min-height: 80px; /* Altura mínima reduzida */
+            cursor: pointer; /* Indicar que a célula é clicável */
+            text-align: center; /* Centralizar texto */
         }
 
         .cell:hover {
-            background: rgba(60, 60, 60, 0.9); /* Escurece no hover */
-            transform: translateY(-3px); /* Efeito de elevação mais subtil */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); /* Sombra mais pronunciada */
+            background: #282828; /* Escurece no hover */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
         }
 
         .cell.active {
-            background: rgba(70, 70, 70, 0.95); /* Célula ativa mais escura */
-            border-color: #e74c3c; /* Borda vermelha para ativa */
-            box-shadow: 0 0 25px rgba(231, 76, 60, 0.5); /* Sombra vermelha para ativa */
+            background: #282828; /* Célula ativa mais escura */
+            border-color: #800000; /* Borda vermelho escuro para ativa */
+            box-shadow: 0 0 15px rgba(128, 0, 0, 0.5); /* Sombra vermelha mais subtil */
         }
 
-        .cell-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px; /* Margem menor */
-        }
-
-        .cell-number {
-            font-size: 1.1em; /* Tamanho da fonte ligeiramente menor */
-            font-weight: bold;
-            color: #e74c3c; /* Número da célula em vermelho */
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .file-name {
-            font-size: 0.85em; /* Fonte um pouco menor */
-            margin-bottom: 10px;
-            color: #ccc; /* Nome do ficheiro em cinzento claro */
-            word-break: break-all;
-            flex-grow: 1; /* Para ocupar espaço disponível */
-        }
-
-        .play-btn {
-            width: 100%;
-            background: linear-gradient(45deg, #e74c3c, #c0392b); /* Vermelho vibrante */
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 20px; /* Menos arredondado que o upload-btn */
-            cursor: pointer;
-            font-size: 0.95em;
-            font-weight: bold;
-            margin-top: auto; /* Empurra o botão para o fundo da célula */
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
-        }
-
-        .play-btn:hover {
-            background: linear-gradient(45deg, #c0392b, #a03025);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
-        }
-
-        .play-btn:disabled {
-            background: #444; /* Cinzento escuro para disabled */
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-            color: #888;
+        .cell .file-name { /* Ajuste para o nome do ficheiro dentro da célula */
+            font-size: 0.85em; /* Ligeiramente maior para ser mais legível */
+            margin-bottom: 0; /* Remover margem inferior */
+            color: #E0E0E0; /* Cor mais clara para alto contraste */
+            word-break: break-word; /* Quebra de palavra para nomes longos */
+            flex-grow: 0; /* Não crescer, apenas ocupar o espaço necessário */
         }
 
         .controls {
-            background: rgba(40, 40, 40, 0.8);
-            border-radius: 10px;
-            padding: 20px;
+            background: #1A1A1A;
+            border-radius: 6px;
+            padding: 15px;
             margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid #303030;
+            display: flex; /* Para alinhar os grupos de controlo */
+            flex-wrap: wrap; /* Permite quebrar linha */
+            gap: 15px; /* Espaçamento entre os grupos de controlo */
+        }
+        
+        .control-column { /* Nova classe para agrupar controles em colunas */
+            display: flex;
+            flex-direction: column;
+            flex: 1; /* Permite que as colunas ocupem espaço */
+            min-width: 200px; /* Largura mínima para evitar quebras excessivas */
         }
 
         .control-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         .control-group label {
-            display: block;
-            margin-bottom: 8px; /* Margem aumentada */
-            font-weight: bold;
-            color: #e0e0e0;
+            margin-bottom: 0;
+            margin-right: 10px;
+            font-weight: normal;
+            color: #E0E0E0;
+            white-space: nowrap;
         }
 
-        .slider {
-            width: 100%;
-            height: 8px; /* Slider mais alto */
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.2); /* Fundo do slider mais suave */
+        .speed-controls, .pitch-controls { /* Unificar estilos para os controlos de slider/input + botões */
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            flex-wrap: wrap;
+            gap: 5px; /* Espaço entre slider/input e botões */
+        }
+
+        .slider { /* Estilo para o slider de velocidade */
+            width: 100%; /* Ocupar a largura total disponível */
+            height: 6px; /* Slider mais fino */
+            border-radius: 3px;
+            background: #404040; /* Fundo do slider mais escuro */
             outline: none;
             -webkit-appearance: none;
+            flex-grow: 1;
         }
-
+        
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 22px; /* Polegar maior */
-            height: 22px;
+            width: 18px; /* Polegar menor */
+            height: 18px;
             border-radius: 50%;
-            background: #e74c3c; /* Polegar vermelho */
+            background: #800000; /* Polegar vermelho escuro */
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6); /* Sombra vermelha */
+            box-shadow: 0 0 8px rgba(128, 0, 0, 0.6); /* Sombra mais visível */
         }
 
         .slider::-moz-range-thumb {
-            width: 22px;
-            height: 22px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
-            background: #e74c3c;
+            background: #800000;
             cursor: pointer;
             border: none;
-            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+            box-shadow: 0 0 8px rgba(128, 0, 0, 0.6);
+        }
+
+        /* Estilos específicos para o input de pitch */
+        .pitch-input {
+            width: 50px; /* Largura compacta para o input de número */
+            padding: 5px;
+            text-align: center;
+            border: 1px solid #505050;
+            color: #F0F0F0;
+            background-color: #303030;
+            border-radius: 4px;
+            font-size: 0.9em;
+            /* Remover setas default em Webkit (Chrome, Safari) */
+            -webkit-appearance: none;
+            -moz-appearance: textfield; /* Para Firefox */
+        }
+
+        /* Remover setas default em IE/Edge */
+        .pitch-input::-ms-clear, .pitch-input::-ms-reveal {
+            display: none;
+        }
+
+        .pitch-btn {
+            background: #600000; /* Vermelho ligeiramente diferente para botões de pitch */
+            color: white;
+            border: none;
+            padding: 6px 10px; /* Padding menor */
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .pitch-btn:hover {
+            background: #800000;
+            transform: translateY(-1px);
+        }
+        
+        /* Botão para resetar o pitch */
+        .pitch-reset-btn {
+            background: #404040; /* Cinza escuro */
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            margin-left: 5px; /* Espaço para o botão de reset */
+        }
+
+        .pitch-reset-btn:hover {
+            background: #606060;
+            transform: translateY(-1px);
         }
 
         .keyboard-shortcuts {
-            background: rgba(40, 40, 40, 0.8);
-            border-radius: 10px;
-            padding: 20px;
+            background: #1A1A1A;
+            border-radius: 6px;
+            padding: 15px;
             margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid #303030;
         }
 
         .keyboard-shortcuts h3 {
-            color: #e0e0e0;
-            margin-bottom: 15px;
+            color: #F0F0F0;
+            margin-bottom: 12px;
+            font-size: 1.1em;
         }
 
         .shortcut-info {
             display: flex;
-            flex-wrap: wrap; /* Para quebrar linha se não houver espaço */
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.85em;
         }
-        .shortcut-info span {
-            margin-right: 15px; /* Espaçamento entre os atalhos */
-            margin-bottom: 8px;
-        }
-
+        
         .key {
-            background: rgba(60, 60, 60, 0.8); /* Fundo da tecla mais escuro */
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-family: monospace;
+            background: #404040; /* Fundo da tecla mais escuro */
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-family: 'Consolas', monospace;
             font-weight: bold;
-            color: #e0e0e0;
-            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            color: #F0F0F0;
+            box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         .loop-indicator {
-            background: rgba(40, 40, 40, 0.8);
-            border-radius: 10px;
-            padding: 15px;
+            background: #1A1A1A;
+            border-radius: 6px;
+            padding: 12px;
             text-align: center;
             margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid #303030;
+            font-size: 0.9em;
         }
 
         .loop-active {
-            background: rgba(231, 76, 60, 0.2); /* Fundo vermelho suave para loop ativo */
-            border: 2px solid #e74c3c; /* Borda vermelha para loop ativo */
+            background: rgba(128, 0, 0, 0.2); /* Fundo vermelho escuro suave para loop ativo */
+            border: 1px solid #800000; /* Borda vermelho escuro para loop ativo */
         }
 
         .progress-bar {
             width: 100%;
-            height: 10px; /* Barra de progresso mais alta */
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            margin: 10px 0;
+            height: 8px;
+            background: #404040;
+            border-radius: 4px;
+            margin: 8px 0;
             cursor: pointer;
             position: relative;
             overflow: hidden;
@@ -264,8 +336,8 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #e74c3c, #c0392b); /* Preenchimento vermelho */
-            border-radius: 5px;
+            background: #800000; /* Preenchimento vermelho escuro */
+            border-radius: 44px;
             transition: width 0.1s ease;
         }
 
@@ -273,20 +345,21 @@
             position: absolute;
             top: 0;
             height: 100%;
-            background: rgba(255, 255, 0, 0.2); /* Marcador de loop amarelo suave */
-            border-radius: 5px;
+            background: rgba(255, 255, 0, 0.15); /* Cor de fundo do "bloco" quando o loop está ativo */
+            border-radius: 4px;
             display: none;
             pointer-events: none;
+            transition: left 0.1s linear, width 0.1s linear; 
         }
 
         .loop-markers::before,
         .loop-markers::after {
             content: '';
             position: absolute;
-            top: -5px; /* Ajuste para que a linha fique fora da barra */
-            bottom: -5px; /* Ajuste para que a linha fique fora da barra */
-            width: 2px;
-            background-color: #f1c40f; /* Cor amarela mais vibrante para as linhas */
+            top: -3px; 
+            bottom: -3px; 
+            width: 1px;
+            background-color: #FFD700; /* Cor amarela dourada para as linhas */
             z-index: 1;
         }
 
@@ -305,38 +378,67 @@
         .time-display {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9em;
+            font-size: 0.8em;
             margin-top: 5px;
-            color: #ccc;
+            color: #B0B0B0;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/bpm-detective@latest/dist/bpm-detective.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>🎵 Player de Áudio com Células</h1>
+        <h1>Slow Music!</h1>
         
+        <div class="bpm-display">
+            <span id="currentBPM">--</span><span>BPM</span>
+        </div>
+
         <div class="global-upload-section">
-            <input type="file" id="globalFileInput" accept="audio/mp3" multiple style="display: none;">
+            <input type="file" id="globalFileInput" accept="audio/mp3,audio/wav,audio/ogg" multiple style="display: none;">
             <button id="globalUploadBtn" class="upload-btn">
                 ⬆️ Carregar Múltiplos Ficheiros
             </button>
+            <button id="clearAllCellsBtn" class="clear-btn">
+                🗑️ Limpar Todas as Células
+            </button>
+            <div class="upload-instructions">
+                Para selecionar vários ficheiros: <span class="key">Shift + Clique</span> ou <span class="key">Ctrl/Cmd + Clique</span>.
+            </div>
             <span id="globalUploadStatus" class="file-name"></span>
         </div>
 
         <div class="controls">
-            <div class="control-group">
-                <label for="speedSlider">Velocidade de Reprodução: <span id="speedValue">1.0x</span></label>
-                <input type="range" id="speedSlider" class="slider" min="0.25" max="2" step="0.25" value="1">
+            <div class="control-column">
+                <div class="control-group">
+                    <label for="speedSlider">Velocidade: <span id="speedValue">1.00x</span></label>
+                    <div class="speed-controls">
+                        <input type="range" id="speedSlider" class="slider" min="0.25" max="2" step="0.01" value="1">
+                        <button id="presetHalfSpeedBtn" class="preset-btn">0.5x</button>
+                        <button id="presetNormalSpeedBtn" class="preset-btn">1x</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="pitchInput">Pitch: <span id="pitchValue">0 semitons</span></label>
+                    <div class="pitch-controls">
+                        <button id="decreasePitchBtn" class="pitch-btn">-</button>
+                        <input type="number" id="pitchInput" class="pitch-input" min="-12" max="12" step="1" value="0">
+                        <button id="increasePitchBtn" class="pitch-btn">+</button>
+                        <button id="resetPitchBtn" class="pitch-reset-btn">Reset</button>
+                    </div>
+                </div>
             </div>
-            
-            <div class="progress-bar" id="progressBar">
-                <div class="progress-fill" id="progressFill"></div>
-                <div class="loop-markers" id="loopMarkers"></div>
-            </div>
-            
-            <div class="time-display">
-                <span id="currentTime">0:00</span>
-                <span id="totalTime">0:00</span>
+
+            <div class="control-column">
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                    <div class="loop-markers" id="loopMarkers"></div>
+                </div>
+                
+                <div class="time-display">
+                    <span id="currentTime">0:00</span>
+                    <span id="totalTime">0:00</span>
+                </div>
             </div>
         </div>
 
@@ -360,41 +462,68 @@
         <div class="grid" id="cellGrid">
             </div>
 
-        <audio id="audioPlayer" preload="metadata"></audio>
+        <audio id="audioPlayer" preload="metadata" style="display: none;"></audio> 
     </div>
 
     <script>
-        let currentAudio = null;
-        let audioFiles = {}; // Guarda { cellNumber: fileURL }
+        // JavaScript
+        let currentAudioBuffer = null; // Armazena o AudioBuffer do ficheiro atualmente carregado
+        let sourceNode = null; // O AudioBufferSourceNode para reprodução real
+        let audioContext = null; // O Web Audio API Context
         let currentCell = null; // Guarda o número da célula ativa
+        
         let loopPoints = { start: null, end: null };
         let isLooping = false;
-        const audioPlayer = document.getElementById('audioPlayer');
+        
+        // Referência ao elemento <audio> HTML para obter metadata e tempo (não para reprodução)
+        const audioPlayerHtml = document.getElementById('audioPlayer'); 
+
         const progressBar = document.getElementById('progressBar');
         const progressFill = document.getElementById('progressFill');
         const loopMarkers = document.getElementById('loopMarkers');
         const globalFileInput = document.getElementById('globalFileInput');
         const globalUploadBtn = document.getElementById('globalUploadBtn');
         const globalUploadStatus = document.getElementById('globalUploadStatus');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValueSpan = document.getElementById('speedValue');
+        const presetHalfSpeedBtn = document.getElementById('presetHalfSpeedBtn');
+        const presetNormalSpeedBtn = document = document.getElementById('presetNormalSpeedBtn');
+        const clearAllCellsBtn = document.getElementById('clearAllCellsBtn');
+
+        const pitchInput = document.getElementById('pitchInput');
+        const pitchValueSpan = document.getElementById('pitchValue');
+        const increasePitchBtn = document.getElementById('increasePitchBtn');
+        const decreasePitchBtn = document.getElementById('decreasePitchBtn');
+        const resetPitchBtn = document.getElementById('resetPitchBtn');
+        
+        // Elementos para o mostrador de BPM
+        const currentBPMDisplay = document.getElementById('currentBPM');
+
         const totalCells = 20; // Definir o número total de células
+
+        // Onde armazenamos os AudioBuffers e os BPM detetados para cada célula
+        let cellAudioData = {}; // Estrutura: { cellNumber: { audioBuffer: AudioBuffer, bpm: number | null } }
+
+        // Variáveis para atualização dos BPM a cada 4 tempos
+        let bpmUpdateInterval = null;
+        let lastBeatUpdate = 0; // Guarda o tempo em que o BPM foi atualizado pela última vez
+
+        // Função para inicializar AudioContext
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
 
         // Criar as células dinamicamente
         function createCells() {
             const grid = document.getElementById('cellGrid');
-            grid.innerHTML = ''; // Limpar células existentes
+            grid.innerHTML = '';
             for (let i = 1; i <= totalCells; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-                cell.setAttribute('data-cell-number', i); // Atributo para identificar a célula
-                cell.innerHTML = `
-                    <div class="cell-header">
-                        <div class="cell-number">Célula ${i}</div>
-                    </div>
-                    <div class="file-name" id="fileName${i}">Nenhum ficheiro carregado</div>
-                    <button class="play-btn" id="playBtn${i}" disabled>
-                        ▶️ Reproduzir
-                    </button>
-                `;
+                cell.setAttribute('data-cell-number', i);
+                cell.innerHTML = `<div class="file-name" id="fileName${i}">Nenhum ficheiro carregado</div>`;
                 grid.appendChild(cell);
             }
         }
@@ -402,10 +531,11 @@
         // Acionar o input de ficheiro global
         globalUploadBtn.addEventListener('click', () => {
             globalFileInput.click();
+            globalUploadBtn.blur(); // Adicionado: Remove o foco do botão após o clique
         });
 
         // Lidar com o upload de múltiplos ficheiros
-        globalFileInput.addEventListener('change', (event) => {
+        globalFileInput.addEventListener('change', async (event) => {
             const files = event.target.files;
             if (files.length === 0) {
                 globalUploadStatus.textContent = 'Nenhum ficheiro selecionado.';
@@ -414,171 +544,443 @@
 
             globalUploadStatus.textContent = `A carregar ${files.length} ficheiro(s)...`;
             
-            // Limpar ficheiros anteriores e desativar células
-            for (let i = 1; i <= totalCells; i++) {
-                // Revogar URL anterior para liberar memória
-                if (audioFiles[i]) {
-                    URL.revokeObjectURL(audioFiles[i]);
-                }
-                delete audioFiles[i];
-                document.getElementById(`fileName${i}`).textContent = 'Nenhum ficheiro carregado';
-                document.getElementById(`playBtn${i}`).disabled = true;
-                const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
-                if (cell) cell.classList.remove('active'); // Remover classe 'active'
-            }
+            clearAllCells(false); // Limpa as células, mas não o status de upload
             
-            // Parar qualquer áudio a tocar
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-                currentAudio = null;
-                currentCell = null;
-                clearLoop();
-                progressFill.style.width = '0%';
-                document.getElementById('currentTime').textContent = '0:00';
-                document.getElementById('totalTime').textContent = '0:00';
-            }
-
             let filesLoaded = 0;
             let cellIndex = 1;
 
-            // Distribuir ficheiros pelas células
             for (let i = 0; i < files.length && cellIndex <= totalCells; i++) {
                 const file = files[i];
-
                 if (!file.type.startsWith('audio/')) {
                     console.warn(`Ficheiro "${file.name}" não é um ficheiro de áudio. Ignorando.`);
-                    continue; // Pular para o próximo ficheiro
+                    continue;
                 }
 
-                const fileURL = URL.createObjectURL(file);
-                audioFiles[cellIndex] = fileURL;
-                
-                document.getElementById(`fileName${cellIndex}`).textContent = file.name;
-                document.getElementById(`playBtn${cellIndex}`).disabled = false;
-                
-                filesLoaded++;
+                try {
+                    // Carrega o ficheiro e o decodifica para um AudioBuffer
+                    const arrayBuffer = await file.arrayBuffer();
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    
+                    // Armazena o AudioBuffer e inicializa BPM como null
+                    cellAudioData[cellIndex] = { audioBuffer: audioBuffer, bpm: null }; 
+                    
+                    document.getElementById(`fileName${cellIndex}`).textContent = file.name;
+                    document.querySelector(`.cell[data-cell-number="${cellIndex}"]`).classList.add('has-file');
+                    
+                    filesLoaded++;
+
+                    // Iniciar deteção de BPM para este ficheiro (não bloquear o carregamento de outros)
+                    detectBPMForCell(cellIndex, file);
+
+                } catch (error) {
+                    console.error(`Erro ao carregar ou decodificar ficheiro "${file.name}":`, error);
+                    globalUploadStatus.textContent = `Erro ao carregar ficheiro: ${file.name}.`;
+                }
                 cellIndex++;
             }
             globalUploadStatus.textContent = `${filesLoaded} ficheiro(s) carregado(s) com sucesso.`;
-            if (filesLoaded === 0 && files.length > 0) {
-                 globalUploadStatus.textContent = 'Nenhum ficheiro de áudio válido carregado.';
-            }
-            event.target.value = ''; // Limpar o input para permitir carregar os mesmos ficheiros novamente
+            event.target.value = ''; // Limpar o input
         });
 
-        // Funções de reprodução de áudio
-        function playAudio(cellNumber) {
-            const newAudioSrc = audioFiles[cellNumber];
-
-            if (!newAudioSrc) { // Se não há ficheiro na célula
-                console.warn(`Nenhum ficheiro de áudio na célula ${cellNumber}.`);
-                return;
-            }
-
-            // Se o áudio atual é o mesmo, alternar play/pause
-            if (currentAudio && currentAudio.src === newAudioSrc) {
-                if (currentAudio.paused) {
-                    currentAudio.play();
-                    document.getElementById(`playBtn${cellNumber}`).textContent = '⏸️ Pausar';
-                } else {
-                    currentAudio.pause();
-                    document.getElementById(`playBtn${cellNumber}`).textContent = '▶️ Reproduzir';
+        async function detectBPMForCell(cellNumber, file) {
+            try {
+                // A biblioteca bpm-detective precisa do ArrayBuffer original do ficheiro
+                const arrayBuffer = await file.arrayBuffer();
+                const bpm = await BPMDetective.run(arrayBuffer); // Executa a deteção de BPM
+                
+                cellAudioData[cellNumber].bpm = bpm.toFixed(2); // Armazena o BPM detetado
+                console.log(`BPM para célula ${cellNumber} (${file.name}): ${bpm.toFixed(2)}`);
+                // Se esta célula for a ativa, atualiza o mostrador de BPM
+                if (currentCell === cellNumber) {
+                    currentBPMDisplay.textContent = bpm.toFixed(2);
                 }
-                return;
-            }
-
-            // Parar áudio anterior e desmarcar célula
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-                if (currentCell) {
-                    document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
-                    document.getElementById(`playBtn${currentCell}`).textContent = '▶️ Reproduzir'; // Resetar texto do botão
+            } catch (error) {
+                console.warn(`Não foi possível detetar BPM para o ficheiro ${file.name}:`, error);
+                cellAudioData[cellNumber].bpm = null;
+                if (currentCell === cellNumber) {
+                    currentBPMDisplay.textContent = '--';
                 }
             }
-
-            clearLoop(); // Limpar loop ao trocar de ficheiro
-
-            audioPlayer.src = newAudioSrc;
-            audioPlayer.load();
-            audioPlayer.play();
-            currentAudio = audioPlayer;
-            currentCell = cellNumber;
-            
-            document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
-            document.getElementById(`playBtn${cellNumber}`).textContent = '⏸️ Pausar'; // Mudar texto para Pausar
-            
-            // Aplicar velocidade atual
-            const speed = document.getElementById('speedSlider').value;
-            audioPlayer.playbackRate = parseFloat(speed);
         }
 
-        // Controle de velocidade
-        document.getElementById('speedSlider').addEventListener('input', function(e) {
-            const speed = parseFloat(e.target.value);
-            document.getElementById('speedValue').textContent = speed + 'x';
-            if (currentAudio) {
-                currentAudio.playbackRate = speed;
+
+        // Nova função para limpar todas as células
+        function clearAllCells(resetStatus = true) {
+            stopCurrentAudio(); // Para e limpa o áudio atual
+            clearLoop(); // Limpa o loop
+            resetPitch(); // Reseta o pitch
+            
+            // Limpa os AudioBuffers e BPM armazenados
+            cellAudioData = {}; 
+            currentBPMDisplay.textContent = '--'; // Limpa o mostrador de BPM
+
+            for (let i = 1; i <= totalCells; i++) {
+                document.getElementById(`fileName${i}`).textContent = 'Nenhum ficheiro carregado';
+                const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
+                if (cell) {
+                    cell.classList.remove('active');
+                    cell.classList.remove('has-file');
+                }
             }
+            if (resetStatus) {
+                globalUploadStatus.textContent = 'Todas as células limpas.';
+            }
+        }
+
+        clearAllCellsBtn.addEventListener('click', () => {
+            clearAllCells(true);
+            clearAllCellsBtn.blur(); // Adicionado: Remove o foco do botão após o clique
         });
+
+        // Função para parar o áudio atualmente a tocar
+        function stopCurrentAudio() {
+            if (sourceNode) {
+                sourceNode.stop();
+                sourceNode.disconnect();
+                sourceNode = null;
+            }
+            // Garante que o elemento HTML audio também para (se estiver a ser usado)
+            audioPlayerHtml.pause();
+            audioPlayerHtml.currentTime = 0;
+            currentAudioBuffer = null;
+            currentCell = null;
+            progressFill.style.width = '0%';
+            document.getElementById('currentTime').textContent = '0:00';
+            document.getElementById('totalTime').textContent = '0:00';
+            pauseProgressUpdate(); // Garante que o intervalo de atualização da barra para
+            stopBPMUpdate(); // Para a atualização de BPM
+            currentBPMDisplay.textContent = '--'; // Limpa o mostrador de BPM
+        }
+
+        // Funções de reprodução de áudio
+        function playAudio(cellNumber, startTime = 0) {
+            initAudioContext(); // Garante que o AudioContext está ativo
+
+            const cellData = cellAudioData[cellNumber];
+            if (!cellData || !cellData.audioBuffer) {
+                console.warn(`Nenhum AudioBuffer na célula ${cellNumber}.`);
+                return;
+            }
+            const audioBuffer = cellData.audioBuffer;
+
+            // Se o áudio já estiver a tocar e for o mesmo ficheiro, alternar play/pause
+            if (currentCell === cellNumber && sourceNode && audioContext.state === 'running') {
+                pausePlayback(); // Usa a função de pausa existente
+                return;
+            }
+            
+            stopCurrentAudio(); // Parar qualquer áudio anterior
+            clearLoop(); // Limpar loop ao trocar de ficheiro
+            resetPitch(); // Resetar pitch ao trocar de ficheiro
+            
+            currentAudioBuffer = audioBuffer;
+            currentCell = cellNumber;
+
+            // Atualiza o mostrador de BPM com o BPM detetado para a célula
+            currentBPMDisplay.textContent = cellData.bpm !== null ? cellData.bpm : '--';
+
+            // Criar um novo sourceNode
+            sourceNode = audioContext.createBufferSource();
+            sourceNode.buffer = currentAudioBuffer;
+            sourceNode.connect(audioContext.destination);
+
+            // Aplicar velocidade e pitch
+            sourceNode.playbackRate.value = parseFloat(speedSlider.value);
+            sourceNode.detune.value = parseInt(pitchInput.value) * 100;
+
+            // Adicionar evento 'ended' para o sourceNode (o único que realmente toca o áudio)
+            sourceNode.onended = () => {
+                if (!isLooping) { // Apenas chama handleAudioEnded se não estiver em loop
+                    handleAudioEnded();
+                }
+            };
+            
+            // Iniciar a reprodução do sourceNode
+            sourceNode.start(0, startTime); // startTime é para loops ou navegar na barra de progresso
+            sourceNode.lastOffset = startTime; // Armazenar o offset para quando for pausar/retomar
+
+            // Atualizar o elemento HTML audio (apenas para metadata e timeupdate)
+            document.getElementById('totalTime').textContent = formatTime(currentAudioBuffer.duration);
+            
+            // Atualizar a célula ativa no UI
+            document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('active')); // Remove de todos
+            document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active'); // Adiciona ao atual
+            
+            // Iniciar a atualização da barra de progresso e BPM
+            startProgressUpdate(startTime);
+            startBPMUpdateInterval(); // Inicia o novo intervalo para BPM
+        }
+
+        function pausePlayback() {
+            if (sourceNode && audioContext.state === 'running') {
+                pauseProgressUpdate(); // Pausa o áudio e a atualização da barra
+                audioContext.suspend(); // Suspende o AudioContext
+                stopBPMUpdate(); // Para a atualização de BPM
+            }
+        }
+
+        function resumePlayback() {
+            if (currentCell && cellAudioData[currentCell] && audioContext.state === 'suspended') {
+                audioContext.resume(); // Retoma o AudioContext
+                // Reinicia a reprodução do sourceNode do último offset
+                playAudio(currentCell, sourceNode ? sourceNode.lastOffset : 0); 
+            }
+        }
+
+        // Variáveis para a atualização da barra de progresso
+        let progressInterval = null;
+        let audioStartTimeContext = 0; // O tempo do AudioContext quando o áudio começou a tocar
+        let audioOffsetPlayback = 0; // O offset dentro do buffer quando o áudio começou (em tempo de reprodução)
+
+        function startProgressUpdate(initialOffset = 0) {
+            if (progressInterval) clearInterval(progressInterval);
+
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            audioStartTimeContext = audioContext.currentTime;
+            audioOffsetPlayback = initialOffset; // Definir o offset inicial
+            
+            progressInterval = setInterval(() => {
+                if (!sourceNode || audioContext.state !== 'running' || !currentAudioBuffer) {
+                    clearInterval(progressInterval);
+                    return;
+                }
+
+                // Calcula o currentTime baseado no tempo do AudioContext e playbackRate
+                const elapsedTime = audioContext.currentTime - audioStartTimeContext;
+                const currentTheoreticalTime = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
+
+                if (!isNaN(currentAudioBuffer.duration)) {
+                    const progress = (currentTheoreticalTime / currentAudioBuffer.duration) * 100;
+                    progressFill.style.width = progress + '%';
+                    
+                    document.getElementById('currentTime').textContent = formatTime(currentTheoreticalTime);
+                    
+                    // Verificar loop
+                    if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
+                        if (currentTheoreticalTime >= loopPoints.end) {
+                            stopCurrentAudio(); // Para o nó atual
+                            playAudio(currentCell, loopPoints.start); // Reinicia a partir do ponto A
+                        }
+                    }
+                } else {
+                    document.getElementById('currentTime').textContent = '0:00';
+                    document.getElementById('totalTime').textContent = '0:00';
+                }
+            }, 100);
+        }
+        
+        // Pausar a atualização da barra de progresso
+        function pauseProgressUpdate() {
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+            if (sourceNode) {
+                // Guarda o offset atual para quando for retomar
+                const elapsedTime = audioContext.currentTime - audioStartTimeContext;
+                sourceNode.lastOffset = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
+                sourceNode.stop();
+                sourceNode.disconnect();
+                sourceNode = null;
+            }
+        }
+
+        // --- Nova lógica para atualização de BPM a cada 4 tempos ---
+        function startBPMUpdateInterval() {
+            stopBPMUpdate(); // Limpa qualquer intervalo anterior
+
+            if (!currentCell || !cellAudioData[currentCell] || !cellAudioData[currentCell].bpm) {
+                currentBPMDisplay.textContent = '--';
+                return;
+            }
+
+            const baseBPM = parseFloat(cellAudioData[currentCell].bpm);
+            const currentSpeed = parseFloat(speedSlider.value);
+            // Calcula o BPM efetivo (afetado pela velocidade)
+            const effectiveBPM = baseBPM * currentSpeed; 
+
+            // Duração de um tempo em segundos
+            const beatDurationSeconds = 60 / effectiveBPM; 
+            // Duração de 4 tempos em segundos
+            const fourBeatDurationSeconds = beatDurationSeconds * 4;
+
+            // Atualiza o display imediatamente ao iniciar a reprodução
+            currentBPMDisplay.textContent = effectiveBPM.toFixed(2);
+            
+            // Define o intervalo de atualização baseado na duração de 4 tempos
+            // Multiplicamos por 1000 para converter de segundos para milissegundos
+            bpmUpdateInterval = setInterval(() => {
+                if (!sourceNode || audioContext.state !== 'running' || !currentAudioBuffer) {
+                    stopBPMUpdate();
+                    return;
+                }
+                // Recalcular o BPM efetivo em cada atualização, caso a velocidade mude
+                const currentSpeedDuringUpdate = parseFloat(speedSlider.value);
+                const updatedEffectiveBPM = baseBPM * currentSpeedDuringUpdate;
+                currentBPMDisplay.textContent = updatedEffectiveBPM.toFixed(2);
+            }, fourBeatDurationSeconds * 1000); 
+        }
+
+        function stopBPMUpdate() {
+            if (bpmUpdateInterval) {
+                clearInterval(bpmUpdateInterval);
+                bpmUpdateInterval = null;
+            }
+        }
+        // --- Fim da nova lógica para atualização de BPM ---
+
+
+        // Controle de velocidade
+        speedSlider.addEventListener('input', function(e) {
+            const speed = parseFloat(e.target.value);
+            speedValueSpan.textContent = speed.toFixed(2) + 'x';
+            if (sourceNode) {
+                sourceNode.playbackRate.value = speed;
+            }
+            // Recalcula e atualiza o BPM imediatamente após mudar a velocidade
+            if (currentCell && cellAudioData[currentCell] && cellAudioData[currentCell].bpm) {
+                const baseBPM = parseFloat(cellAudioData[currentCell].bpm);
+                const effectiveBPM = baseBPM * speed;
+                currentBPMDisplay.textContent = effectiveBPM.toFixed(2);
+                startBPMUpdateInterval(); // Reinicia o intervalo para refletir a nova velocidade
+            } else {
+                currentBPMDisplay.textContent = '--';
+            }
+            speedSlider.blur(); // Adicionado: Remove o foco do slider
+        });
+
+        // Presets de velocidade
+        presetHalfSpeedBtn.addEventListener('click', () => {
+            speedSlider.value = 0.5;
+            speedSlider.dispatchEvent(new Event('input')); // Dispara o evento input para atualizar tudo
+            presetHalfSpeedBtn.blur(); // Adicionado: Remove o foco do botão
+        });
+
+        presetNormalSpeedBtn.addEventListener('click', () => {
+            speedSlider.value = 1.0;
+            speedSlider.dispatchEvent(new Event('input')); // Dispara o evento input para atualizar tudo
+            presetNormalSpeedBtn.blur(); // Adicionado: Remove o foco do botão
+        });
+
+        // Controlo de Pitch (Tom)
+        function applyPitch() {
+            if (sourceNode) {
+                const semitones = parseInt(pitchInput.value);
+                sourceNode.detune.value = semitones * 100; // detune é em cents
+            }
+        }
+
+        pitchInput.addEventListener('input', function() {
+            let semitones = parseInt(this.value);
+            if (isNaN(semitones)) semitones = 0;
+            if (semitones > 12) semitones = 12;
+            if (semitones < -12) semitones = -12;
+            this.value = semitones;
+            pitchValueSpan.textContent = `${semitones} semitons`;
+            applyPitch();
+        });
+
+        increasePitchBtn.addEventListener('click', () => {
+            let currentSemitones = parseInt(pitchInput.value);
+            if (currentSemitones < 12) {
+                pitchInput.value = currentSemitones + 1;
+                pitchInput.dispatchEvent(new Event('input'));
+            }
+            increasePitchBtn.blur(); // Adicionado: Remove o foco do botão
+            pitchInput.blur(); // Adicionado: Remove o foco do input
+        });
+
+        decreasePitchBtn.addEventListener('click', () => {
+            let currentSemitones = parseInt(pitchInput.value);
+            if (currentSemitones > -12) {
+                pitchInput.value = currentSemitones - 1;
+                pitchInput.dispatchEvent(new Event('input'));
+            }
+            decreasePitchBtn.blur(); // Adicionado: Remove o foco do botão
+            pitchInput.blur(); // Adicionado: Remove o foco do input
+        });
+        
+        function resetPitch() {
+            pitchInput.value = 0;
+            pitchInput.dispatchEvent(new Event('input'));
+            pitchInput.blur(); // Adicionado: Remove o foco do input ao resetar
+        }
+
+        resetPitchBtn.addEventListener('click', () => {
+            resetPitch();
+            resetPitchBtn.blur(); // Adicionado: Remove o foco do botão
+        });
+
 
         // Atalhos do teclado
         document.addEventListener('keydown', function(e) {
-            if (!currentAudio) return;
+            // Se o foco estiver em qualquer input ou botão, não acionar atalhos de teclado (exceto para espaço, se necessário)
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'BUTTON')) {
+                // Permitir espaço para play/pause mesmo com foco num botão/input, mas remover o foco depois
+                if (e.key.toLowerCase() === ' ') {
+                    document.activeElement.blur(); 
+                } else {
+                    return; 
+                }
+            }
 
             switch(e.key.toLowerCase()) {
                 case 'a':
-                    setLoopPoint('start');
+                    if (sourceNode && currentAudioBuffer) {
+                        const elapsedTime = audioContext.currentTime - audioStartTimeContext;
+                        const currentTheoreticalTime = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
+                        setLoopPoint('start', currentTheoreticalTime);
+                    }
                     break;
                 case 'b':
-                    setLoopPoint('end');
+                    if (sourceNode && currentAudioBuffer) {
+                        const elapsedTime = audioContext.currentTime - audioStartTimeContext;
+                        const currentTheoreticalTime = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
+                        setLoopPoint('end', currentTheoreticalTime);
+                    }
                     break;
                 case 'x':
                     clearLoop();
                     break;
                 case ' ': // Espaço para play/pause
                     e.preventDefault(); // Prevenir rolagem da página
-                    if (currentAudio) {
-                        if (currentAudio.paused) {
-                            currentAudio.play();
+                    if (currentCell && cellAudioData[currentCell]) {
+                        if (sourceNode && audioContext.state === 'running') {
+                            pausePlayback(); // Usa a função de pausa
                         } else {
-                            currentAudio.pause();
-                        }
-                        // Atualizar texto do botão da célula ativa
-                        if (currentCell) {
-                            const playBtn = document.getElementById(`playBtn${currentCell}`);
-                            playBtn.textContent = currentAudio.paused ? '▶️ Reproduzir' : '⏸️ Pausar';
+                            resumePlayback(); // Usa a função de retomar
                         }
                     }
                     break;
             }
         });
 
-        function setLoopPoint(point) {
-            if (!currentAudio) return;
+        function setLoopPoint(point, time) {
+            if (!currentAudioBuffer) return;
             
-            const currentTime = currentAudio.currentTime;
-            loopPoints[point] = currentTime;
+            loopPoints[point] = time;
             
             if (point === 'start') {
-                document.getElementById('pointA').textContent = formatTime(currentTime);
+                document.getElementById('pointA').textContent = formatTime(time);
             } else {
-                document.getElementById('pointB').textContent = formatTime(currentTime);
-                // Quando define o ponto B, ativa o loop
-                if (loopPoints.start !== null) {
-                    activateLoop();
-                }
+                document.getElementById('pointB').textContent = formatTime(time);
             }
             
-            updateLoopDisplay();
+            if (loopPoints.start !== null && loopPoints.end !== null) {
+                activateLoop();
+            } else {
+                updateLoopDisplay();
+                updateLoopMarkers();
+            }
         }
 
         function activateLoop() {
             if (loopPoints.start !== null && loopPoints.end !== null) {
-                // Garantir que o start é antes do end
                 if (loopPoints.start > loopPoints.end) {
-                    [loopPoints.start, loopPoints.end] = [loopPoints.end, loopPoints.start]; // Trocar os valores
+                    [loopPoints.start, loopPoints.end] = [loopPoints.end, loopPoints.start];
                     document.getElementById('pointA').textContent = formatTime(loopPoints.start);
                     document.getElementById('pointB').textContent = formatTime(loopPoints.end);
                 }
@@ -596,6 +998,8 @@
             document.getElementById('pointB').textContent = '--';
             updateLoopDisplay();
             loopMarkers.classList.remove('active');
+            loopMarkers.style.width = '0%';
+            loopMarkers.style.left = '0%';
         }
 
         function updateLoopDisplay() {
@@ -610,72 +1014,69 @@
             } else {
                 loopIndicator.classList.remove('loop-active');
                 loopStatus.textContent = 'Desativado';
-                loopPointsDiv.style.display = 'none';
+                
+                if (loopPoints.start !== null || loopPoints.end !== null) {
+                    loopPointsDiv.style.display = 'block';
+                } else {
+                    loopPointsDiv.style.display = 'none';
+                }
             }
         }
 
         function updateLoopMarkers() {
-            if (!currentAudio || !isLooping || !currentAudio.duration || isNaN(currentAudio.duration)) {
+            if (!currentAudioBuffer || isNaN(currentAudioBuffer.duration)) {
                 loopMarkers.classList.remove('active');
                 return;
             }
             
-            const duration = currentAudio.duration;
-            const startPercent = (loopPoints.start / duration) * 100;
-            const endPercent = (loopPoints.end / duration) * 100;
+            const duration = currentAudioBuffer.duration;
             
-            loopMarkers.style.left = startPercent + '%';
-            loopMarkers.style.width = (endPercent - startPercent) + '%';
-            loopMarkers.classList.add('active');
+            if (loopPoints.start !== null && loopPoints.end === null) {
+                const startPercent = (loopPoints.start / duration) * 100;
+                loopMarkers.style.left = startPercent + '%';
+                loopMarkers.style.width = '1px';
+                loopMarkers.classList.add('active');
+                loopMarkers.style.backgroundColor = 'transparent';
+            } 
+            else if (loopPoints.start !== null && loopPoints.end !== null) {
+                const startPercent = (loopPoints.start / duration) * 100;
+                const endPercent = (loopPoints.end / duration) * 100;
+                
+                loopMarkers.style.left = startPercent + '%';
+                loopMarkers.style.width = (endPercent - startPercent) + '%';
+                loopMarkers.classList.add('active');
+                loopMarkers.style.backgroundColor = 'rgba(255, 255, 0, 0.15)';
+            } 
+            else {
+                loopMarkers.classList.remove('active');
+            }
         }
 
-        // Atualizar barra de progresso
-        audioPlayer.addEventListener('timeupdate', function() {
-            if (audioPlayer.duration && !isNaN(audioPlayer.duration)) {
-                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-                progressFill.style.width = progress + '%';
-                
-                document.getElementById('currentTime').textContent = formatTime(audioPlayer.currentTime);
-                document.getElementById('totalTime').textContent = formatTime(audioPlayer.duration);
-                
-                // Verificar loop
-                if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
-                    if (audioPlayer.currentTime >= loopPoints.end) {
-                        audioPlayer.currentTime = loopPoints.start;
-                    }
-                }
-            }
-        });
-
-        // Carregar metadata do áudio
-        audioPlayer.addEventListener('loadedmetadata', function() {
-            updateLoopMarkers();
-            document.getElementById('totalTime').textContent = formatTime(audioPlayer.duration);
-        });
-
         // Quando o áudio termina
-        audioPlayer.addEventListener('ended', function() {
+        function handleAudioEnded() {
             if (currentCell) {
                 document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
-                document.getElementById(`playBtn${currentCell}`).textContent = '▶️ Reproduzir';
             }
-            currentAudio = null;
-            currentCell = null;
+            stopCurrentAudio(); // Garante que tudo é parado e limpo
             clearLoop();
-            progressFill.style.width = '0%';
-            document.getElementById('currentTime').textContent = '0:00';
-        });
+            resetPitch();
+            currentBPMDisplay.textContent = '--'; // Limpa o mostrador de BPM
+        }
 
         // Clique na barra de progresso para navegar
         progressBar.addEventListener('click', function(e) {
-            if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) return;
+            if (!currentAudioBuffer || isNaN(currentAudioBuffer.duration)) return;
             
             const rect = progressBar.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
             const percentage = clickX / rect.width;
-            const newTime = percentage * currentAudio.duration;
+            const newTime = percentage * currentAudioBuffer.duration;
             
-            currentAudio.currentTime = newTime;
+            if (currentCell !== null) {
+                stopCurrentAudio(); // Para o áudio atual
+                playAudio(currentCell, newTime); // Reinicia a partir do novo tempo
+            }
+            progressBar.blur(); // Adicionado: Remove o foco da barra de progresso
         });
 
         function formatTime(seconds) {
@@ -685,21 +1086,22 @@
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // Delegação de eventos para os botões de reprodução das células
+        // Delegação de eventos para as células
         document.getElementById('cellGrid').addEventListener('click', function(event) {
-            const target = event.target;
-            if (target.classList.contains('play-btn')) {
-                const cellElement = target.closest('.cell');
-                if (cellElement) {
-                    const cellNumber = parseInt(cellElement.dataset.cellNumber);
-                    playAudio(cellNumber);
-                }
+            const cellElement = event.target.closest('.cell[data-cell-number]');
+            if (cellElement) {
+                const cellNumber = parseInt(cellElement.dataset.cellNumber);
+                playAudio(cellNumber);
+                cellElement.blur(); // Adicionado: Remove o foco da célula clicada
             }
         });
 
         // Inicializar
         createCells();
         updateLoopDisplay();
+        // Garante que o AudioContext é inicializado quando o utilizador interage pela primeira vez
+        document.body.addEventListener('click', initAudioContext, { once: true });
+        applyPitch(); // Para garantir que o valor inicial (0) é aplicado
     </script>
 </body>
 </html>

@@ -599,9 +599,9 @@
 
         async function detectBPMForCell(cellNumber, file) {
             // VERIFICA SE A BIBLIOTECA DetectBPM ESTÁ DISPONÍVEL
-            // E agora chamamos DetectBPM.default()
-            if (typeof DetectBPM === 'undefined' || typeof DetectBPM.default !== 'function') {
-                console.warn('DetectBPM library or its default export (the detection function) not found. Cannot detect BPM.');
+            // E agora chamamos DetectBPM() diretamente
+            if (typeof DetectBPM !== 'function') { // A verificação é mais simples: se DetectBPM é uma função.
+                console.warn('DetectBPM library (the detection function) not found. Cannot detect BPM.');
                 cellAudioData[cellNumber].bpm = null;
                 if (currentCell === cellNumber) {
                     currentBPMDisplay.textContent = '--';
@@ -613,8 +613,8 @@
             try {
                 // Ler o ficheiro como um ArrayBuffer
                 const arrayBuffer = await file.arrayBuffer();
-                // Passar o ArrayBuffer para DetectBPM.default
-                const bpm = await DetectBPM.default(arrayBuffer); // <--- CORREÇÃO AQUI!
+                // Passar o ArrayBuffer diretamente para DetectBPM()
+                const bpm = await DetectBPM(arrayBuffer); // <--- CORREÇÃO APLICADA AQUI
                 
                 cellAudioData[cellNumber].bpm = bpm.toFixed(2); 
                 console.log(`BPM detetado para célula ${cellNumber} (${file.name}): ${bpm.toFixed(2)}`);

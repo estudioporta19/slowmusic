@@ -496,6 +496,7 @@
         // Acionar o input de ficheiro global
         globalUploadBtn.addEventListener('click', () => {
             globalFileInput.click();
+            globalUploadBtn.blur(); // Adicionado: Remove o foco do botão após o clique
         });
 
         // Lidar com o upload de múltiplos ficheiros
@@ -560,7 +561,10 @@
             }
         }
 
-        clearAllCellsBtn.addEventListener('click', () => clearAllCells(true));
+        clearAllCellsBtn.addEventListener('click', () => {
+            clearAllCells(true);
+            clearAllCellsBtn.blur(); // Adicionado: Remove o foco do botão após o clique
+        });
 
         // Função para parar o áudio atualmente a tocar
         function stopCurrentAudio() {
@@ -577,6 +581,7 @@
             progressFill.style.width = '0%';
             document.getElementById('currentTime').textContent = '0:00';
             document.getElementById('totalTime').textContent = '0:00';
+            pauseProgressUpdate(); // Garante que o intervalo de atualização da barra para
         }
 
         // Funções de reprodução de áudio
@@ -620,56 +625,53 @@
             
             // Iniciar a reprodução do sourceNode
             sourceNode.start(0, startTime); // startTime é para loops ou navegar na barra de progresso
+            sourceNode.lastOffset = startTime; // Armazenar o offset para quando for pausar/retomar
 
             // Atualizar o elemento HTML audio (apenas para metadata e timeupdate)
-            // Criar um URL temporário para o elemento audio para que ele carregue a metadata
             // Uma forma mais robusta seria ter os URLs originais dos ficheiros para audioPlayerHtml.src
-            // Para simplicidade, vamos supor que duration e currentTime são geridos pelo currentAudioBuffer
-            audioPlayerHtml.src = URL.createObjectURL(new Blob([currentAudioBuffer.duration])); // Não é o ficheiro real, apenas para metadata
-            audioPlayerHtml.load();
+            // Para simplicidade, vamos usar o currentAudioBuffer.duration
+            // Não é o ficheiro real, apenas para metadata e duração.
+            // Para obter a duração para o display, usamos diretamente o currentAudioBuffer.duration
+            document.getElementById('totalTime').textContent = formatTime(currentAudioBuffer.duration);
             
             // Atualizar a célula ativa no UI
             document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
             
             // Iniciar a atualização da barra de progresso
-            startProgressUpdate();
+            startProgressUpdate(startTime);
         }
         
         // Variáveis para a atualização da barra de progresso
         let progressInterval = null;
-        let audioStartTime = 0; // O tempo em que o áudio começou a tocar no AudioContext
-        let audioOffset = 0; // O offset dentro do buffer quando o áudio começou
+        let audioStartTimeContext = 0; // O tempo do AudioContext quando o áudio começou a tocar
+        let audioOffsetPlayback = 0; // O offset dentro do buffer quando o áudio começou (em tempo de reprodução)
 
-        function startProgressUpdate() {
+        function startProgressUpdate(initialOffset = 0) {
             if (progressInterval) clearInterval(progressInterval);
 
-            // Certifica-se de que o AudioContext está em estado 'running' para obter o tempo corretamente
             if (audioContext.state === 'suspended') {
                 audioContext.resume();
             }
 
-            audioStartTime = audioContext.currentTime;
-            // Se o sourceNode existe e tem offset de início, usar esse offset
-            audioOffset = sourceNode ? (sourceNode.lastOffset || 0) : 0; 
+            audioStartTimeContext = audioContext.currentTime;
+            audioOffsetPlayback = initialOffset; // Definir o offset inicial
             
-            // Atualizar a barra de progresso a cada 100ms
             progressInterval = setInterval(() => {
-                if (!sourceNode || audioContext.state !== 'running') {
+                if (!sourceNode || audioContext.state !== 'running' || !currentAudioBuffer) {
                     clearInterval(progressInterval);
                     return;
                 }
 
                 // Calcula o currentTime baseado no tempo do AudioContext e playbackRate
-                const elapsedTime = audioContext.currentTime - audioStartTime;
-                const currentTheoreticalTime = audioOffset + (elapsedTime * sourceNode.playbackRate.value);
+                const elapsedTime = audioContext.currentTime - audioStartTimeContext;
+                const currentTheoreticalTime = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
 
-                if (currentAudioBuffer && !isNaN(currentAudioBuffer.duration)) {
+                if (!isNaN(currentAudioBuffer.duration)) {
                     const progress = (currentTheoreticalTime / currentAudioBuffer.duration) * 100;
                     progressFill.style.width = progress + '%';
                     
                     document.getElementById('currentTime').textContent = formatTime(currentTheoreticalTime);
-                    document.getElementById('totalTime').textContent = formatTime(currentAudioBuffer.duration);
-
+                    
                     // Verificar loop
                     if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
                         if (currentTheoreticalTime >= loopPoints.end) {
@@ -678,7 +680,6 @@
                         }
                     }
                 } else {
-                    // Se não tiver duração, exibir 0:00
                     document.getElementById('currentTime').textContent = '0:00';
                     document.getElementById('totalTime').textContent = '0:00';
                 }
@@ -693,8 +694,8 @@
             }
             if (sourceNode) {
                 // Guarda o offset atual para quando for retomar
-                const elapsedTime = audioContext.currentTime - audioStartTime;
-                sourceNode.lastOffset = audioOffset + (elapsedTime * sourceNode.playbackRate.value);
+                const elapsedTime = audioContext.currentTime - audioStartTimeContext;
+                sourceNode.lastOffset = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
                 sourceNode.stop();
                 sourceNode.disconnect();
                 sourceNode = null;
@@ -709,6 +710,7 @@
             if (sourceNode) {
                 sourceNode.playbackRate.value = speed;
             }
+            speedSlider.blur(); // Adicionado: Remove o foco do slider
         });
 
         // Presets de velocidade
@@ -718,6 +720,7 @@
             if (sourceNode) {
                 sourceNode.playbackRate.value = 0.5;
             }
+            presetHalfSpeedBtn.blur(); // Adicionado: Remove o foco do botão
         });
 
         presetNormalSpeedBtn.addEventListener('click', () => {
@@ -726,6 +729,7 @@
             if (sourceNode) {
                 sourceNode.playbackRate.value = 1.0;
             }
+            presetNormalSpeedBtn.blur(); // Adicionado: Remove o foco do botão
         });
 
         // Controlo de Pitch (Tom)
@@ -752,6 +756,8 @@
                 pitchInput.value = currentSemitones + 1;
                 pitchInput.dispatchEvent(new Event('input'));
             }
+            increasePitchBtn.blur(); // Adicionado: Remove o foco do botão
+            pitchInput.blur(); // Adicionado: Remove o foco do input
         });
 
         decreasePitchBtn.addEventListener('click', () => {
@@ -760,35 +766,46 @@
                 pitchInput.value = currentSemitones - 1;
                 pitchInput.dispatchEvent(new Event('input'));
             }
+            decreasePitchBtn.blur(); // Adicionado: Remove o foco do botão
+            pitchInput.blur(); // Adicionado: Remove o foco do input
         });
         
         function resetPitch() {
             pitchInput.value = 0;
             pitchInput.dispatchEvent(new Event('input'));
+            pitchInput.blur(); // Adicionado: Remove o foco do input ao resetar
         }
 
-        resetPitchBtn.addEventListener('click', resetPitch);
+        resetPitchBtn.addEventListener('click', () => {
+            resetPitch();
+            resetPitchBtn.blur(); // Adicionado: Remove o foco do botão
+        });
 
 
         // Atalhos do teclado
         document.addEventListener('keydown', function(e) {
-            if (document.activeElement === pitchInput || globalFileInput === document.activeElement) {
-                return;
+            // Se o foco estiver em qualquer input ou botão, não acionar atalhos de teclado (exceto para espaço, se necessário)
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'BUTTON')) {
+                // Permitir espaço para play/pause mesmo com foco num botão/input, mas remover o foco depois
+                if (e.key.toLowerCase() === ' ') {
+                    document.activeElement.blur(); 
+                } else {
+                    return; 
+                }
             }
 
             switch(e.key.toLowerCase()) {
                 case 'a':
-                    // Usar o tempo calculado para o loop points
                     if (sourceNode && currentAudioBuffer) {
-                        const elapsedTime = audioContext.currentTime - audioStartTime;
-                        const currentTheoreticalTime = audioOffset + (elapsedTime * sourceNode.playbackRate.value);
+                        const elapsedTime = audioContext.currentTime - audioStartTimeContext;
+                        const currentTheoreticalTime = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
                         setLoopPoint('start', currentTheoreticalTime);
                     }
                     break;
                 case 'b':
                     if (sourceNode && currentAudioBuffer) {
-                        const elapsedTime = audioContext.currentTime - audioStartTime;
-                        const currentTheoreticalTime = audioOffset + (elapsedTime * sourceNode.playbackRate.value);
+                        const elapsedTime = audioContext.currentTime - audioStartTimeContext;
+                        const currentTheoreticalTime = audioOffsetPlayback + (elapsedTime * sourceNode.playbackRate.value);
                         setLoopPoint('end', currentTheoreticalTime);
                     }
                     break;
@@ -931,6 +948,7 @@
                 stopCurrentAudio(); // Para o áudio atual
                 playAudio(currentCell, newTime); // Reinicia a partir do novo tempo
             }
+            progressBar.blur(); // Adicionado: Remove o foco da barra de progresso
         });
 
         function formatTime(seconds) {
@@ -946,6 +964,7 @@
             if (cellElement) {
                 const cellNumber = parseInt(cellElement.dataset.cellNumber);
                 playAudio(cellNumber);
+                cellElement.blur(); // Adicionado: Remove o foco da célula clicada
             }
         });
 

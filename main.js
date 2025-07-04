@@ -1,4 +1,3 @@
- <script>
         // JavaScript
         let currentAudioBuffer = null; 
         let sourceNode = null; 
@@ -691,4 +690,4 @@
             document.body.addEventListener('click', initAudioContext, { once: true });
             applyPitch(); 
         });
-    </script>
+

@@ -598,9 +598,7 @@
         });
 
         async function detectBPMForCell(cellNumber, file) {
-            // VERIFICA SE A BIBLIOTECA DetectBPM ESTÁ DISPONÍVEL
-            // E agora chamamos DetectBPM() diretamente
-            if (typeof DetectBPM !== 'function') { // A verificação é mais simples: se DetectBPM é uma função.
+            if (typeof DetectBPM !== 'function') {
                 console.warn('DetectBPM library (the detection function) not found. Cannot detect BPM.');
                 cellAudioData[cellNumber].bpm = null;
                 if (currentCell === cellNumber) {
@@ -611,10 +609,45 @@
 
             console.log(`A iniciar deteção de BPM para célula ${cellNumber} (${file.name})...`);
             try {
-                // Ler o ficheiro como um ArrayBuffer
                 const arrayBuffer = await file.arrayBuffer();
-                // Passar o ArrayBuffer diretamente para DetectBPM()
-                const bpm = await DetectBPM(arrayBuffer); // <--- CORREÇÃO APLICADA AQUI
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer); // <--- Decodificar aqui para acesso
+
+                // --- NOVA VERIFICAÇÃO DE SANIDADE AQUI ---
+                if (!audioBuffer || 
+                    isNaN(audioBuffer.length) || 
+                    isNaN(audioBuffer.numberOfChannels) || 
+                    isNaN(audioBuffer.sampleRate) ||
+                    audioBuffer.length <= 0 ||
+                    audioBuffer.numberOfChannels <= 0 ||
+                    audioBuffer.sampleRate <= 0
+                ) {
+                    throw new Error("AudioBuffer is invalid or incomplete (non-finite values).");
+                }
+                // --- FIM DA NOVA VERIFICAÇÃO ---
+                
+                // Agora que temos o audioBuffer, precisamos de passar o ArrayBuffer original
+                // porque a biblioteca DetectBPM espera o ArrayBuffer para decodificar internamente
+                // ou precisamos de ter a certeza de que a biblioteca pode usar o AudioBuffer diretamente.
+
+                // Revendo a biblioteca `bpm-detective.min.js`:
+                // A função `detect(buffer)` espera um `buffer` que é o `ArrayBuffer` do ficheiro.
+                // Dentro dela, ela cria um `OfflineContext` com `buffer.length`, etc.
+                // Então, a sua linha `const bpm = await DetectBPM(arrayBuffer);` está correta.
+                // O erro ocorre dentro da função `getLowPassSource(buffer)` que é chamada por `detect(buffer)`.
+                // Isso significa que o problema é com a *interpretação* do `arrayBuffer` pelo `getLowPassSource` que acaba por ter valores não finitos.
+
+                // A VERDADEIRA CAUSA: a `detect` function na biblioteca `bpm-detective`
+                // espera um *AudioBuffer*, não um *ArrayBuffer*!
+
+                // Olhando novamente para a função detect na biblioteca:
+                // function detect(buffer){ var source=getLowPassSource(buffer); source.start(0); return[findPeaks,identifyIntervals,groupByTempo(buffer.sampleRate),getTopCandidate].reduce(function(state,fn){return fn(state)},source.buffer.getChannelData(0))}
+                // Ela usa `buffer.sampleRate` e `source.buffer.getChannelData(0)`.
+                // Isso só funciona se `buffer` já for um AudioBuffer, e não um ArrayBuffer.
+
+                // ENTÃO, A CORREÇÃO É MAIS SIMPLES:
+
+                // A `DetectBPM` deve receber o `AudioBuffer` que você já decodificou!
+                const bpm = await DetectBPM(audioBuffer); // <--- A GRANDE CORREÇÃO AQUI!
                 
                 cellAudioData[cellNumber].bpm = bpm.toFixed(2); 
                 console.log(`BPM detetado para célula ${cellNumber} (${file.name}): ${bpm.toFixed(2)}`);
@@ -623,7 +656,7 @@
                     currentBPMDisplay.textContent = bpm.toFixed(2);
                 }
             } catch (error) {
-                console.warn(`Não foi possível detetar BPM para o ficheiro ${file.name}:`, error);
+                console.warn(`Não foi possível detetar BPM para o ficheiro ${file.name}: ${error.message}`, error);
                 cellAudioData[cellNumber].bpm = null;
                 if (currentCell === cellNumber) {
                     currentBPMDisplay.textContent = '--';

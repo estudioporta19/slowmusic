@@ -1,1 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player de Áudio com Células</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a1a; /* Fundo preto mais suave */
+            min-height: 100vh;
+            padding: 20px;
+            color: white; /* Letras brancas */
+        }
+
+        .container {
+            max-width: 1300px; /* Aumentado para acomodar 5 colunas */
+            margin: 0 auto;
+            background: rgba(30, 30, 30, 0.9); /* Fundo do container mais escuro e opaco */
+            backdrop-filter: blur(5px); /* Efeito de blur mais subtil */
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); /* Sombra mais intensa */
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Borda suave */
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.8em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6); /* Sombra de texto mais escura */
+            color: #e0e0e0; /* Título ligeiramente acinzentado para contraste */
+        }
+
+        /* Estilos para o novo botão de upload global */
+        .global-upload-section {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: rgba(40, 40, 40, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-btn { /* Reutilizado para o botão global e os dentro das células */
+            background: linear-gradient(45deg, #e74c3c, #c0392b); /* Vermelho vibrante */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .upload-btn:hover {
+            background: linear-gradient(45deg, #c0392b, #a03025);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* 5 colunas responsivas */
+            gap: 15px; /* Espaçamento menor entre células */
+            margin-bottom: 30px;
+        }
+
+        .cell {
+            background: rgba(40, 40, 40, 0.8); /* Fundo da célula mais escuro */
+            border-radius: 12px; /* Cantos um pouco menos arredondados */
+            padding: 15px; /* Padding menor */
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Borda suave */
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex; /* Para centralizar conteúdo */
+            flex-direction: column;
+            justify-content: space-between; /* Espaçamento entre header, nome e botão */
+        }
+
+        .cell:hover {
+            background: rgba(60, 60, 60, 0.9); /* Escurece no hover */
+            transform: translateY(-3px); /* Efeito de elevação mais subtil */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); /* Sombra mais pronunciada */
+        }
+
+        .cell.active {
+            background: rgba(70, 70, 70, 0.95); /* Célula ativa mais escura */
+            border-color: #e74c3c; /* Borda vermelha para ativa */
+            box-shadow: 0 0 25px rgba(231, 76, 60, 0.5); /* Sombra vermelha para ativa */
+        }
+
+        .cell-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px; /* Margem menor */
+        }
+
+        .cell-number {
+            font-size: 1.1em; /* Tamanho da fonte ligeiramente menor */
+            font-weight: bold;
+            color: #e74c3c; /* Número da célula em vermelho */
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-name {
+            font-size: 0.85em; /* Fonte um pouco menor */
+            margin-bottom: 10px;
+            color: #ccc; /* Nome do ficheiro em cinzento claro */
+            word-break: break-all;
+            flex-grow: 1; /* Para ocupar espaço disponível */
+        }
+
+        .play-btn {
+            width: 100%;
+            background: linear-gradient(45deg, #e74c3c, #c0392b); /* Vermelho vibrante */
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 20px; /* Menos arredondado que o upload-btn */
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: bold;
+            margin-top: auto; /* Empurra o botão para o fundo da célula */
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .play-btn:hover {
+            background: linear-gradient(45deg, #c0392b, #a03025);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+        }
+
+        .play-btn:disabled {
+            background: #444; /* Cinzento escuro para disabled */
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            color: #888;
+        }
+
+        .controls {
+            background: rgba(40, 40, 40, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px; /* Margem aumentada */
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px; /* Slider mais alto */
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.2); /* Fundo do slider mais suave */
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px; /* Polegar maior */
+            height: 22px;
+            border-radius: 50%;
+            background: #e74c3c; /* Polegar vermelho */
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6); /* Sombra vermelha */
+        }
+
+        .slider::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #e74c3c;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+        }
+
+        .keyboard-shortcuts {
+            background: rgba(40, 40, 40, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .keyboard-shortcuts h3 {
+            color: #e0e0e0;
+            margin-bottom: 15px;
+        }
+
+        .shortcut-info {
+            display: flex;
+            flex-wrap: wrap; /* Para quebrar linha se não houver espaço */
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .shortcut-info span {
+            margin-right: 15px; /* Espaçamento entre os atalhos */
+            margin-bottom: 8px;
+        }
+
+        .key {
+            background: rgba(60, 60, 60, 0.8); /* Fundo da tecla mais escuro */
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #e0e0e0;
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .loop-indicator {
+            background: rgba(40, 40, 40, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loop-active {
+            background: rgba(231, 76, 60, 0.2); /* Fundo vermelho suave para loop ativo */
+            border: 2px solid #e74c3c; /* Borda vermelha para loop ativo */
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px; /* Barra de progresso mais alta */
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            margin: 10px 0;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #c0392b); /* Preenchimento vermelho */
+            border-radius: 5px;
+            transition: width 0.1s ease;
+        }
+
+        .loop-markers {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            background: rgba(255, 255, 0, 0.2); /* Marcador de loop amarelo suave */
+            border-radius: 5px;
+            display: none;
+            pointer-events: none;
+        }
+
+        .loop-markers::before,
+        .loop-markers::after {
+            content: '';
+            position: absolute;
+            top: -5px; /* Ajuste para que a linha fique fora da barra */
+            bottom: -5px; /* Ajuste para que a linha fique fora da barra */
+            width: 2px;
+            background-color: #f1c40f; /* Cor amarela mais vibrante para as linhas */
+            z-index: 1;
+        }
+
+        .loop-markers::before {
+            left: 0;
+        }
+
+        .loop-markers::after {
+            right: 0;
+        }
+
+        .loop-markers.active {
+            display: block;
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            margin-top: 5px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Player de Áudio com Células</h1>
+        
+        <div class="global-upload-section">
+            <input type="file" id="globalFileInput" accept="audio/mp3" multiple style="display: none;">
+            <button id="globalUploadBtn" class="upload-btn">
+                ⬆️ Carregar Múltiplos Ficheiros
+            </button>
+            <span id="globalUploadStatus" class="file-name"></span>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="speedSlider">Velocidade de Reprodução: <span id="speedValue">1.0x</span></label>
+                <input type="range" id="speedSlider" class="slider" min="0.25" max="2" step="0.25" value="1">
+            </div>
+            
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+                <div class="loop-markers" id="loopMarkers"></div>
+            </div>
+            
+            <div class="time-display">
+                <span id="currentTime">0:00</span>
+                <span id="totalTime">0:00</span>
+            </div>
+        </div>
+
+        <div class="loop-indicator" id="loopIndicator">
+            <div>🔄 Loop: <span id="loopStatus">Desativado</span></div>
+            <div id="loopPoints" style="display: none;">
+                Ponto A: <span id="pointA">--</span> | Ponto B: <span id="pointB">--</span>
+            </div>
+        </div>
+
+        <div class="keyboard-shortcuts">
+            <h3>⌨️ Atalhos do Teclado:</h3>
+            <div class="shortcut-info">
+                <span><span class="key">A</span> - Definir ponto inicial do loop</span>
+                <span><span class="key">B</span> - Definir ponto final do loop</span>
+                <span><span class="key">X</span> - Limpar loop</span>
+                <span><span class="key">Espaço</span> - Reproduzir/Pausar</span>
+            </div>
+        </div>
+
+        <div class="grid" id="cellGrid">
+            </div>
+
+        <audio id="audioPlayer" preload="metadata"></audio>
+    </div>
+
+    <script>
+        let currentAudio = null;
+        let audioFiles = {}; // Guarda { cellNumber: fileURL }
+        let currentCell = null; // Guarda o número da célula ativa
+        let loopPoints = { start: null, end: null };
+        let isLooping = false;
+        const audioPlayer = document.getElementById('audioPlayer');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const loopMarkers = document.getElementById('loopMarkers');
+        const globalFileInput = document.getElementById('globalFileInput');
+        const globalUploadBtn = document.getElementById('globalUploadBtn');
+        const globalUploadStatus = document.getElementById('globalUploadStatus');
+        const totalCells = 20; // Definir o número total de células
+
+        // Criar as células dinamicamente
+        function createCells() {
+            const grid = document.getElementById('cellGrid');
+            grid.innerHTML = ''; // Limpar células existentes
+            for (let i = 1; i <= totalCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.setAttribute('data-cell-number', i); // Atributo para identificar a célula
+                cell.innerHTML = `
+                    <div class="cell-header">
+                        <div class="cell-number">Célula ${i}</div>
+                    </div>
+                    <div class="file-name" id="fileName${i}">Nenhum ficheiro carregado</div>
+                    <button class="play-btn" id="playBtn${i}" disabled>
+                        ▶️ Reproduzir
+                    </button>
+                `;
+                grid.appendChild(cell);
+            }
+        }
+
+        // Acionar o input de ficheiro global
+        globalUploadBtn.addEventListener('click', () => {
+            globalFileInput.click();
+        });
+
+        // Lidar com o upload de múltiplos ficheiros
+        globalFileInput.addEventListener('change', (event) => {
+            const files = event.target.files;
+            if (files.length === 0) {
+                globalUploadStatus.textContent = 'Nenhum ficheiro selecionado.';
+                return;
+            }
+
+            globalUploadStatus.textContent = `A carregar ${files.length} ficheiro(s)...`;
+            
+            // Limpar ficheiros anteriores e desativar células
+            for (let i = 1; i <= totalCells; i++) {
+                // Revogar URL anterior para liberar memória
+                if (audioFiles[i]) {
+                    URL.revokeObjectURL(audioFiles[i]);
+                }
+                delete audioFiles[i];
+                document.getElementById(`fileName${i}`).textContent = 'Nenhum ficheiro carregado';
+                document.getElementById(`playBtn${i}`).disabled = true;
+                const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
+                if (cell) cell.classList.remove('active'); // Remover classe 'active'
+            }
+            
+            // Parar qualquer áudio a tocar
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+                currentCell = null;
+                clearLoop();
+                progressFill.style.width = '0%';
+                document.getElementById('currentTime').textContent = '0:00';
+                document.getElementById('totalTime').textContent = '0:00';
+            }
+
+            let filesLoaded = 0;
+            let cellIndex = 1;
+
+            // Distribuir ficheiros pelas células
+            for (let i = 0; i < files.length && cellIndex <= totalCells; i++) {
+                const file = files[i];
+
+                if (!file.type.startsWith('audio/')) {
+                    console.warn(`Ficheiro "${file.name}" não é um ficheiro de áudio. Ignorando.`);
+                    continue; // Pular para o próximo ficheiro
+                }
+
+                const fileURL = URL.createObjectURL(file);
+                audioFiles[cellIndex] = fileURL;
+                
+                document.getElementById(`fileName${cellIndex}`).textContent = file.name;
+                document.getElementById(`playBtn${cellIndex}`).disabled = false;
+                
+                filesLoaded++;
+                cellIndex++;
+            }
+            globalUploadStatus.textContent = `${filesLoaded} ficheiro(s) carregado(s) com sucesso.`;
+            if (filesLoaded === 0 && files.length > 0) {
+                 globalUploadStatus.textContent = 'Nenhum ficheiro de áudio válido carregado.';
+            }
+            event.target.value = ''; // Limpar o input para permitir carregar os mesmos ficheiros novamente
+        });
+
+        // Funções de reprodução de áudio
+        function playAudio(cellNumber) {
+            const newAudioSrc = audioFiles[cellNumber];
+
+            if (!newAudioSrc) { // Se não há ficheiro na célula
+                console.warn(`Nenhum ficheiro de áudio na célula ${cellNumber}.`);
+                return;
+            }
+
+            // Se o áudio atual é o mesmo, alternar play/pause
+            if (currentAudio && currentAudio.src === newAudioSrc) {
+                if (currentAudio.paused) {
+                    currentAudio.play();
+                    document.getElementById(`playBtn${cellNumber}`).textContent = '⏸️ Pausar';
+                } else {
+                    currentAudio.pause();
+                    document.getElementById(`playBtn${cellNumber}`).textContent = '▶️ Reproduzir';
+                }
+                return;
+            }
+
+            // Parar áudio anterior e desmarcar célula
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentCell) {
+                    document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
+                    document.getElementById(`playBtn${currentCell}`).textContent = '▶️ Reproduzir'; // Resetar texto do botão
+                }
+            }
+
+            clearLoop(); // Limpar loop ao trocar de ficheiro
+
+            audioPlayer.src = newAudioSrc;
+            audioPlayer.load();
+            audioPlayer.play();
+            currentAudio = audioPlayer;
+            currentCell = cellNumber;
+            
+            document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
+            document.getElementById(`playBtn${cellNumber}`).textContent = '⏸️ Pausar'; // Mudar texto para Pausar
+            
+            // Aplicar velocidade atual
+            const speed = document.getElementById('speedSlider').value;
+            audioPlayer.playbackRate = parseFloat(speed);
+        }
+
+        // Controle de velocidade
+        document.getElementById('speedSlider').addEventListener('input', function(e) {
+            const speed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = speed + 'x';
+            if (currentAudio) {
+                currentAudio.playbackRate = speed;
+            }
+        });
+
+        // Atalhos do teclado
+        document.addEventListener('keydown', function(e) {
+            if (!currentAudio) return;
+
+            switch(e.key.toLowerCase()) {
+                case 'a':
+                    setLoopPoint('start');
+                    break;
+                case 'b':
+                    setLoopPoint('end');
+                    break;
+                case 'x':
+                    clearLoop();
+                    break;
+                case ' ': // Espaço para play/pause
+                    e.preventDefault(); // Prevenir rolagem da página
+                    if (currentAudio) {
+                        if (currentAudio.paused) {
+                            currentAudio.play();
+                        } else {
+                            currentAudio.pause();
+                        }
+                        // Atualizar texto do botão da célula ativa
+                        if (currentCell) {
+                            const playBtn = document.getElementById(`playBtn${currentCell}`);
+                            playBtn.textContent = currentAudio.paused ? '▶️ Reproduzir' : '⏸️ Pausar';
+                        }
+                    }
+                    break;
+            }
+        });
+
+        function setLoopPoint(point) {
+            if (!currentAudio) return;
+            
+            const currentTime = currentAudio.currentTime;
+            loopPoints[point] = currentTime;
+            
+            if (point === 'start') {
+                document.getElementById('pointA').textContent = formatTime(currentTime);
+            } else {
+                document.getElementById('pointB').textContent = formatTime(currentTime);
+                // Quando define o ponto B, ativa o loop
+                if (loopPoints.start !== null) {
+                    activateLoop();
+                }
+            }
+            
+            updateLoopDisplay();
+        }
+
+        function activateLoop() {
+            if (loopPoints.start !== null && loopPoints.end !== null) {
+                // Garantir que o start é antes do end
+                if (loopPoints.start > loopPoints.end) {
+                    [loopPoints.start, loopPoints.end] = [loopPoints.end, loopPoints.start]; // Trocar os valores
+                    document.getElementById('pointA').textContent = formatTime(loopPoints.start);
+                    document.getElementById('pointB').textContent = formatTime(loopPoints.end);
+                }
+                isLooping = true;
+                updateLoopDisplay();
+                updateLoopMarkers();
+            }
+        }
+
+        function clearLoop() {
+            loopPoints.start = null;
+            loopPoints.end = null;
+            isLooping = false;
+            document.getElementById('pointA').textContent = '--';
+            document.getElementById('pointB').textContent = '--';
+            updateLoopDisplay();
+            loopMarkers.classList.remove('active');
+        }
+
+        function updateLoopDisplay() {
+            const loopIndicator = document.getElementById('loopIndicator');
+            const loopStatus = document.getElementById('loopStatus');
+            const loopPointsDiv = document.getElementById('loopPoints');
+            
+            if (isLooping) {
+                loopIndicator.classList.add('loop-active');
+                loopStatus.textContent = 'Ativado';
+                loopPointsDiv.style.display = 'block';
+            } else {
+                loopIndicator.classList.remove('loop-active');
+                loopStatus.textContent = 'Desativado';
+                loopPointsDiv.style.display = 'none';
+            }
+        }
+
+        function updateLoopMarkers() {
+            if (!currentAudio || !isLooping || !currentAudio.duration || isNaN(currentAudio.duration)) {
+                loopMarkers.classList.remove('active');
+                return;
+            }
+            
+            const duration = currentAudio.duration;
+            const startPercent = (loopPoints.start / duration) * 100;
+            const endPercent = (loopPoints.end / duration) * 100;
+            
+            loopMarkers.style.left = startPercent + '%';
+            loopMarkers.style.width = (endPercent - startPercent) + '%';
+            loopMarkers.classList.add('active');
+        }
+
+        // Atualizar barra de progresso
+        audioPlayer.addEventListener('timeupdate', function() {
+            if (audioPlayer.duration && !isNaN(audioPlayer.duration)) {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressFill.style.width = progress + '%';
+                
+                document.getElementById('currentTime').textContent = formatTime(audioPlayer.currentTime);
+                document.getElementById('totalTime').textContent = formatTime(audioPlayer.duration);
+                
+                // Verificar loop
+                if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
+                    if (audioPlayer.currentTime >= loopPoints.end) {
+                        audioPlayer.currentTime = loopPoints.start;
+                    }
+                }
+            }
+        });
+
+        // Carregar metadata do áudio
+        audioPlayer.addEventListener('loadedmetadata', function() {
+            updateLoopMarkers();
+            document.getElementById('totalTime').textContent = formatTime(audioPlayer.duration);
+        });
+
+        // Quando o áudio termina
+        audioPlayer.addEventListener('ended', function() {
+            if (currentCell) {
+                document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
+                document.getElementById(`playBtn${currentCell}`).textContent = '▶️ Reproduzir';
+            }
+            currentAudio = null;
+            currentCell = null;
+            clearLoop();
+            progressFill.style.width = '0%';
+            document.getElementById('currentTime').textContent = '0:00';
+        });
+
+        // Clique na barra de progresso para navegar
+        progressBar.addEventListener('click', function(e) {
+            if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) return;
+            
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percentage = clickX / rect.width;
+            const newTime = percentage * currentAudio.duration;
+            
+            currentAudio.currentTime = newTime;
+        });
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Delegação de eventos para os botões de reprodução das células
+        document.getElementById('cellGrid').addEventListener('click', function(event) {
+            const target = event.target;
+            if (target.classList.contains('play-btn')) {
+                const cellElement = target.closest('.cell');
+                if (cellElement) {
+                    const cellNumber = parseInt(cellElement.dataset.cellNumber);
+                    playAudio(cellNumber);
+                }
+            }
+        });
+
+        // Inicializar
+        createCells();
+        updateLoopDisplay();
+    </script>
+</body>
+</html>

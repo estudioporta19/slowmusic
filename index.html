@@ -383,7 +383,7 @@
         }
     </style>
 
-    <script src="bpm-detective.min.js" defer></script>
+    <script src="./js/bpm-detective.min.js" defer></script> 
 </head>
 <body>
     <div class="container">
@@ -580,6 +580,7 @@
                     
                     filesLoaded++;
 
+                    // Chamar a deteção de BPM
                     detectBPMForCell(cellIndex, file);
 
                 } catch (error) {
@@ -597,9 +598,9 @@
         });
 
         async function detectBPMForCell(cellNumber, file) {
-            // Verifica se a biblioteca BPMDetective está disponível
-            if (typeof BPMDetective === 'undefined') {
-                console.warn('BPMDetective library not found. Cannot detect BPM.');
+            // VERIFICA SE A BIBLIOTECA DetectBPM ESTÁ DISPONÍVEL
+            if (typeof DetectBPM === 'undefined') {
+                console.warn('DetectBPM library not found. Cannot detect BPM.');
                 cellAudioData[cellNumber].bpm = null;
                 if (currentCell === cellNumber) {
                     currentBPMDisplay.textContent = '--';
@@ -609,8 +610,10 @@
 
             console.log(`A iniciar deteção de BPM para célula ${cellNumber} (${file.name})...`);
             try {
+                // Ler o ficheiro como um ArrayBuffer
                 const arrayBuffer = await file.arrayBuffer();
-                const bpm = await BPMDetective.run(arrayBuffer); 
+                // Passar o ArrayBuffer para DetectBPM.run
+                const bpm = await DetectBPM.run(arrayBuffer); 
                 
                 cellAudioData[cellNumber].bpm = bpm.toFixed(2); 
                 console.log(`BPM detetado para célula ${cellNumber} (${file.name}): ${bpm.toFixed(2)}`);
@@ -660,6 +663,7 @@
             audioPlayerHtml.pause();
             audioPlayerHtml.currentTime = 0;
             currentAudioBuffer = null;
+            // Não resetar currentCell aqui, para permitir re-play do mesmo item
             
             progressFill.style.width = '0%';
             document.getElementById('currentTime').textContent = '0:00';
@@ -668,6 +672,7 @@
             stopBPMUpdate(); 
             currentBPMDisplay.textContent = '--'; 
 
+            // Desativar a célula visualmente se houver uma ativa
             document.querySelectorAll('.cell.active').forEach(cell => cell.classList.remove('active'));
         }
 
@@ -675,6 +680,7 @@
             initAudioContext(); 
             if (audioContext.state === 'suspended') {
                 audioContext.resume().then(() => {
+                    // Tentar reproduzir novamente depois de retomar o contexto
                     playAudioInternal(cellNumber, startTime);
                 }).catch(e => console.error("Erro ao retomar AudioContext:", e));
             } else {
@@ -686,16 +692,18 @@
             const cellData = cellAudioData[cellNumber];
             if (!cellData || !cellData.audioBuffer) {
                 console.warn(`Nenhum AudioBuffer na célula ${cellNumber}.`);
-                stopCurrentAudio(); 
+                stopCurrentAudio(); // Para a reprodução e limpa o UI
                 return;
             }
             const audioBuffer = cellData.audioBuffer;
 
+            // Se o áudio já estiver a tocar e for o mesmo ficheiro, alternar play/pause
             if (currentCell === cellNumber && sourceNode && audioContext.state === 'running') {
                 pausePlayback(); 
                 return;
             }
             
+            // Só parar completamente o áudio se for uma nova célula
             if (currentCell !== cellNumber) {
                 stopCurrentAudio(); 
                 clearLoop(); 
@@ -746,6 +754,7 @@
                     playAudio(currentCell, sourceNode ? sourceNode.lastOffset : 0); 
                 }).catch(e => console.error("Erro ao retomar AudioContext para resumePlayback:", e));
             } else if (currentCell && cellAudioData[currentCell] && !sourceNode) {
+                 // Caso o áudio tenha terminado mas a célula ainda esteja selecionada
                  playAudio(currentCell, 0);
             }
         }
@@ -758,6 +767,7 @@
             if (progressInterval) clearInterval(progressInterval);
 
             if (audioContext.state === 'suspended') {
+                 // Tenta retomar se estiver suspenso para que o tempo do contexto avance
                  audioContext.resume();
             }
 
@@ -781,12 +791,14 @@
                     
                     if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
                         if (currentTheoreticalTime >= loopPoints.end) {
+                            // Parar o nó atual e iniciar um novo do ponto de loop
                             sourceNode.stop(); 
                             sourceNode.disconnect();
-                            sourceNode = null; 
+                            sourceNode = null; // Resetar para que playAudio crie um novo
                             playAudio(currentCell, loopPoints.start); 
                         }
                     } else if (currentTheoreticalTime >= currentAudioBuffer.duration) {
+                        // Se não há loop e o áudio termina naturalmente
                         handleAudioEnded();
                     }
                 } else {
@@ -828,6 +840,8 @@
             currentBPMDisplay.textContent = effectiveBPM.toFixed(2);
             
             bpmUpdateInterval = setInterval(() => {
+                // Não é necessário recalcular o effectiveBPM aqui, pois o evento 'input' do slider já o faz
+                // E queremos que ele "pisque" com o valor atual a cada 4 tempos
                 if (currentCell && cellAudioData[currentCell] && cellAudioData[currentCell].bpm !== null) {
                     const currentSpeedDuringUpdate = parseFloat(speedSlider.value);
                     const updatedEffectiveBPM = parseFloat(cellAudioData[currentCell].bpm) * currentSpeedDuringUpdate;
@@ -860,7 +874,7 @@
                 const baseBPM = parseFloat(cellAudioData[currentCell].bpm);
                 const effectiveBPM = baseBPM * speed;
                 currentBPMDisplay.textContent = effectiveBPM.toFixed(2);
-                startBPMUpdateInterval(); 
+                startBPMUpdateInterval(); // Reinicia o intervalo para refletir a nova velocidade
             } else {
                 currentBPMDisplay.textContent = '--';
             }

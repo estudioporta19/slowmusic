@@ -286,7 +286,7 @@
         <h1>🎵 Slow Music!</h1>
         
         <div class="global-upload-section">
-            <input type="file" id="globalFileInput" accept="audio/mp3" multiple style="display: none;">
+            <input type="file" id="globalFileInput" accept="audio/mp3, audio/wav, audio/*" multiple style="display: none;">
             <button id="globalUploadBtn" class="upload-btn">
                 ⬆️ Carregar Múltiplos Ficheiros
             </button>
@@ -420,6 +420,7 @@
             for (let i = 0; i < files.length && cellIndex <= totalCells; i++) {
                 const file = files[i];
 
+                // A verificação é um pouco mais abrangente agora, usando file.type.startsWith('audio/')
                 if (!file.type.startsWith('audio/')) {
                     console.warn(`Ficheiro "${file.name}" não é um ficheiro de áudio. Ignorando.`);
                     continue; // Pular para o próximo ficheiro

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player de Áudio Compacto</title>
+    <title>Slow Music!</title>
     <style>
         /* CSS será inserido aqui */
         * {
@@ -13,264 +13,235 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte mais formal */
-            background-color: #121212; /* Fundo ainda mais escuro */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000000; /* Fundo preto puro */
             min-height: 100vh;
-            padding: 15px; /* Padding reduzido */
-            color: #E0E0E0; /* Letras brancas suaves */
+            padding: 15px;
+            color: #F0F0F0; /* Letras brancas para alto contraste */
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Alinhar ao topo */
+            align-items: flex-start;
         }
 
         .container {
-            max-width: 1000px; /* Largura máxima reduzida para mais compacto */
+            max-width: 1000px;
             margin: 0 auto;
-            background: #1E1E1E; /* Fundo do container escuro */
-            border-radius: 8px; /* Cantos menos arredondados */
-            padding: 20px; /* Padding reduzido */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); /* Sombra mais subtil */
-            border: 1px solid #333; /* Borda mais discreta */
-            width: 100%; /* Ocupar largura disponível até o max-width */
+            background: #101010; /* Fundo do container ligeiramente menos preto */
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6); /* Sombra mais pronunciada no preto */
+            border: 1px solid #303030; /* Borda escura */
+            width: 100%;
         }
 
         h1 {
             text-align: center;
-            margin-bottom: 25px; /* Margem reduzida */
-            font-size: 2em; /* Tamanho da fonte reduzido */
-            color: #F0F0F0;
-            text-shadow: none; /* Remover sombra do texto */
+            margin-bottom: 25px;
+            font-size: 2.5em; /* Tamanho ligeiramente maior para o título */
+            color: #E0E0E0;
+            font-weight: 300; /* Mais leve */
+            letter-spacing: 2px; /* Espaçamento entre letras */
+            text-transform: uppercase; /* Maiúsculas */
+            border-bottom: 1px solid #303030; /* Linha discreta abaixo do título */
+            padding-bottom: 10px;
         }
 
         .global-upload-section {
             text-align: center;
-            margin-bottom: 20px; /* Margem reduzida */
-            padding: 10px; /* Padding reduzido */
-            background: #282828;
-            border-radius: 6px; /* Cantos menos arredondados */
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #1A1A1A; /* Fundo da seção de upload */
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
         }
 
         .upload-btn, .preset-btn {
-            background: #8B0000; /* Vermelho escuro */
+            background: #800000; /* Vermelho escuro profundo */
             color: white;
             border: none;
-            padding: 8px 18px; /* Padding reduzido */
-            border-radius: 4px; /* Cantos mais retos */
+            padding: 8px 18px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 0.9em; /* Tamanho da fonte reduzido */
-            font-weight: 600; /* Mais negrito */
+            font-size: 0.9em;
+            font-weight: 600;
             transition: background-color 0.2s ease, transform 0.2s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            margin: 0 5px; /* Espaçamento entre botões */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            margin: 0 5px;
         }
 
         .upload-btn:hover, .preset-btn:hover {
-            background: #A00000; /* Vermelho ligeiramente mais claro no hover */
-            transform: translateY(-1px); /* Efeito de elevação mínimo */
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+            background: #B00000; /* Vermelho ligeiramente mais claro no hover */
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
         }
 
         .file-name {
-            font-size: 0.8em; /* Fonte ainda menor */
+            font-size: 0.8em;
             color: #B0B0B0;
             margin-left: 10px;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Células ligeiramente menores */
-            gap: 10px; /* Espaçamento ainda menor */
-            margin-bottom: 25px; /* Margem reduzida */
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            margin-bottom: 25px;
         }
 
         .cell {
-            background: #282828; /* Fundo da célula escuro */
-            border-radius: 6px; /* Cantos menos arredondados */
-            padding: 12px; /* Padding reduzido */
-            border: 1px solid #444; /* Borda mais escura */
-            transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            background: #1A1A1A; /* Fundo da célula */
+            border-radius: 6px;
+            padding: 12px;
+            border: 1px solid #303030;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            min-height: 100px; /* Altura mínima para células */
+            justify-content: center; /* Centralizar conteúdo verticalmente */
+            align-items: center; /* Centralizar conteúdo horizontalmente */
+            min-height: 80px; /* Altura mínima reduzida */
+            cursor: pointer; /* Indicar que a célula é clicável */
+            text-align: center; /* Centralizar texto */
         }
 
         .cell:hover {
-            background: #3A3A3A; /* Escurece no hover */
-            transform: none; /* Remover elevação no hover */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            background: #282828; /* Escurece no hover */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
         }
 
         .cell.active {
-            background: #3A3A3A; /* Célula ativa mais escura */
-            border-color: #8B0000; /* Borda vermelha escura para ativa */
-            box-shadow: 0 0 15px rgba(139, 0, 0, 0.4); /* Sombra vermelha mais subtil */
+            background: #282828; /* Célula ativa mais escura */
+            border-color: #800000; /* Borda vermelho escuro para ativa */
+            box-shadow: 0 0 15px rgba(128, 0, 0, 0.5); /* Sombra vermelha mais subtil */
         }
 
-        .cell-header {
-            margin-bottom: 8px; /* Margem menor */
+        /* Removido .cell-header e .cell-number pois não são mais necessários */
+
+        .cell .file-name { /* Ajuste para o nome do ficheiro dentro da célula */
+            font-size: 0.85em; /* Ligeiramente maior para ser mais legível */
+            margin-bottom: 0; /* Remover margem inferior */
+            color: #E0E0E0; /* Cor mais clara para alto contraste */
+            word-break: break-word; /* Quebra de palavra para nomes longos */
+            flex-grow: 0; /* Não crescer, apenas ocupar o espaço necessário */
         }
 
-        .cell-number {
-            font-size: 1em; /* Tamanho da fonte ligeiramente menor */
-            font-weight: bold;
-            color: #8B0000; /* Número da célula em vermelho escuro */
-        }
-
-        .file-name {
-            font-size: 0.75em; /* Fonte ainda menor */
-            margin-bottom: 8px;
-            color: #B0B0B0;
-            word-break: break-all;
-            flex-grow: 1;
-        }
-
-        .play-btn {
-            width: 100%;
-            background: #8B0000; /* Vermelho escuro */
-            color: white;
-            border: none;
-            padding: 8px; /* Padding reduzido */
-            border-radius: 4px; /* Cantos mais retos */
-            cursor: pointer;
-            font-size: 0.85em; /* Tamanho da fonte reduzido */
-            font-weight: 600;
-            margin-top: auto;
-            transition: background-color 0.2s ease, transform 0.2s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .play-btn:hover {
-            background: #A00000;
-            transform: translateY(-1px);
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .play-btn:disabled {
-            background: #333; /* Cinzento escuro para disabled */
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-            color: #777;
-        }
+        /* Removido .play-btn pois não há mais um botão explícito */
 
         .controls {
-            background: #282828;
+            background: #1A1A1A;
             border-radius: 6px;
-            padding: 15px; /* Padding reduzido */
+            padding: 15px;
             margin-bottom: 20px;
-            border: 1px solid #444;
+            border: 1px solid #303030;
         }
 
         .control-group {
-            margin-bottom: 12px; /* Margem reduzida */
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
-            flex-wrap: wrap; /* Para quebrar linha em telas pequenas */
+            flex-wrap: wrap;
         }
 
         .control-group label {
-            margin-bottom: 0; /* Remover margem inferior */
+            margin-bottom: 0;
             margin-right: 10px;
-            font-weight: normal; /* Menos negrito */
+            font-weight: normal;
             color: #E0E0E0;
-            white-space: nowrap; /* Não quebrar a linha */
+            white-space: nowrap;
         }
 
         .speed-controls {
             display: flex;
             align-items: center;
-            flex-grow: 1; /* Ocupar espaço disponível */
+            flex-grow: 1;
             flex-wrap: wrap;
         }
 
         .slider {
-            width: 100%; /* Ocupar a largura total disponível */
-            height: 6px; /* Slider mais fino */
+            width: 100%;
+            height: 6px;
             border-radius: 3px;
-            background: #444; /* Fundo do slider mais escuro */
+            background: #404040; /* Fundo do slider mais escuro */
             outline: none;
             -webkit-appearance: none;
-            margin-right: 10px; /* Espaçamento entre slider e botões */
+            margin-right: 10px;
             flex-grow: 1;
         }
 
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 18px; /* Polegar menor */
+            width: 18px;
             height: 18px;
             border-radius: 50%;
-            background: #8B0000; /* Polegar vermelho escuro */
+            background: #800000; /* Polegar vermelho escuro */
             cursor: pointer;
-            box-shadow: 0 0 8px rgba(139, 0, 0, 0.5); /* Sombra mais subtil */
+            box-shadow: 0 0 8px rgba(128, 0, 0, 0.6); /* Sombra mais visível */
         }
 
         .slider::-moz-range-thumb {
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            background: #8B0000;
+            background: #800000;
             cursor: pointer;
             border: none;
-            box-shadow: 0 0 8px rgba(139, 0, 0, 0.5);
+            box-shadow: 0 0 8px rgba(128, 0, 0, 0.6);
         }
 
         .keyboard-shortcuts {
-            background: #282828;
+            background: #1A1A1A;
             border-radius: 6px;
             padding: 15px;
             margin-bottom: 20px;
-            border: 1px solid #444;
+            border: 1px solid #303030;
         }
 
         .keyboard-shortcuts h3 {
             color: #F0F0F0;
             margin-bottom: 12px;
-            font-size: 1.1em; /* Título menor */
+            font-size: 1.1em;
         }
 
         .shortcut-info {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px; /* Espaçamento entre os atalhos */
-            font-size: 0.85em; /* Fonte menor */
+            gap: 10px;
+            font-size: 0.85em;
         }
         
         .key {
-            background: #444; /* Fundo da tecla mais escuro */
-            padding: 3px 8px; /* Padding reduzido */
+            background: #404040; /* Fundo da tecla mais escuro */
+            padding: 3px 8px;
             border-radius: 3px;
-            font-family: 'Consolas', monospace; /* Fonte mais técnica */
+            font-family: 'Consolas', monospace;
             font-weight: bold;
-            color: #E0E0E0;
-            box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+            color: #F0F0F0;
+            box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         .loop-indicator {
-            background: #282828;
+            background: #1A1A1A;
             border-radius: 6px;
-            padding: 12px; /* Padding reduzido */
+            padding: 12px;
             text-align: center;
             margin-bottom: 20px;
-            border: 1px solid #444;
-            font-size: 0.9em; /* Fonte menor */
+            border: 1px solid #303030;
+            font-size: 0.9em;
         }
 
         .loop-active {
-            background: rgba(139, 0, 0, 0.2); /* Fundo vermelho escuro suave para loop ativo */
-            border: 1px solid #8B0000; /* Borda vermelha escura para loop ativo */
+            background: rgba(128, 0, 0, 0.2); /* Fundo vermelho escuro suave para loop ativo */
+            border: 1px solid #800000; /* Borda vermelho escuro para loop ativo */
         }
 
         .progress-bar {
             width: 100%;
-            height: 8px; /* Barra de progresso mais fina */
-            background: #444;
+            height: 8px;
+            background: #404040;
             border-radius: 4px;
-            margin: 8px 0; /* Margem reduzida */
+            margin: 8px 0;
             cursor: pointer;
             position: relative;
             overflow: hidden;
@@ -278,7 +249,7 @@
 
         .progress-fill {
             height: 100%;
-            background: #8B0000; /* Preenchimento vermelho escuro */
+            background: #800000; /* Preenchimento vermelho escuro */
             border-radius: 4px;
             transition: width 0.1s ease;
         }
@@ -287,7 +258,7 @@
             position: absolute;
             top: 0;
             height: 100%;
-            background: rgba(255, 255, 0, 0.15); /* Marcador de loop amarelo mais suave */
+            background: rgba(255, 255, 0, 0.15);
             border-radius: 4px;
             display: none;
             pointer-events: none;
@@ -297,10 +268,10 @@
         .loop-markers::after {
             content: '';
             position: absolute;
-            top: -3px; /* Ajuste para que a linha fique fora da barra */
-            bottom: -3px; /* Ajuste para que a linha fique fora da barra */
-            width: 1px; /* Linha mais fina */
-            background-color: #FFD700; /* Cor amarela dourada para as linhas */
+            top: -3px;
+            bottom: -3px;
+            width: 1px;
+            background-color: #FFD700;
             z-index: 1;
         }
 
@@ -311,7 +282,7 @@
         .time-display {
             display: flex;
             justify-content: space-between;
-            font-size: 0.8em; /* Fonte menor */
+            font-size: 0.8em;
             margin-top: 5px;
             color: #B0B0B0;
         }
@@ -319,7 +290,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎵 Player de Áudio</h1>
+        <h1>Slow Music!</h1>
         
         <div class="global-upload-section">
             <input type="file" id="globalFileInput" accept="audio/mp3,audio/wav,audio/ogg" multiple style="display: none;">
@@ -401,13 +372,7 @@
                 cell.className = 'cell';
                 cell.setAttribute('data-cell-number', i); // Atributo para identificar a célula
                 cell.innerHTML = `
-                    <div class="cell-header">
-                        <div class="cell-number">Célula ${i}</div>
-                    </div>
                     <div class="file-name" id="fileName${i}">Nenhum ficheiro carregado</div>
-                    <button class="play-btn" id="playBtn${i}" disabled>
-                        ▶️ Reproduzir
-                    </button>
                 `;
                 grid.appendChild(cell);
             }
@@ -436,9 +401,9 @@
                 }
                 delete audioFiles[i];
                 document.getElementById(`fileName${i}`).textContent = 'Nenhum ficheiro carregado';
-                document.getElementById(`playBtn${i}`).disabled = true;
                 const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
                 if (cell) cell.classList.remove('active'); // Remover classe 'active'
+                cell.classList.remove('has-file'); // Remover classe que indica que tem ficheiro
             }
             
             // Parar qualquer áudio a tocar
@@ -470,7 +435,7 @@
                 audioFiles[cellIndex] = fileURL;
                 
                 document.getElementById(`fileName${cellIndex}`).textContent = file.name;
-                document.getElementById(`playBtn${cellIndex}`).disabled = false;
+                document.querySelector(`.cell[data-cell-number="${cellIndex}"]`).classList.add('has-file'); // Adicionar classe para indicar que tem ficheiro
                 
                 filesLoaded++;
                 cellIndex++;
@@ -495,11 +460,10 @@
             if (currentAudio && currentAudio.src === newAudioSrc) {
                 if (currentAudio.paused) {
                     currentAudio.play();
-                    document.getElementById(`playBtn${cellNumber}`).textContent = '⏸️ Pausar';
                 } else {
                     currentAudio.pause();
-                    document.getElementById(`playBtn${cellNumber}`).textContent = '▶️ Reproduzir';
                 }
+                // Não há botão para atualizar texto, a classe 'active' já indica o estado
                 return;
             }
 
@@ -509,7 +473,6 @@
                 currentAudio.currentTime = 0;
                 if (currentCell) {
                     document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
-                    document.getElementById(`playBtn${currentCell}`).textContent = '▶️ Reproduzir'; // Resetar texto do botão
                 }
             }
 
@@ -522,7 +485,6 @@
             currentCell = cellNumber;
             
             document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
-            document.getElementById(`playBtn${cellNumber}`).textContent = '⏸️ Pausar'; // Mudar texto para Pausar
             
             // Aplicar velocidade atual
             const speed = speedSlider.value;
@@ -578,11 +540,7 @@
                         } else {
                             currentAudio.pause();
                         }
-                        // Atualizar texto do botão da célula ativa
-                        if (currentCell) {
-                            const playBtn = document.getElementById(`playBtn${currentCell}`);
-                            playBtn.textContent = currentAudio.paused ? '▶️ Reproduzir' : '⏸️ Pausar';
-                        }
+                        // Apenas a classe 'active' na célula indica o estado
                     }
                     break;
             }
@@ -690,7 +648,6 @@
         audioPlayer.addEventListener('ended', function() {
             if (currentCell) {
                 document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
-                document.getElementById(`playBtn${currentCell}`).textContent = '▶️ Reproduzir';
             }
             currentAudio = null;
             currentCell = null;
@@ -718,15 +675,15 @@
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // Delegação de eventos para os botões de reprodução das células
+        // Delegação de eventos para as células (agora toda a célula é clicável)
         document.getElementById('cellGrid').addEventListener('click', function(event) {
             const target = event.target;
-            if (target.classList.contains('play-btn')) {
-                const cellElement = target.closest('.cell');
-                if (cellElement) {
-                    const cellNumber = parseInt(cellElement.dataset.cellNumber);
-                    playAudio(cellNumber);
-                }
+            // Encontrar a célula pai mais próxima que tenha o atributo data-cell-number
+            const cellElement = target.closest('.cell[data-cell-number]');
+            
+            if (cellElement) {
+                const cellNumber = parseInt(cellElement.dataset.cellNumber);
+                playAudio(cellNumber);
             }
         });
 

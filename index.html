@@ -251,6 +251,13 @@
             border: 2px solid #e74c3c; /* Borda vermelha para loop ativo */
         }
 
+        /* Novo estilo para o destaque temporário dos pontos de loop */
+        .loop-point-highlight {
+            color: #f1c40f; /* Cor amarela para destaque */
+            font-weight: bold;
+            transition: color 0.3s ease-in-out, font-weight 0.3s ease-in-out;
+        }
+
         .progress-bar {
             width: 100%;
             height: 10px; /* Barra de progresso mais alta */
@@ -265,7 +272,7 @@
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #e74c3c, #c0392b); /* Preenchimento vermelho */
-            border-radius: 5_px;
+            border-radius: 5px;
             transition: width 0.1s ease;
         }
 
@@ -589,10 +596,25 @@
             const currentTime = currentAudio.currentTime;
             loopPoints[point] = currentTime;
             
+            const pointAElement = document.getElementById('pointA');
+            const pointBElement = document.getElementById('pointB');
+
             if (point === 'start') {
-                document.getElementById('pointA').textContent = formatTime(currentTime);
+                pointAElement.textContent = formatTime(currentTime);
+                // Adicionar classe de destaque
+                pointAElement.classList.add('loop-point-highlight');
+                // Remover classe de destaque após um breve período
+                setTimeout(() => {
+                    pointAElement.classList.remove('loop-point-highlight');
+                }, 800); // 800ms = 0.8 segundos para o destaque
             } else {
-                document.getElementById('pointB').textContent = formatTime(currentTime);
+                pointBElement.textContent = formatTime(currentTime);
+                // Adicionar classe de destaque ao Ponto B também (opcional, mas faz sentido para consistência)
+                pointBElement.classList.add('loop-point-highlight');
+                setTimeout(() => {
+                    pointBElement.classList.remove('loop-point-highlight');
+                }, 800);
+                
                 // Quando define o ponto B, ativa o loop
                 if (loopPoints.start !== null) {
                     activateLoop();

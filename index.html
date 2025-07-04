@@ -55,7 +55,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
         }
 
-        .upload-btn, .preset-btn {
+        .upload-btn, .preset-btn, .clear-btn {
             background: #800000; /* Vermelho escuro profundo */
             color: white;
             border: none;
@@ -69,10 +69,16 @@
             margin: 0 5px;
         }
 
-        .upload-btn:hover, .preset-btn:hover {
+        .upload-btn:hover, .preset-btn:hover, .clear-btn:hover {
             background: #B00000; /* Vermelho ligeiramente mais claro no hover */
             transform: translateY(-1px);
             box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .upload-instructions {
+            font-size: 0.8em;
+            color: #A0A0A0;
+            margin-top: 10px;
         }
 
         .grid {
@@ -159,22 +165,19 @@
             gap: 5px; /* Espaço entre slider/input e botões */
         }
 
-        .slider, .pitch-input { /* Estilo unificado para slider e input de pitch */
+        .slider { /* Estilo para o slider de velocidade */
             width: 100%; /* Ocupar a largura total disponível */
             height: 6px; /* Slider mais fino */
             border-radius: 3px;
-            background: #404040; /* Fundo do slider/input mais escuro */
+            background: #404040; /* Fundo do slider mais escuro */
             outline: none;
             -webkit-appearance: none;
             flex-grow: 1;
         }
         
-        .slider::-webkit-slider-thumb, .pitch-input::-webkit-outer-spin-button, .pitch-input::-webkit-inner-spin-button {
+        .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-        }
-
-        .slider::-webkit-slider-thumb {
             width: 18px; /* Polegar menor */
             height: 18px;
             border-radius: 50%;
@@ -195,7 +198,7 @@
 
         /* Estilos específicos para o input de pitch */
         .pitch-input {
-            width: 60px; /* Largura fixa para o input de número */
+            width: 50px; /* Largura compacta para o input de número */
             padding: 5px;
             text-align: center;
             border: 1px solid #505050;
@@ -203,13 +206,21 @@
             background-color: #303030;
             border-radius: 4px;
             font-size: 0.9em;
+            /* Remover setas default em Webkit (Chrome, Safari) */
+            -webkit-appearance: none;
+            -moz-appearance: textfield; /* Para Firefox */
+        }
+
+        /* Remover setas default em IE/Edge */
+        .pitch-input::-ms-clear, .pitch-input::-ms-reveal {
+            display: none;
         }
 
         .pitch-btn {
             background: #600000; /* Vermelho ligeiramente diferente para botões de pitch */
             color: white;
             border: none;
-            padding: 6px 12px; /* Padding menor */
+            padding: 6px 10px; /* Padding menor */
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.85em;
@@ -220,6 +231,26 @@
 
         .pitch-btn:hover {
             background: #800000;
+            transform: translateY(-1px);
+        }
+        
+        /* Botão para resetar o pitch */
+        .pitch-reset-btn {
+            background: #404040; /* Cinza escuro */
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            margin-left: 5px; /* Espaço para o botão de reset */
+        }
+
+        .pitch-reset-btn:hover {
+            background: #606060;
             transform: translateY(-1px);
         }
 
@@ -283,7 +314,7 @@
         .progress-fill {
             height: 100%;
             background: #800000; /* Preenchimento vermelho escuro */
-            border-radius: 4px;
+            border-radius: 44px;
             transition: width 0.1s ease;
         }
 
@@ -295,11 +326,9 @@
             border-radius: 4px;
             display: none;
             pointer-events: none;
-            /* Transições para o marcador de loop */
             transition: left 0.1s linear, width 0.1s linear; 
         }
 
-        /* Estilos para as linhas verticais do loop. Precisam de estar aqui no CSS */
         .loop-markers::before,
         .loop-markers::after {
             content: '';
@@ -341,6 +370,12 @@
             <button id="globalUploadBtn" class="upload-btn">
                 ⬆️ Carregar Múltiplos Ficheiros
             </button>
+            <button id="clearAllCellsBtn" class="clear-btn">
+                🗑️ Limpar Todas as Células
+            </button>
+            <div class="upload-instructions">
+                Para selecionar vários ficheiros: <span class="key">Shift + Clique</span> ou <span class="key">Ctrl/Cmd + Clique</span>.
+            </div>
             <span id="globalUploadStatus" class="file-name"></span>
         </div>
 
@@ -361,6 +396,7 @@
                         <button id="decreasePitchBtn" class="pitch-btn">-</button>
                         <input type="number" id="pitchInput" class="pitch-input" min="-12" max="12" step="1" value="0">
                         <button id="increasePitchBtn" class="pitch-btn">+</button>
+                        <button id="resetPitchBtn" class="pitch-reset-btn">Reset</button>
                     </div>
                 </div>
             </div>
@@ -419,16 +455,16 @@
         const speedValueSpan = document.getElementById('speedValue');
         const presetHalfSpeedBtn = document.getElementById('presetHalfSpeedBtn');
         const presetNormalSpeedBtn = document.getElementById('presetNormalSpeedBtn');
+        const clearAllCellsBtn = document.getElementById('clearAllCellsBtn'); // Novo botão
 
-        // Novos elementos para controlo de pitch
+        // Elementos para controlo de pitch
         let audioContext = null;
-        let sourceNode = null;
-        let semitoneShifter = null; // Node para controlo de pitch
+        let sourceNode = null; // SourceNode agora será recriado cada vez que o áudio toca
         const pitchInput = document.getElementById('pitchInput');
         const pitchValueSpan = document.getElementById('pitchValue');
         const increasePitchBtn = document.getElementById('increasePitchBtn');
         const decreasePitchBtn = document.getElementById('decreasePitchBtn');
-
+        const resetPitchBtn = document.getElementById('resetPitchBtn'); // Novo botão reset pitch
 
         const totalCells = 20; // Definir o número total de células
 
@@ -436,13 +472,6 @@
         function initAudioContext() {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                // Criar um BiquadFilterNode para usar como shifter de pitch
-                semitoneShifter = audioContext.createBiquadFilter();
-                semitoneShifter.type = "allpass"; // Tipo de filtro que pode ser usado para pitch shifting
-                semitoneShifter.Q.value = 1; // Um valor de Q de 1 funciona bem para pitch shifting.
-                
-                // Conectar o shifter ao destino final
-                semitoneShifter.connect(audioContext.destination);
             }
         }
 
@@ -477,36 +506,9 @@
             globalUploadStatus.textContent = `A carregar ${files.length} ficheiro(s)...`;
             
             // Limpar ficheiros anteriores e desativar células
-            for (let i = 1; i <= totalCells; i++) {
-                // Revogar URL anterior para liberar memória
-                if (audioFiles[i]) {
-                    URL.revokeObjectURL(audioFiles[i]);
-                }
-                delete audioFiles[i];
-                document.getElementById(`fileName${i}`).textContent = 'Nenhum ficheiro carregado';
-                const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
-                if (cell) cell.classList.remove('active'); // Remover classe 'active'
-                cell.classList.remove('has-file'); // Remover classe que indica que tem ficheiro
-            }
+            // e parar áudio se estiver a tocar
+            clearAllCells(); // Reutiliza a função de limpar tudo
             
-            // Parar qualquer áudio a tocar
-            if (currentAudio) {
-                // Se estiver a usar AudioContext, precisa de parar e fechar a fonte
-                if (sourceNode) {
-                    sourceNode.stop();
-                    sourceNode.disconnect();
-                    sourceNode = null;
-                }
-                audioPlayer.pause();
-                audioPlayer.currentTime = 0;
-                currentAudio = null;
-                currentCell = null;
-                clearLoop();
-                progressFill.style.width = '0%';
-                document.getElementById('currentTime').textContent = '0:00';
-                document.getElementById('totalTime').textContent = '0:00';
-            }
-
             let filesLoaded = 0;
             let cellIndex = 1;
 
@@ -536,6 +538,43 @@
             event.target.value = ''; // Limpar o input para permitir carregar os mesmos ficheiros novamente
         });
 
+        // Nova função para limpar todas as células
+        function clearAllCells() {
+            // Parar qualquer áudio a tocar
+            if (currentAudio) {
+                audioPlayer.pause();
+                audioPlayer.currentTime = 0;
+            }
+            if (sourceNode) {
+                sourceNode.stop();
+                sourceNode.disconnect();
+                sourceNode = null;
+            }
+            currentAudio = null;
+            currentCell = null;
+            clearLoop(); // Limpa o loop
+            resetPitch(); // Reseta o pitch
+            progressFill.style.width = '0%';
+            document.getElementById('currentTime').textContent = '0:00';
+            document.getElementById('totalTime').textContent = '0:00';
+
+            for (let i = 1; i <= totalCells; i++) {
+                // Revogar URL anterior para liberar memória
+                if (audioFiles[i]) {
+                    URL.revokeObjectURL(audioFiles[i]);
+                }
+                delete audioFiles[i];
+                document.getElementById(`fileName${i}`).textContent = 'Nenhum ficheiro carregado';
+                const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
+                if (cell) cell.classList.remove('active'); // Remover classe 'active'
+                cell.classList.remove('has-file'); // Remover classe que indica que tem ficheiro
+            }
+            globalUploadStatus.textContent = 'Todas as células limpas.';
+        }
+
+        clearAllCellsBtn.addEventListener('click', clearAllCells);
+
+
         // Funções de reprodução de áudio
         async function playAudio(cellNumber) {
             const newAudioSrc = audioFiles[cellNumber];
@@ -547,55 +586,64 @@
 
             initAudioContext(); // Inicializa o AudioContext ao tentar tocar
             
-            // Parar áudio anterior do AudioContext
+            // Parar áudio anterior
             if (sourceNode) {
                 sourceNode.stop();
                 sourceNode.disconnect();
                 sourceNode = null;
             }
-            // Parar áudio anterior do elemento <audio> HTML5
             if (currentAudio) {
                 currentAudio.pause();
-                currentAudio.currentTime = 0;
+                audioPlayer.currentTime = 0; // Resetar para 0 ao trocar de faixa
                 if (currentCell) {
                     document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
                 }
             }
 
-            // O elemento <audio> HTML5 será usado como a fonte principal para a barra de progresso
-            // Mas o áudio real será roteado através do AudioContext para controlo de pitch.
+            clearLoop(); // Limpar loop ao trocar de ficheiro
+            resetPitch(); // Reseta o pitch ao trocar de ficheiro
+
+            // Carrega o áudio no elemento <audio> para a barra de progresso
             audioPlayer.src = newAudioSrc;
-            audioPlayer.load(); // Carrega o áudio no elemento <audio>
+            audioPlayer.load(); 
 
-            // Agora, crie um AudioBufferSourceNode a partir do ficheiro
-            const response = await fetch(newAudioSrc);
-            const arrayBuffer = await response.arrayBuffer();
-            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            // Crie um AudioBufferSourceNode para o Web Audio API
+            try {
+                const response = await fetch(newAudioSrc);
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-            sourceNode = audioContext.createBufferSource();
-            sourceNode.buffer = audioBuffer;
-            sourceNode.connect(semitoneShifter); // Conecta à cadeia de pitch
-            
-            // Adicionar eventos para o sourceNode para sincronizar com o elemento <audio>
-            sourceNode.onended = () => {
-                // Aumentar a tolerância para evitar duplos "ended"
-                if (audioPlayer.ended || Math.abs(audioPlayer.currentTime - audioPlayer.duration) < 0.1) {
-                    audioPlayer.pause(); // Garante que o elemento de áudio também para
-                    handleAudioEnded();
-                }
-            };
-            
-            sourceNode.start(0, audioPlayer.currentTime); // Iniciar a partir da posição atual do audioPlayer
-            audioPlayer.play(); // Iniciar o elemento <audio> para que timeupdate funcione
+                sourceNode = audioContext.createBufferSource();
+                sourceNode.buffer = audioBuffer;
+                sourceNode.connect(audioContext.destination); // Conecta diretamente ao destino
 
-            currentAudio = audioPlayer; // Continuar a usar o elemento audio para a barra de progresso
-            currentCell = cellNumber;
-            
-            document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
-            
-            // Aplicar velocidade e pitch atuais
-            audioPlayer.playbackRate = parseFloat(speedSlider.value);
-            applyPitch();
+                // Adicionar eventos para o sourceNode para sincronizar
+                sourceNode.onended = () => {
+                    // Adicione uma pequena margem para garantir que o 'ended' do sourceNode e audioPlayer são processados
+                    if (audioPlayer.ended || Math.abs(audioPlayer.currentTime - audioPlayer.duration) < 0.1) {
+                         // Apenas chame handleAudioEnded se não estiver a fazer loop
+                        if (!isLooping) { 
+                            handleAudioEnded();
+                        }
+                    }
+                };
+                
+                sourceNode.start(0, audioPlayer.currentTime); // Iniciar a partir da posição atual do audioPlayer
+                audioPlayer.play(); // Iniciar o elemento <audio> para que timeupdate funcione
+
+                currentAudio = audioPlayer; // Continuar a usar o elemento audio para a barra de progresso
+                currentCell = cellNumber;
+                
+                document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
+                
+                // Aplicar velocidade e pitch atuais
+                audioPlayer.playbackRate = parseFloat(speedSlider.value);
+                sourceNode.playbackRate.value = parseFloat(speedSlider.value); // Sincroniza playbackRate no sourceNode
+                applyPitch(); // Aplica o pitch inicial
+            } catch (error) {
+                console.error("Erro ao carregar ou decodificar áudio:", error);
+                globalUploadStatus.textContent = `Erro ao carregar ficheiro: ${error.message}`;
+            }
         }
 
         // Controle de velocidade
@@ -604,9 +652,8 @@
             speedValueSpan.textContent = speed.toFixed(2) + 'x'; // Formatar para 2 casas decimais
             if (currentAudio) {
                 currentAudio.playbackRate = speed;
-                // Se estiver usando AudioContext para pitch, é importante que playbackRate afete o sourceNode também
                 if (sourceNode) {
-                    sourceNode.playbackRate.value = speed;
+                    sourceNode.playbackRate.value = speed; // Sincroniza playbackRate no sourceNode
                 }
             }
         });
@@ -636,12 +683,10 @@
 
         // Controlo de Pitch (Tom)
         function applyPitch() {
-            if (semitoneShifter) {
+            if (sourceNode && audioContext) {
                 const semitones = parseInt(pitchInput.value);
-                // A frequência de corte do allpass filter pode ser ajustada para pitch shifting
-                // Esta é uma fórmula aproximada para mapear semitons para frequência de filtro:
-                const frequency = 440 * Math.pow(2, semitones / 12); // A4 = 440Hz, escala temperada
-                semitoneShifter.frequency.value = frequency;
+                // detune é em cents (100 cents = 1 semitom)
+                sourceNode.detune.value = semitones * 100;
             }
         }
 
@@ -671,6 +716,13 @@
                 pitchInput.dispatchEvent(new Event('input')); // Dispara o evento 'input' para atualizar o pitch
             }
         });
+        
+        function resetPitch() {
+            pitchInput.value = 0;
+            pitchInput.dispatchEvent(new Event('input')); // Dispara o evento 'input' para atualizar o pitch
+        }
+
+        resetPitchBtn.addEventListener('click', resetPitch);
 
 
         // Atalhos do teclado
@@ -680,24 +732,28 @@
                 return;
             }
 
-            if (!currentAudio) return;
+            // Apenas prosseguir se houver áudio e não for um clique no input de ficheiro
+            if (!currentAudio && e.key.toLowerCase() !== ' ') return; // Permite espaço para tocar/pausar mesmo sem audio loaded
+            if (globalFileInput === document.activeElement) return; // Não interfere se o input de ficheiro estiver ativo
 
             switch(e.key.toLowerCase()) {
                 case 'a':
-                    setLoopPoint('start');
+                    if (currentAudio) setLoopPoint('start');
                     break;
                 case 'b':
-                    setLoopPoint('end');
+                    if (currentAudio) setLoopPoint('end');
                     break;
                 case 'x':
-                    clearLoop();
+                    if (currentAudio) clearLoop();
                     break;
                 case ' ': // Espaço para play/pause
                     e.preventDefault(); // Prevenir rolagem da página
                     if (currentAudio) {
                         if (audioPlayer.paused) { // Verifica o estado do elemento <audio>
-                            audioPlayer.play();
-                            if (sourceNode) sourceNode.start(0, audioPlayer.currentTime); // Recria e inicia o sourceNode
+                            // Recria e inicia o sourceNode apenas se for diferente do que estava a tocar
+                            // Se a música foi pausada e não mudou, o sourceNode pode ser reiniciado.
+                            // Mas é mais robusto recriá-lo para evitar problemas de estado.
+                            playAudio(currentCell); // Chama playAudio para reiniciar corretamente o sourceNode
                         } else {
                             audioPlayer.pause();
                             if (sourceNode) {
@@ -706,6 +762,8 @@
                                 sourceNode = null;
                             }
                         }
+                    } else if (currentCell && audioFiles[currentCell]) { // Se não há áudio, mas uma célula está selecionada e tem ficheiro
+                        playAudio(currentCell);
                     }
                     break;
             }
@@ -723,8 +781,6 @@
                 document.getElementById('pointB').textContent = formatTime(currentTime);
             }
             
-            // Se ambos os pontos estiverem definidos, ative o loop.
-            // Caso contrário, apenas atualize a exibição e os marcadores.
             if (loopPoints.start !== null && loopPoints.end !== null) {
                 activateLoop();
             } else {
@@ -735,7 +791,6 @@
 
         function activateLoop() {
             if (loopPoints.start !== null && loopPoints.end !== null) {
-                // Garantir que o start é antes do end
                 if (loopPoints.start > loopPoints.end) {
                     [loopPoints.start, loopPoints.end] = [loopPoints.end, loopPoints.start]; // Trocar os valores
                     document.getElementById('pointA').textContent = formatTime(loopPoints.start);
@@ -764,7 +819,6 @@
             const loopStatus = document.getElementById('loopStatus');
             const loopPointsDiv = document.getElementById('loopPoints');
             
-            // O status "Ativado" só aparece se isLooping for true (start e end definidos)
             if (isLooping) {
                 loopIndicator.classList.add('loop-active');
                 loopStatus.textContent = 'Ativado';
@@ -773,7 +827,6 @@
                 loopIndicator.classList.remove('loop-active');
                 loopStatus.textContent = 'Desativado';
                 
-                // Mostrar os pontos A e B se apenas um deles estiver definido
                 if (loopPoints.start !== null || loopPoints.end !== null) {
                     loopPointsDiv.style.display = 'block';
                 } else {
@@ -790,17 +843,14 @@
             
             const duration = currentAudio.duration;
             
-            // Se apenas o ponto A for definido, mostre apenas uma linha no ponto A
             if (loopPoints.start !== null && loopPoints.end === null) {
                 const startPercent = (loopPoints.start / duration) * 100;
                 loopMarkers.style.left = startPercent + '%';
                 loopMarkers.style.width = '1px'; // Apenas uma linha fina
                 loopMarkers.classList.add('active');
                 loopMarkers.style.backgroundColor = 'transparent'; // Fundo transparente
-                // Os pseudo-elementos ::before e ::after ainda fornecem as linhas
             } 
-            // Se ambos os pontos A e B forem definidos (e isLooping for true), mostre a área do loop
-            else if (loopPoints.start !== null && loopPoints.end !== null) { // isLooping é verificado na activateLoop
+            else if (loopPoints.start !== null && loopPoints.end !== null) {
                 const startPercent = (loopPoints.start / duration) * 100;
                 const endPercent = (loopPoints.end / duration) * 100;
                 
@@ -809,7 +859,6 @@
                 loopMarkers.classList.add('active');
                 loopMarkers.style.backgroundColor = 'rgba(255, 255, 0, 0.15)'; // Fundo do bloco
             } 
-            // Se nenhum ponto ou apenas o ponto B estiver definido sem o A, esconda o marcador
             else {
                 loopMarkers.classList.remove('active');
             }
@@ -828,12 +877,12 @@
                 if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
                     if (audioPlayer.currentTime >= loopPoints.end) {
                         audioPlayer.currentTime = loopPoints.start;
-                        // Se estiver a usar AudioContext, também precisa de reiniciar o sourceNode
+                        // Reiniciar o sourceNode se estiver em loop
                         if (sourceNode) {
                             sourceNode.stop();
                             sourceNode.disconnect();
-                            sourceNode = null;
-                            playAudio(currentCell); // Reinicia o áudio da célula atual
+                            // Criar e iniciar um novo sourceNode na posição do loop
+                            playAudio(currentCell); // Chamar playAudio para recriar o sourceNode e tocar
                         }
                     }
                 }
@@ -854,6 +903,7 @@
             currentAudio = null;
             currentCell = null;
             clearLoop();
+            resetPitch(); // Resetar pitch ao terminar o áudio
             progressFill.style.width = '0%';
             document.getElementById('currentTime').textContent = '0:00';
             // Certificar que o sourceNode é limpo ao terminar
@@ -867,7 +917,7 @@
 
 
         // Clique na barra de progresso para navegar
-        progressBar.addEventListener('click', function(e) {
+        progressBar.addEventListener('click', async function(e) { // Adicionado async
             if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) return;
             
             const rect = progressBar.getBoundingClientRect();
@@ -876,13 +926,15 @@
             const newTime = percentage * currentAudio.duration;
             
             currentAudio.currentTime = newTime;
-            // Se estiver a usar AudioContext, precisa de reiniciar o sourceNode na nova posição
+            // Reiniciar o sourceNode para que o áudio continue do novo ponto
             if (sourceNode) {
                 sourceNode.stop();
                 sourceNode.disconnect();
                 sourceNode = null;
-                playAudio(currentCell); // Reinicia o áudio da célula atual
             }
+            // Chama playAudio para recriar o sourceNode na nova posição e começar a tocar
+            // A função playAudio já é assíncrona, por isso o await/async é necessário
+            await playAudio(currentCell); 
         });
 
         function formatTime(seconds) {
@@ -910,7 +962,7 @@
         // Garante que o AudioContext é inicializado quando o utilizador interage pela primeira vez
         document.body.addEventListener('click', initAudioContext, { once: true });
         // Aplicar pitch inicial caso seja diferente de 0
-        applyPitch();
+        applyPitch(); // Para garantir que o valor inicial (0) é aplicado
     </script>
 </body>
 </html>

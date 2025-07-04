@@ -46,6 +46,15 @@
             background: rgba(40, 40, 40, 0.8);
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: flex; /* Adicionado para alinhar os botões */
+            justify-content: center; /* Centraliza os botões */
+            align-items: center; /* Alinha verticalmente */
+            flex-wrap: wrap; /* Permite quebrar linha em ecrãs pequenos */
+        }
+
+        .global-upload-section button,
+        .global-upload-section input { /* Ajustar input para alinhamento se necessário */
+            margin: 5px; /* Pequena margem para espaçar os elementos */
         }
 
         .upload-btn { /* Reutilizado para o botão global e os dentro das células */
@@ -290,6 +299,9 @@
             <button id="globalUploadBtn" class="upload-btn">
                 ⬆️ Carregar Múltiplos Ficheiros
             </button>
+            <button id="clearCellsBtn" class="upload-btn" style="background: #6c757d; margin-left: 10px;">
+                🗑️ Limpar Células
+            </button>
             <span id="globalUploadStatus" class="file-name"></span>
         </div>
 
@@ -352,6 +364,7 @@
         const globalFileInput = document.getElementById('globalFileInput');
         const globalUploadBtn = document.getElementById('globalUploadBtn');
         const globalUploadStatus = document.getElementById('globalUploadStatus');
+        const clearCellsBtn = document.getElementById('clearCellsBtn'); // Adicionado
         const speedSlider = document.getElementById('speedSlider');
         const speedValue = document.getElementById('speedValue');
         const speedPreset05 = document.getElementById('speedPreset05');
@@ -390,28 +403,8 @@
             globalUploadStatus.textContent = `A carregar ${files.length} ficheiro(s)...`;
             
             // Limpar ficheiros anteriores e desativar células
-            for (let i = 1; i <= totalCells; i++) {
-                // Revogar URL anterior para liberar memória
-                if (audioFiles[i]) {
-                    URL.revokeObjectURL(audioFiles[i]);
-                }
-                delete audioFiles[i];
-                document.getElementById(`fileName${i}`).textContent = 'Vazia'; // Resetar texto para 'Vazia'
-                const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
-                if (cell) cell.classList.remove('active'); // Remover classe 'active'
-            }
-            
-            // Parar qualquer áudio a tocar
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-                currentAudio = null;
-                currentCell = null;
-                clearLoop();
-                progressFill.style.width = '0%';
-                document.getElementById('currentTime').textContent = '0:00';
-                document.getElementById('totalTime').textContent = '0:00';
-            }
+            // Reutiliza a lógica de limpeza para garantir um estado limpo antes de carregar novos
+            clearAllCells(); // Chama a nova função de limpeza
 
             let filesLoaded = 0;
             let cellIndex = 1;
@@ -420,7 +413,6 @@
             for (let i = 0; i < files.length && cellIndex <= totalCells; i++) {
                 const file = files[i];
 
-                // A verificação é um pouco mais abrangente agora, usando file.type.startsWith('audio/')
                 if (!file.type.startsWith('audio/')) {
                     console.warn(`Ficheiro "${file.name}" não é um ficheiro de áudio. Ignorando.`);
                     continue; // Pular para o próximo ficheiro
@@ -442,6 +434,37 @@
             }
             event.target.value = ''; // Limpar o input para permitir carregar os mesmos ficheiros novamente
         });
+
+        // Função para limpar todas as células - Nova função
+        function clearAllCells() {
+            // Parar qualquer áudio a tocar
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+                currentCell = null;
+                clearLoop(); // Isso já limpa o loop, status e marcadores
+                progressFill.style.width = '0%';
+                document.getElementById('currentTime').textContent = '0:00';
+                document.getElementById('totalTime').textContent = '0:00';
+            }
+
+            // Limpar ficheiros de cada célula
+            for (let i = 1; i <= totalCells; i++) {
+                if (audioFiles[i]) {
+                    URL.revokeObjectURL(audioFiles[i]); // Libera a memória do URL do objeto
+                }
+                delete audioFiles[i]; // Remove a entrada do objeto audioFiles
+                document.getElementById(`fileName${i}`).textContent = 'Vazia'; // Volta o texto para "Vazia"
+                const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
+                if (cell) cell.classList.remove('active'); // Remove a classe 'active'
+            }
+            globalUploadStatus.textContent = 'Células limpas.';
+        }
+
+        // Event listener para o botão de limpar células - Novo
+        clearCellsBtn.addEventListener('click', clearAllCells);
+
 
         // Funções de reprodução de áudio - Agora ativada pelo clique na célula
         function playAudio(cellNumber) {

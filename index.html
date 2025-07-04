@@ -251,7 +251,7 @@
             border: 2px solid #e74c3c; /* Borda vermelha para loop ativo */
         }
 
-        /* Novo estilo para o destaque temporário dos pontos de loop */
+        /* Estilo para o destaque temporário dos pontos de loop (A e B) */
         .loop-point-highlight {
             color: #f1c40f; /* Cor amarela para destaque */
             font-weight: bold;
@@ -282,7 +282,7 @@
             height: 100%;
             background: rgba(255, 255, 0, 0.2); /* Marcador de loop amarelo suave */
             border-radius: 5px;
-            display: none;
+            display: none; /* Inicia oculto */
             pointer-events: none;
         }
 
@@ -306,7 +306,7 @@
         }
 
         .loop-markers.active {
-            display: block;
+            display: block; /* Ativa a visibilidade */
         }
 
         .time-display {
@@ -622,6 +622,7 @@
             }
             
             updateLoopDisplay();
+            updateLoopMarkers(); // Chamar aqui para atualizar o visual do marcador imediatamente
         }
 
         function activateLoop() {
@@ -645,7 +646,7 @@
             document.getElementById('pointA').textContent = '--';
             document.getElementById('pointB').textContent = '--';
             updateLoopDisplay();
-            loopMarkers.classList.remove('active');
+            updateLoopMarkers(); // Chamar aqui para esconder o marcador completamente
         }
 
         function updateLoopDisplay() {
@@ -665,18 +666,40 @@
         }
 
         function updateLoopMarkers() {
-            if (!currentAudio || !isLooping || !currentAudio.duration || isNaN(currentAudio.duration)) {
+            if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) {
                 loopMarkers.classList.remove('active');
+                loopMarkers.style.display = 'none'; // Certifica-se que está oculto
                 return;
             }
             
             const duration = currentAudio.duration;
-            const startPercent = (loopPoints.start / duration) * 100;
-            const endPercent = (loopPoints.end / duration) * 100;
             
-            loopMarkers.style.left = startPercent + '%';
-            loopMarkers.style.width = (endPercent - startPercent) + '%';
-            loopMarkers.classList.add('active');
+            // Se ambos os pontos estão definidos (loop ativo)
+            if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
+                const startPercent = (loopPoints.start / duration) * 100;
+                const endPercent = (loopPoints.end / duration) * 100;
+                
+                loopMarkers.style.left = startPercent + '%';
+                loopMarkers.style.width = (endPercent - startPercent) + '%';
+                loopMarkers.classList.add('active');
+                loopMarkers.style.display = 'block'; // Certifica-se que é visível
+            } 
+            // Se apenas o ponto A está definido (feedback visual para o Ponto A)
+            else if (loopPoints.start !== null) {
+                const startPercent = (loopPoints.start / duration) * 100;
+                
+                loopMarkers.style.left = startPercent + '%';
+                loopMarkers.style.width = '2px'; // Uma linha fina para o Ponto A
+                // É importante manter as pseudoelementos ::before e ::after visíveis
+                // E o fundo semi-transparente que simula a "área" do loop deve ser quase invisível, mas o elemento principal deve ser visível para que as linhas funcionem.
+                loopMarkers.classList.add('active'); // Mantém a classe 'active' para que as linhas funcionem
+                loopMarkers.style.display = 'block'; // Certifica-se que é visível
+            }
+            // Se nenhum ponto está definido
+            else {
+                loopMarkers.classList.remove('active');
+                loopMarkers.style.display = 'none'; // Esconde completamente
+            }
         }
 
         // Atualizar barra de progresso
@@ -699,7 +722,7 @@
 
         // Carregar metadata do áudio
         audioPlayer.addEventListener('loadedmetadata', function() {
-            updateLoopMarkers();
+            updateLoopMarkers(); // Chamar aqui para garantir que o marcador seja desenhado se já houver pontos definidos
             document.getElementById('totalTime').textContent = formatTime(audioPlayer.duration);
         });
 
@@ -711,7 +734,7 @@
             }
             currentAudio = null;
             currentCell = null;
-            clearLoop();
+            clearLoop(); // Isso já chama updateLoopMarkers para esconder tudo
             progressFill.style.width = '0%';
             document.getElementById('currentTime').textContent = '0:00';
             document.getElementById('totalTime').textContent = '0:00';

@@ -1,3 +1,5 @@
+// main.js
+
 // JavaScript
 let currentAudioBuffer = null;
 let sourceNode = null;
@@ -9,6 +11,9 @@ let isCurrentlyPlaying = false;
 let loopPoints = { start: null, end: null };
 let isLooping = false;
 
+// As variáveis globais para os elementos DOM devem ser inicializadas dentro de DOMContentLoaded
+// para garantir que os elementos existem.
+// Por agora, vamos manter como const onde é possível, mas teremos que ajustar algumas mais abaixo.
 const progressBar = document.getElementById('progressBar');
 const progressFill = document.getElementById('progressFill');
 const loopMarkers = document.getElementById('loopMarkers');
@@ -46,18 +51,59 @@ function initAudioContext() {
     }
 }
 
-// Criar as células dinamicamente
+// --- Funções de Criação e Manipulação de Células ---
+
+// Criar as células dinamicamente - HTML COMPLETO RESTAURADO AQUI
 function createCells() {
     const grid = document.getElementById('cellGrid');
-    grid.innerHTML = '';
+    grid.innerHTML = ''; // Limpa o conteúdo da grelha antes de recriar
     for (let i = 1; i <= totalCells; i++) {
         const cell = document.createElement('div');
         cell.className = 'cell';
         cell.setAttribute('data-cell-number', i);
-        cell.innerHTML = `<div class="file-name" id="fileName${i}">Nenhum ficheiro carregado</div>`;
+        // *** HTML CORRIGIDO AQUI PARA INCLUIR TODOS OS ELEMENTOS ***
+        cell.innerHTML = `
+            <div class="cell-header">
+                <div class="cell-number">Célula ${i}</div>
+            </div>
+            <div class="file-name" id="fileName${i}">Nenhum ficheiro carregado</div>
+            <button class="play-btn" id="playBtn${i}" disabled>
+                ▶️ Reproduzir
+            </button>
+        `;
         grid.appendChild(cell);
     }
+    // Chamar a função para adicionar listeners aos botões das células recém-criadas
+    addCellButtonListeners();
 }
+
+// Função para adicionar listeners aos botões de reprodução das células
+function addCellButtonListeners() {
+    document.querySelectorAll('.cell .play-btn').forEach(button => {
+        // Remover listeners antigos para evitar duplicados se createCells for chamada novamente
+        button.removeEventListener('click', handleCellButtonClick);
+        button.addEventListener('click', handleCellButtonClick);
+    });
+}
+
+// Handler para o clique no botão de reprodução da célula
+function handleCellButtonClick(event) {
+    const cellElement = event.target.closest('.cell[data-cell-number]');
+    if (cellElement) {
+        const cellNumber = parseInt(cellElement.dataset.cellNumber);
+        console.log(`Célula clicada (via botão): ${cellNumber}. currentCell antes: ${currentCell}`);
+        
+        // Se a mesma célula estiver a tocar, pausa. Caso contrário, toca a nova.
+        if (cellNumber === currentCell && isCurrentlyPlaying) {
+            pausePlayback();
+        } else {
+            playAudio(cellNumber, 0); 
+        }
+        event.target.blur(); // Remove o foco do botão para não interferir com atalhos de teclado
+    }
+}
+
+// --- Event Listeners Globais ---
 
 globalUploadBtn.addEventListener('click', () => {
     initAudioContext();
@@ -80,9 +126,17 @@ globalFileInput.addEventListener('change', async (event) => {
     clearLoop();
     resetPitch();
     currentBPMDisplay.textContent = '--';
+    
+    // Atualizar todas as células visualmente
     document.querySelectorAll('.cell').forEach(cell => {
-        cell.classList.remove('active', 'has-file'); // Remove classes visuais
-        document.getElementById(`fileName${parseInt(cell.dataset.cellNumber)}`).textContent = 'Nenhum ficheiro carregado';
+        const cellNumber = parseInt(cell.dataset.cellNumber);
+        document.getElementById(`fileName${cellNumber}`).textContent = 'Nenhum ficheiro carregado';
+        const playBtn = document.getElementById(`playBtn${cellNumber}`); // Obtém o botão da célula
+        if(playBtn) { // Verifica se o botão existe antes de manipulá-lo
+            playBtn.textContent = '▶️ Reproduzir'; // Resetar texto do botão
+            playBtn.disabled = true; // Desativar botão
+        }
+        cell.classList.remove('active', 'has-file'); 
     });
 
 
@@ -107,11 +161,14 @@ globalFileInput.addEventListener('change', async (event) => {
             const arrayBuffer = await file.arrayBuffer();
             const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-            // **VERIFICAÇÃO CRÍTICA AQUI:** Log para ver o que está a ser armazenado
             console.log(`Carregado: Célula ${cellIndex}, Ficheiro: ${file.name}, Duração: ${audioBuffer.duration.toFixed(2)}s`);
             cellAudioData[cellIndex] = { audioBuffer: audioBuffer, bpm: null, fileName: file.name };
 
             document.getElementById(`fileName${cellIndex}`).textContent = file.name;
+            const playBtn = document.getElementById(`playBtn${cellIndex}`); // Obtém o botão
+            if(playBtn) { // Verifica se o botão existe
+                playBtn.disabled = false; // Ativar botão
+            }
             document.querySelector(`.cell[data-cell-number="${cellIndex}"]`).classList.add('has-file');
 
             filesLoaded++;
@@ -130,14 +187,16 @@ globalFileInput.addEventListener('change', async (event) => {
         globalUploadStatus.textContent = 'Nenhum ficheiro de áudio válido foi carregado.';
     }
     event.target.value = '';
-    // **VERIFICAÇÃO CRÍTICA AQUI:** Log para ver o estado final de cellAudioData após o carregamento
     console.log("Estado final de cellAudioData após o upload:", cellAudioData);
 });
 
 async function detectBPMForCell(cellNumber, file) {
     if (typeof DetectBPM !== 'function') {
         console.warn('DetectBPM library (the detection function) not found. Cannot detect BPM.');
-        cellAudioData[cellNumber].bpm = null;
+        // Certifica-se de que a célula existe em cellAudioData antes de tentar definir o bpm
+        if(cellAudioData[cellNumber]) {
+            cellAudioData[cellNumber].bpm = null;
+        }
         if (currentCell === cellNumber) {
             currentBPMDisplay.textContent = '--';
         }
@@ -151,15 +210,22 @@ async function detectBPMForCell(cellNumber, file) {
 
         const bpm = await DetectBPM(audioBuffer);
 
-        cellAudioData[cellNumber].bpm = bpm.toFixed(2);
-        console.log(`BPM detetado para célula ${cellNumber} (${file.name}): ${bpm.toFixed(2)}`);
-
-        if (currentCell === cellNumber) {
-            currentBPMDisplay.textContent = bpm.toFixed(2);
+        // Certifica-se de que a célula existe em cellAudioData antes de tentar definir o bpm
+        if(cellAudioData[cellNumber]) {
+            cellAudioData[cellNumber].bpm = bpm.toFixed(2);
+            console.log(`BPM detetado para célula ${cellNumber} (${file.name}): ${bpm.toFixed(2)}`);
+            if (currentCell === cellNumber) {
+                currentBPMDisplay.textContent = bpm.toFixed(2);
+            }
+        } else {
+             console.warn(`Célula ${cellNumber} não encontrada em cellAudioData após detecção de BPM.`);
         }
     } catch (error) {
         console.warn(`Não foi possível detetar BPM para o ficheiro ${file.name}: ${error.message}`, error);
-        cellAudioData[cellNumber].bpm = null;
+        // Certifica-se de que a célula existe em cellAudioData antes de tentar definir o bpm
+        if(cellAudioData[cellNumber]) {
+            cellAudioData[cellNumber].bpm = null;
+        }
         if (currentCell === cellNumber) {
             currentBPMDisplay.textContent = '--';
         }
@@ -177,6 +243,11 @@ function clearAllCells(resetStatus = true) {
     document.querySelectorAll('.cell').forEach(cell => {
         const cellNumber = parseInt(cell.dataset.cellNumber);
         document.getElementById(`fileName${cellNumber}`).textContent = 'Nenhum ficheiro carregado';
+        const playBtn = document.getElementById(`playBtn${cellNumber}`); // Obtém o botão da célula
+        if(playBtn) { // Verifica se o botão existe antes de manipular
+            playBtn.textContent = '▶️ Reproduzir'; // Resetar texto do botão
+            playBtn.disabled = true; // Desativar botão
+        }
         cell.classList.remove('active', 'has-file');
     });
 
@@ -201,11 +272,24 @@ function stopCurrentAudio(fullStop = false) {
     
     isCurrentlyPlaying = false; // Atualiza o estado de reprodução
 
+    // Atualiza o texto do botão da célula ativa, se houver
+    if (currentCell !== null) {
+        const currentCellPlayBtn = document.getElementById(`playBtn${currentCell}`);
+        if (currentCellPlayBtn) {
+            currentCellPlayBtn.textContent = '▶️ Reproduzir';
+        }
+        // Remove a classe 'active' da célula atual
+        const currentCellElement = document.querySelector(`.cell[data-cell-number="${currentCell}"]`);
+        if (currentCellElement) {
+            currentCellElement.classList.remove('active');
+        }
+    }
+
     if (fullStop) {
         currentAudioBuffer = null;
         currentCell = null; // Também deve ser nulo se não houver faixa selecionada
         lastPlaybackTime = 0; // Se for uma parada total, começa do zero
-    } 
+    }
     
     progressFill.style.width = '0%';
     document.getElementById('currentTime').textContent = '0:00';
@@ -214,10 +298,6 @@ function stopCurrentAudio(fullStop = false) {
     stopBPMUpdate();
     currentBPMDisplay.textContent = '--';
 
-    // Desativar a célula visualmente se for uma parada completa ou se acabou de pausar
-    if (fullStop || (currentCell !== null && !isCurrentlyPlaying)) { 
-        document.querySelectorAll('.cell.active').forEach(cell => cell.classList.remove('active'));
-    }
     console.log(`stopCurrentAudio: currentCell = ${currentCell}, isCurrentlyPlaying = ${isCurrentlyPlaying}`);
 }
 
@@ -257,10 +337,23 @@ function playAudioInternal(cellNumber, startTime = 0) {
         return;
     }
     
+    // Parar a reprodução anterior
     if (sourceNode) {
         sourceNode.stop();
         sourceNode.disconnect();
         sourceNode = null;
+    }
+
+    // Remover 'active' da célula anterior, se houver
+    if (currentCell !== null && currentCell !== cellNumber) {
+        const prevCellElement = document.querySelector(`.cell[data-cell-number="${currentCell}"]`);
+        if (prevCellElement) {
+            prevCellElement.classList.remove('active');
+        }
+        const prevPlayBtn = document.getElementById(`playBtn${currentCell}`);
+        if(prevPlayBtn) {
+            prevPlayBtn.textContent = '▶️ Reproduzir';
+        }
     }
 
     currentAudioBuffer = audioBuffer;
@@ -288,8 +381,15 @@ function playAudioInternal(cellNumber, startTime = 0) {
 
     document.getElementById('totalTime').textContent = formatTime(currentAudioBuffer.duration);
 
-    document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('active'));
-    document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
+    // Adicionar 'active' à célula atual e atualizar o seu botão
+    const currentCellElement = document.querySelector(`.cell[data-cell-number="${cellNumber}"]`);
+    if (currentCellElement) {
+        currentCellElement.classList.add('active');
+    }
+    const currentPlayBtn = document.getElementById(`playBtn${cellNumber}`);
+    if(currentPlayBtn) {
+        currentPlayBtn.textContent = '⏸️ Pausar';
+    }
     
     isCurrentlyPlaying = true; 
 
@@ -316,7 +416,14 @@ function pausePlayback() {
         isCurrentlyPlaying = false; 
 
         if (currentCell) {
-            document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
+            const currentCellElement = document.querySelector(`.cell[data-cell-number="${currentCell}"]`);
+            if (currentCellElement) {
+                currentCellElement.classList.remove('active');
+            }
+            const playBtn = document.getElementById(`playBtn${currentCell}`);
+            if (playBtn) {
+                playBtn.textContent = '▶️ Reproduzir';
+            }
         }
     }
     console.log(`pausePlayback: currentCell = ${currentCell}, lastPlaybackTime = ${lastPlaybackTime}`); // NOVO LOG
@@ -360,11 +467,8 @@ let audioOffsetPlayback = 0;
 function startProgressUpdate() {
     if (progressInterval) clearInterval(progressInterval);
 
-    if (audioContext && audioContext.state === 'suspended') {
-        audioContext.resume().then(() => {
-            console.log("AudioContext resumed for progress update.");
-        }).catch(e => console.error("Failed to resume AudioContext for progress update:", e));
-    }
+    // Removido o `audioContext.resume()` daqui, pois já é feito em `playAudio` e `resumePlayback`
+    // para evitar chamadas redundantes e potencialmente problemáticas.
 
     audioStartTimeContext = audioContext.currentTime;
     audioOffsetPlayback = lastPlaybackTime;
@@ -465,7 +569,7 @@ speedSlider.addEventListener('input', function(e) {
             sourceNode = null;
         }
         playAudioInternal(currentCell, currentTimeInAudio);
-    } else if (sourceNode) {
+    } else if (sourceNode) { // Se não estiver a tocar mas houver um sourceNode ativo
         sourceNode.playbackRate.value = speed;
     }
 
@@ -474,7 +578,7 @@ speedSlider.addEventListener('input', function(e) {
         const baseBPM = parseFloat(cellAudioData[currentCell].bpm);
         const effectiveBPM = baseBPM * speed;
         currentBPMDisplay.textContent = effectiveBPM.toFixed(2);
-        startBPMUpdateInterval();
+        // startBPMUpdateInterval(); // Já é chamado por playAudioInternal ou handleAudioEnded
     } else {
         currentBPMDisplay.textContent = '--';
     }
@@ -542,12 +646,14 @@ resetPitchBtn.addEventListener('click', () => {
 });
 
 document.addEventListener('keydown', function(e) {
-    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'BUTTON' || document.activeElement.tagName === 'SLIDER')) {
+    // Adicionamos uma verificação mais robusta para elementos focados
+    // e permitimos que o espaço funcione como play/pause apenas se nada mais estiver focado
+    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'BUTTON' || document.activeElement.tagName === 'SLIDER' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.isContentEditable)) {
         if (e.key.toLowerCase() === ' ') {
-            e.preventDefault(); 
-            document.activeElement.blur(); 
+            e.preventDefault(); // Previne o comportamento padrão (ex: scroll)
+            document.activeElement.blur(); // Remove o foco do elemento
         } else {
-            return; 
+            return; // Se um elemento interativo está focado e não é espaço, deixa o evento seguir
         }
     }
 
@@ -569,13 +675,15 @@ document.addEventListener('keydown', function(e) {
         case 'x':
             clearLoop();
             break;
-        case ' ':
+        case ' ': // Espaço para Play/Pause
             if (currentCell && cellAudioData[currentCell]) {
                 if (isCurrentlyPlaying) {
                     pausePlayback();
                 } else {
                     resumePlayback();
                 }
+            } else {
+                console.log("Nenhuma célula selecionada ou carregada para reproduzir/pausar.");
             }
             break;
     }
@@ -683,7 +791,7 @@ function updateLoopMarkers() {
 
 function handleAudioEnded() {
     if (!isLooping && currentCell) {
-        document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
+        // A lógica para remover a classe 'active' e resetar o botão já está em stopCurrentAudio(true)
     }
     stopCurrentAudio(true); 
     clearLoop(); 
@@ -727,25 +835,31 @@ function formatTime(seconds) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-document.getElementById('cellGrid').addEventListener('click', function(event) {
-    const cellElement = event.target.closest('.cell[data-cell-number]');
-    if (cellElement) {
-        const cellNumber = parseInt(cellElement.dataset.cellNumber);
-        console.log(`Célula clicada: ${cellNumber}. currentCell antes: ${currentCell}`); // NOVO LOG
-        
-        if (cellNumber === currentCell && isCurrentlyPlaying) {
-            pausePlayback();
-        } else {
-            playAudio(cellNumber, 0); 
-        }
-        cellElement.blur();
-    }
-});
+// REMOVIDO: O event listener delegado no 'cellGrid' agora é desnecessário para os botões de reprodução
+// pois cada botão tem o seu próprio listener adicionado por `addCellButtonListeners()`.
+// Manter um click listener para a célula inteira (não no botão) pode ser feito, mas é diferente do que o botão faz.
+// Se quiser que clicar na célula inteira (fora do botão) também inicie a reprodução, pode adicioná-lo aqui.
+// Por enquanto, o foco é nos botões.
+// document.getElementById('cellGrid').addEventListener('click', function(event) {
+//     const cellElement = event.target.closest('.cell[data-cell-number]');
+//     if (cellElement && !event.target.classList.contains('play-btn')) { // Evita duplicar o comportamento do botão
+//         const cellNumber = parseInt(cellElement.dataset.cellNumber);
+//         console.log(`Célula clicada (fora do botão): ${cellNumber}. currentCell antes: ${currentCell}`);
+//         
+//         if (cellNumber === currentCell && isCurrentlyPlaying) {
+//             pausePlayback();
+//         } else {
+//             playAudio(cellNumber, 0); 
+//         }
+//         cellElement.blur();
+//     }
+// });
+
 
 document.addEventListener('DOMContentLoaded', () => {
-    createCells();
+    createCells(); // Cria as células com o HTML completo e anexa os listeners dos botões
     updateLoopDisplay();
     // Adiciona o listener para inicializar o AudioContext apenas na primeira interação do utilizador
     document.body.addEventListener('click', initAudioContext, { once: true });
-    applyPitch(); 
+    applyPitch(); // Aplica o pitch inicial se houver um sourceNode
 });

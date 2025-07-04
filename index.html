@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player de Áudio com Células</title>
+    <title>Slow Music!</title>
     <style>
         * {
             margin: 0;
@@ -283,7 +283,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎵 Player de Áudio com Células</h1>
+        <h1>🎵 Slow Music!</h1>
         
         <div class="global-upload-section">
             <input type="file" id="globalFileInput" accept="audio/mp3" multiple style="display: none;">
@@ -296,7 +296,7 @@
         <div class="controls">
             <div class="control-group">
                 <label for="speedSlider">Velocidade de Reprodução: <span id="speedValue">1.0x</span></label>
-                <input type="range" id="speedSlider" class="slider" min="0.25" max="2" step="0.125" value="1">
+                <input type="range" id="speedSlider" class="slider" min="0.25" max="1" step="0.05" value="1">
             </div>
             
             <div class="control-group">
@@ -488,7 +488,7 @@
         // Função para aplicar a velocidade
         function applySpeed(speed) {
             speedSlider.value = speed;
-            speedValue.textContent = speed + 'x';
+            speedValue.textContent = speed.toFixed(2) + 'x'; // Exibe com duas casas decimais
             if (currentAudio) {
                 currentAudio.playbackRate = speed;
             }
@@ -506,7 +506,7 @@
         // Controle de velocidade
         speedSlider.addEventListener('input', function(e) {
             const speed = parseFloat(e.target.value);
-            speedValue.textContent = speed + 'x';
+            speedValue.textContent = speed.toFixed(2) + 'x'; // Exibe com duas casas decimais
             if (currentAudio) {
                 currentAudio.playbackRate = speed;
             }
@@ -724,6 +724,7 @@
         // Inicializar
         createCells();
         updateLoopDisplay();
+        applySpeed(parseFloat(speedSlider.value)); // Garante que o valor inicial do slider é exibido corretamente
     </script>
 </body>
 </html>

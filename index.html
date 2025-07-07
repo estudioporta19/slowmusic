@@ -6,7 +6,6 @@
     <title>SoundTouch.js Audio Manipulator</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/soundtouch-js/0.1.30/soundtouch.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -246,14 +245,14 @@
 
 <script>
     // --- Variáveis Globais ---
-    let audioContext = null; 
+    let audioContext = null;    
     let sourceNode;
     let soundtouchWorkletNode; // AudioWorkletNode
     let audioBuffer;
 
     let isPlaying = false;
-    let seekPosition = 0; 
-    let playbackStartTime = 0; 
+    let seekPosition = 0;    
+    let playbackStartTime = 0;    
     
     // --- Elementos do DOM ---
     const audioFileEl = document.getElementById('audioFile');
@@ -284,17 +283,17 @@
         controlsEl.style.display = 'none';
 
         const reader = new FileReader();
-        reader.onload = async (e) => { 
+        reader.onload = async (e) => {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                // ** AQUI É ONDE O AUDIO WORKLET É ADICIONADO AO CONTEXTO DE ÁUDIO **
+                // AQUI É ONDE O AUDIO WORKLET É ADICIONADO AO CONTEXTO DE ÁUDIO
                 try {
-                    await audioContext.audioWorklet.addModule('./soundtouch-worklet.js'); 
-                    console.log('AudioWorklet "soundtouch-processor" carregado com sucesso.');
+                    await audioContext.audioWorklet.addModule('./soundtouch-worklet.js');
+                    console.log('AudioWorklet "scheduled-soundtouch-worklet" carregado com sucesso.'); // Log atualizado
                 } catch (error) {
                     console.error('Erro ao carregar AudioWorklet:', error);
                     loadingStatusEl.textContent = 'Erro fatal: Não foi possível carregar o processador de áudio!';
-                    return; 
+                    return;
                 }
             }
             audioContext.decodeAudioData(e.target.result)
@@ -314,7 +313,7 @@
     }
 
     // --- 2. CONTROLOS DE REPRODUÇÃO ---
-    async function togglePlayback() { 
+    async function togglePlayback() {    
         if (!audioBuffer) return;
         
         if (audioContext && audioContext.state === 'suspended') {
@@ -324,26 +323,19 @@
         if (isPlaying) {
             pausePlayback();
         } else {
-            await startPlayback(); 
+            await startPlayback();    
         }
     }
 
-    async function startPlayback() { 
+    async function startPlayback() {    
         if (isPlaying || !audioBuffer) return;
         
-        if (!audioContext) { // Esta verificação é redundante se loadAudioFile já cria e adiciona o worklet
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            try {
-                // Embora já feito em loadAudioFile, esta linha garante para qualquer outro cenário
-                await audioContext.audioWorklet.addModule('./soundtouch-worklet.js');
-                console.log('AudioWorklet "soundtouch-processor" carregado com sucesso.');
-            } catch (error) {
-                console.error('Erro ao carregar AudioWorklet:', error);
-                alert('Não foi possível carregar o processador de áudio. Verifique a consola para detalhes.');
-                return;
-            }
+        // Se o contexto não estiver pronto ou o worklet não estiver carregado, isso será tratado em loadAudioFile
+        if (!audioContext) {
+            console.error('AudioContext não inicializado.');
+            return;
         }
-        
+
         if (audioContext.state === 'suspended') {
             await audioContext.resume();
         }
@@ -352,56 +344,92 @@
         sourceNode.buffer = audioBuffer;
 
         // Instanciar o AudioWorkletNode após o módulo ter sido adicionado
-        soundtouchWorkletNode = new AudioWorkletNode(audioContext, 'soundtouch-processor');
+        // CORREÇÃO: Usar o nome correto do processador
+        soundtouchWorkletNode = new AudioWorkletNode(audioContext, 'scheduled-soundtouch-worklet');
 
         sourceNode.connect(soundtouchWorkletNode);
         soundtouchWorkletNode.connect(audioContext.destination);
 
-        updateSoundTouchSettings();
-        
-        sourceNode.onended = () => {
-            if (seekPosition >= audioBuffer.duration - 0.1) {
+        // Comunicação com o AudioWorklet para passar os dados do buffer
+        // Note: Para um uso eficiente em AudioWorklets, o ideal seria passar o AudioBuffer por Transferable
+        // Mas para simplificar o exemplo, vamos simular o envio de dados que o worklet precisa
+        // No seu worklet, a inicialização espera 'bufferProps', 'leftChannel', 'rightChannel'
+        // Você precisaria de uma forma de enviar estes dados para o worklet.
+        // O código do seu worklet 'ScheduledSoundTouchWorklet' parece esperar os canais via mensagem de porta.
+        // Vamos enviar uma mensagem para inicializar o worklet com os dados do buffer.
+        // Esta parte é crucial e pode precisar de mais refinamento dependendo de como você quer que o worklet opere.
+        const bufferProps = {
+            sampleRate: audioBuffer.sampleRate,
+            numberOfChannels: audioBuffer.numberOfChannels,
+            length: audioBuffer.length,
+            duration: audioBuffer.duration
+        };
+        const leftChannelData = audioBuffer.getChannelData(0);
+        const rightChannelData = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : audioBuffer.getChannelData(0);
+
+        soundtouchWorkletNode.port.postMessage({
+            message: 'INITIALIZE_PROCESSOR',
+            detail: [bufferProps, leftChannelData, rightChannelData]
+        }, [leftChannelData.buffer, rightChannelData.buffer]); // Transferir os buffers para o worklet
+
+        soundtouchWorkletNode.port.onmessage = (event) => {
+            if (event.data.message === 'PROCESSOR_READY') {
+                console.log('Worklet processador inicializado e pronto.');
+                // Só depois do processador estar pronto é que se deve começar a reprodução
+                // No entanto, o seu worklet usa parameters para pitch/tempo, o que é síncrono.
+                // A reprodução já pode começar aqui se os parâmetros já foram definidos.
+                sourceNode.start(0, seekPosition);
+                playbackStartTime = audioContext.currentTime;
+                isPlaying = true;
+                updatePlayButton();
+            } else if (event.data.message === 'PROCESSOR_END') {
+                console.log('Reprodução terminada pelo processador.');
                 stopPlayback();
-            } else if (!isPlaying) { 
-            } else {
-                stopPlayback(); 
             }
         };
 
-        sourceNode.start(0, seekPosition);
+
+        updateSoundTouchSettings();
         
-        playbackStartTime = audioContext.currentTime;
-        isPlaying = true;
-        updatePlayButton();
+        sourceNode.onended = () => {
+            // Este onended é para o SourceNode, não para o áudio processado pelo worklet.
+            // A lógica de fim de áudio deve vir do worklet.
+            console.log('SourceNode terminou. Verificando o estado do worklet.');
+            if (!isPlaying) { // Se parou por comando do utilizador
+                return;
+            }
+            // A lógica de "seekPosition >= audioBuffer.duration - 0.1" já não é ideal aqui
+            // porque o tempo do worklet pode ser diferente devido a mudanças de tempo/pitch.
+            // O worklet envia 'PROCESSOR_END' quando termina.
+        };
     }
 
     function pausePlayback() {
         if (!isPlaying || !sourceNode) return;
         
-        const currentTempo = soundtouchWorkletNode ? soundtouchWorkletNode.parameters.get('tempo').value : 1.0;
-        const elapsed = audioContext.currentTime - playbackStartTime;
-        seekPosition += elapsed * currentTempo; 
-
-        sourceNode.stop();
-        sourceNode.disconnect();
-        if (soundtouchWorkletNode) { 
-            soundtouchWorkletNode.disconnect();
-        }
-        
-        isPlaying = false;
-        updatePlayButton();
+        // Aqui, a lógica de seekPosition precisa ser mais robusta com o worklet.
+        // Idealmente, o worklet reportaria a posição atual de reprodução.
+        // Por simplicidade, vamos parar e re-inicializar o worklet no play
+        stopPlayback(); // stopPlayback já redefine seekPosition a 0
+        // Para uma verdadeira pausa, você precisaria de uma mensagem 'pause' para o worklet
+        // e ele deveria manter seu estado interno (seekPosition)
+        // Por enquanto, esta simula uma 'stop' e 'start' do início ou da última seekPosition
     }
     
     function stopPlayback() {
         if (sourceNode) {
             sourceNode.stop();
             sourceNode.disconnect();
+            sourceNode = null; // Limpar o node
         }
-        if (soundtouchWorkletNode) { 
+        if (soundtouchWorkletNode) {    
+            // Envia uma mensagem para o worklet para ele resetar o seu estado interno
+            soundtouchWorkletNode.port.postMessage({ message: 'STOP' });
             soundtouchWorkletNode.disconnect();
+            soundtouchWorkletNode = null; // Limpar o node
         }
         isPlaying = false;
-        seekPosition = 0; 
+        seekPosition = 0;    
         updatePlayButton();
     }
     
@@ -411,13 +439,14 @@
 
     // --- 3. SLIDERS E ATUALIZAÇÃO DE EFEITOS ---
     function updateSoundTouchSettings() {
-        if (!soundtouchWorkletNode) return; 
+        if (!soundtouchWorkletNode) return;    
 
         const speed = parseFloat(speedSlider.value);
         const semitones = parseInt(pitchSlider.value);
         
+        // Os parâmetros do AudioWorklet são AudioParam e são definidos diretamente
         soundtouchWorkletNode.parameters.get('tempo').value = speed;
-        soundtouchWorkletNode.parameters.get('pitchSemitones').value = semitones; 
+        soundtouchWorkletNode.parameters.get('pitchSemitones').value = semitones;    
     }
     
     speedSlider.addEventListener('input', () => {

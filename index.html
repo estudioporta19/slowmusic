@@ -3,76 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slow Music!</title>
+    <title>Sample Player com Células</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>🎵 Slow Music!</h1>
-        
-        <div class="global-upload-section">
-            <input type="file" id="globalFileInput" accept="audio/mp3, audio/wav, audio/*" multiple style="display: none;">
-            <button id="globalUploadBtn" class="upload-btn">
-                ⬆️ Carregar Múltiplos Ficheiros
-            </button>
-            <button id="clearCellsBtn" class="upload-btn" style="background: #6c757d; margin-left: 10px;">
-                🗑️ Limpar Células
-            </button>
-            <span id="globalUploadStatus" class="file-name"></span>
-        </div>
+    <header>
+        <h1>Sample Player</h1>
+    </header>
 
-        <div class="controls">
-            <div class="control-group">
-                <label for="speedSlider">Velocidade de Reprodução: <span id="speedValue">1.0x</span></label>
-                <input type="range" id="speedSlider" class="slider" min="0.25" max="1" step="0.05" value="1">
-            </div>
-            <div class="control-group">
-                <label for="pitchSlider">Transposição (Meios Tons): <span id="pitchValue">0</span></label>
-                <input type="range" id="pitchSlider" class="slider" min="-1200" max="1200" step="100" value="0">
-            </div>
-            <div class="control-group">
-                <label>Presets:</label>
-                <button id="speedPreset05" class="upload-btn" style="background: #3498db; margin-right: 10px;">0.5x</button>
-                <button id="speedPreset10" class="upload-btn" style="background: #2ecc71;">1x</button>
-            </div>
+    <main>
+        <section class="upload-section">
+            <button id="globalUploadBtn">Carregar Ficheiro(s) de Áudio</button>
+            <input type="file" id="globalFileInput" accept="audio/*" multiple style="display: none;">
+            <span id="globalUploadStatus">Nenhum ficheiro carregado.</span>
+            <button id="clearCellsBtn">Limpar Todas as Células</button>
+        </section>
 
-            <div class="progress-bar" id="progressBar">
+        <section class="player-controls">
+            <div class="progress-bar-container" id="progressBar">
                 <div class="progress-fill" id="progressFill"></div>
                 <div class="loop-markers" id="loopMarkers">
-                    <div class="loop-handle loop-handle-start" id="loopHandleA"></div>
-                    <div class="loop-handle loop-handle-end" id="loopHandleB"></div>
+                    <div class="loop-handle" id="loopHandleA"></div>
+                    <div class="loop-handle" id="loopHandleB"></div>
                 </div>
             </div>
-            
             <div class="time-display">
-                <span id="currentTime">0:00</span>
-                <span id="totalTime">0:00</span>
+                <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
             </div>
-        </div>
 
-        <div class="loop-indicator" id="loopIndicator">
-            <div>🔄 Loop: <span id="loopStatus">Desativado</span></div>
-            <div id="loopPoints" style="display: none;">
-                Ponto A: <span id="pointA">--</span> | Ponto B: <span id="pointB">--</span>
+            <div class="control-group">
+                <label for="speedSlider">Velocidade:</label>
+                <input type="range" id="speedSlider" min="0.5" max="2.0" value="1.0" step="0.01">
+                <span id="speedValue">1.00x</span>
             </div>
-        </div>
 
-        <div class="keyboard-shortcuts">
-            <h3>⌨️ Atalhos do Teclado:</h3>
-            <div class="shortcut-info">
-                <span><span class="key">A</span> - Definir ponto inicial do loop</span>
-                <span><span class="key">B</span> - Definir ponto final do loop</span>
-                <span><span class="key">X</span> - Limpar loop</span>
-                <span><span class="key">Espaço</span> - Reproduzir/Pausar</span>
+            <div class="control-group">
+                <label for="pitchSlider">Transposição (Semitons):</label>
+                <input type="range" id="pitchSlider" min="-1200" max="1200" value="0" step="1">
+                <span id="pitchValue">0 semitons</span>
             </div>
-        </div>
 
-        <div class="grid" id="cellGrid">
-        </div>
+            <div class="loop-controls">
+                <span class="loop-indicator" id="loopIndicator">Loop: <span id="loopStatus">Desativado</span></span>
+                <div id="loopPoints" style="display: none;">
+                    Ponto A: <span id="pointA">--</span> | Ponto B: <span id="pointB">--</span>
+                </div>
+            </div>
+        </section>
 
-        <audio id="audioPlayer" preload="metadata"></audio>
-    </div>
+        <section id="cellGrid" class="cell-grid">
+            </section>
+    </main>
 
+    <footer>
+        <p>Atalhos: A (Ponto A), B (Ponto B), X (Limpar Loop), Espaço (Play/Pause)</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/soundtouch-js/soundtouch.min.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

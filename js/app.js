@@ -1,8 +1,7 @@
 // js/app.js
 
 // --- Variáveis Globais e Referências de Elementos ---
-let currentAudio = null; // O elemento <audio> HTML (usado principalmente para obter metadados e como proxy)
-let audioFiles = {}; // Guarda { cellNumber: { fileURL: string, audioBuffer: AudioBuffer, fileName: string } }
+let audioFiles = {}; // Guarda { cellNumber: { fileURL: string, audioBuffer: AudioBuffer, fileName: string, lastPlaybackTime: number } }
 let currentCell = null; // Guarda o número da célula ativa
 
 let loopPoints = { start: null, end: null };
@@ -11,11 +10,10 @@ let isLooping = false;
 // Web Audio API
 let audioContext;
 let currentSourceNode = null; // O AudioBufferSourceNode atualmente a tocar
-let currentGainNode = null; // Nó de ganho para controlar volume (opcional, mas boa prática)
-let isPlayingWithWebAudio = false; // Flag para saber se estamos a usar Web Audio API ou não
+let currentGainNode = null; // Nó de ganho
+let isPlaying = false; // Flag para saber se estamos a tocar
 
 // Referências de elementos HTML
-const audioPlayer = document.getElementById('audioPlayer'); // O elemento HTML <audio>
 const progressBar = document.getElementById('progressBar');
 const progressFill = document.getElementById('progressFill');
 const loopMarkers = document.getElementById('loopMarkers');
@@ -40,16 +38,22 @@ const totalCells = 20;
 let isDraggingLoopHandle = false;
 let activeLoopHandle = null; // 'start' or 'end'
 
+let progressUpdateInterval = null; // Para controlar o setInterval
+
 // --- Inicialização ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Inicializa o AudioContext assim que a página carrega
+    // Inicializa o AudioContext
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     
+    // Cria o nó de ganho uma vez e conecta ao destino
+    currentGainNode = audioContext.createGain(); 
+    currentGainNode.connect(audioContext.destination);
+
     createCells();
     updateLoopDisplay();
-    // NÃO aplique speed e pitch diretamente aqui, use applyAudioSettings no playAudio
-    applySpeed(parseFloat(speedSlider.value)); // Apenas para atualizar o valor exibido
-    applyPitch(parseInt(pitchSlider.value)); // Apenas para atualizar o valor exibido
+    // Apenas atualiza o display dos sliders, as configs reais são aplicadas no playAudio
+    applySpeedToDisplay(parseFloat(speedSlider.value));
+    applyPitchToDisplay(parseInt(pitchSlider.value));
     updateLoopMarkers();
 });
 
@@ -77,30 +81,7 @@ function createCells() {
 }
 
 function clearAllCells() {
-    // Parar a reprodução Web Audio API se estiver ativa
-    if (currentSourceNode) {
-        currentSourceNode.stop();
-        currentSourceNode.disconnect();
-        currentSourceNode = null;
-        if (currentGainNode) { // Verifica se o gainNode existe antes de desconectar
-            currentGainNode.disconnect();
-            currentGainNode = null;
-        }
-        isPlayingWithWebAudio = false;
-    }
-    
-    // Resetar o elemento <audio> HTML (como proxy)
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio.src = ''; 
-    }
-    currentAudio = null; // Redefine o proxy
-    currentCell = null;
-    clearLoop();
-    progressFill.style.width = '0%';
-    document.getElementById('currentTime').textContent = '0:00';
-    document.getElementById('totalTime').textContent = '0:00';
+    stopCurrentAudio(); // Parar e limpar qualquer reprodução atual
 
     for (let i = 1; i <= totalCells; i++) {
         if (audioFiles[i] && audioFiles[i].fileURL) {
@@ -169,7 +150,8 @@ globalFileInput.addEventListener('change', async (event) => {
             audioFiles[cellIndex] = {
                 fileURL: fileURL,
                 audioBuffer: audioBuffer,
-                fileName: fileNameWithoutExtension || file.name
+                fileName: fileNameWithoutExtension || file.name,
+                lastPlaybackTime: 0 // Inicia com 0
             };
             
             document.getElementById(`fileName${cellIndex}`).textContent = audioFiles[cellIndex].fileName;
@@ -188,15 +170,30 @@ globalFileInput.addEventListener('change', async (event) => {
 
 clearCellsBtn.addEventListener('click', clearAllCells);
 
-// Nova função para aplicar configurações de áudio (velocidade e pitch)
+// Função para aplicar configurações de áudio (velocidade e pitch)
 function applyAudioSettings(sourceNode, speed, pitchCents) {
     sourceNode.playbackRate.value = speed;
     
     // Compensar o pitch induzido pela velocidade
-    // pitchChangeInCents = Math.log2(speed) * 1200;
-    // DetuneFinal = (pitchCents do slider) - pitchChangeInCents
     const speedPitchCompensation = Math.log2(speed) * 1200;
     sourceNode.detune.value = pitchCents - speedPitchCompensation;
+}
+
+// Para a reprodução atual, limpa estados
+function stopCurrentAudio() {
+    if (currentSourceNode) {
+        try {
+            currentSourceNode.stop();
+            currentSourceNode.disconnect();
+        } catch (e) {
+            console.warn("Erro ao parar currentSourceNode:", e);
+        }
+        currentSourceNode = null;
+    }
+    isPlaying = false;
+    // Limpa o intervalo de atualização da barra de progresso
+    clearInterval(progressUpdateInterval);
+    progressUpdateInterval = null;
 }
 
 function playAudio(cellNumber, startOffset = 0) {
@@ -207,41 +204,30 @@ function playAudio(cellNumber, startOffset = 0) {
         return;
     }
 
-    // Parar qualquer reprodução Web Audio API anterior
-    if (currentSourceNode) {
-        currentSourceNode.stop();
-        currentSourceNode.disconnect();
-        currentSourceNode = null;
-        if (currentGainNode) {
-             currentGainNode.disconnect();
-             currentGainNode = null;
-        }
-    }
+    // Parar qualquer reprodução existente antes de iniciar uma nova
+    stopCurrentAudio();
     
-    // Desativar célula ativa anterior
-    if (currentCell) {
+    // Desativar célula ativa anterior, se houver
+    if (currentCell && document.querySelector(`.cell[data-cell-number="${currentCell}"]`)) {
         document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
     }
 
-    // Resetar e ativar a nova célula
-    if (currentCell !== cellNumber) { // Só limpa o loop se mudar de música
-        clearLoop(); 
-    }
+    // Atualizar célula ativa
     currentCell = cellNumber;
     document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
+
+    // Se mudou de faixa, limpar loop
+    if (audioData.lastCell !== currentCell) { // Adicionar um controlo para saber se a célula mudou
+        clearLoop();
+    }
+    audioData.lastCell = currentCell; // Marca a última célula para referência
 
     // --- Configurar e Iniciar Web Audio API Playback ---
     currentSourceNode = audioContext.createBufferSource();
     currentSourceNode.buffer = audioData.audioBuffer;
+    currentSourceNode.connect(currentGainNode); // Conecta ao nó de ganho já existente
 
-    if (!currentGainNode) { // Cria o nó de ganho apenas uma vez se ainda não existir
-        currentGainNode = audioContext.createGain(); 
-        currentGainNode.connect(audioContext.destination);
-    }
-    
-    currentSourceNode.connect(currentGainNode);
-
-    // Aplicar velocidade e pitch usando a nova função
+    // Aplicar velocidade e pitch usando a função
     const currentSpeed = parseFloat(speedSlider.value);
     const currentPitch = parseInt(pitchSlider.value);
     applyAudioSettings(currentSourceNode, currentSpeed, currentPitch);
@@ -249,67 +235,53 @@ function playAudio(cellNumber, startOffset = 0) {
     // Ajustar a duração total exibida
     document.getElementById('totalTime').textContent = formatTime(audioData.audioBuffer.duration);
 
-    // Para simular o currentTime do <audio> HTML
+    // Salvar o tempo de início e offset para cálculo preciso do tempo decorrido
     currentSourceNode._startTime = audioContext.currentTime;
-    currentSourceNode._seekOffset = startOffset; // Armazena o offset para cálculo do tempo
+    currentSourceNode._seekOffset = startOffset; 
 
-    // Quando o áudio termina (no Web Audio API)
+    // Lidar com o final da reprodução ou loop
     currentSourceNode.onended = () => {
         if (!isLooping) {
-            // Se não estiver em loop, tratar como "ended" normal
+            stopCurrentAudio(); // Limpar tudo
+            // Resetar UI para estado inicial
             if (currentCell) {
                 document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
             }
-            currentAudio = null; 
             currentCell = null;
             clearLoop();
             progressFill.style.width = '0%';
             document.getElementById('currentTime').textContent = '0:00';
             document.getElementById('totalTime').textContent = '0:00';
-            isPlayingWithWebAudio = false;
         } else {
-            // Se estiver em loop, reiniciar para o ponto de loop
+            // Se estiver em loop, reiniciar a reprodução do ponto de loop
             if (loopPoints.start !== null && loopPoints.end !== null) {
-                // Parar o nó atual para reiniciar
-                currentSourceNode.stop();
-                currentSourceNode.disconnect(); 
-
-                // Criar e conectar um novo nó de fonte
-                currentSourceNode = audioContext.createBufferSource();
-                currentSourceNode.buffer = audioData.audioBuffer;
-                currentSourceNode.connect(currentGainNode); 
-                //currentGainNode.connect(audioContext.destination); // Já está conectado
-
-                // Aplicar velocidade e pitch novamente ao novo nó
-                applyAudioSettings(currentSourceNode, currentSpeed, currentPitch);
-
-                // Recalcular seekOffset e playbackStartTime para o loop
-                currentSourceNode._seekOffset = loopPoints.start;
-                currentSourceNode._startTime = audioContext.currentTime;
-
-                currentSourceNode.start(0, loopPoints.start); // Começa do ponto de loop
-                currentSourceNode.onended = this; // Reatribui o handler onended
+                // Parar o nó atual para reiniciar (sem desconectar)
+                // Usamos playAudio para recriar o nó de forma limpa e aplicar as configs
+                playAudio(currentCell, loopPoints.start);
             }
         }
     };
 
     currentSourceNode.start(0, startOffset); // Iniciar no offset fornecido
-    isPlayingWithWebAudio = true;
+    isPlaying = true;
 
-    // Atualiza a UI da barra de progresso e tempo a cada 100ms
-    const updateProgressInterval = setInterval(() => {
-        if (!isPlayingWithWebAudio || !currentSourceNode || !audioData.audioBuffer) {
-            clearInterval(updateProgressInterval);
+    // Inicia ou reinicia o intervalo de atualização da barra de progresso
+    if (progressUpdateInterval) {
+        clearInterval(progressUpdateInterval);
+    }
+    progressUpdateInterval = setInterval(() => {
+        if (!isPlaying || !currentSourceNode || !audioData.audioBuffer) {
+            clearInterval(progressUpdateInterval);
+            progressUpdateInterval = null;
             return;
         }
 
-        // Tempo atual = (Tempo real do contexto - Tempo de início da reprodução) * Velocidade + Offset de busca
         let elapsedTime = (audioContext.currentTime - currentSourceNode._startTime) * currentSourceNode.playbackRate.value + currentSourceNode._seekOffset;
         
-        // Se a reprodução chegar ao fim da música (ou do loop end)
-        if (elapsedTime >= audioData.audioBuffer.duration) {
-            // Para evitar que a barra de progresso exceda 100% no final da música antes do 'onended' ser acionado
-            elapsedTime = audioData.audioBuffer.duration; 
+        // Limita o tempo decorrido para não exceder a duração total (ou o ponto final do loop) para o display
+        const displayDuration = isLooping && loopPoints.end !== null ? loopPoints.end : audioData.audioBuffer.duration;
+        if (elapsedTime >= displayDuration) {
+            elapsedTime = displayDuration; 
         }
 
         let progress = (elapsedTime / audioData.audioBuffer.duration) * 100;
@@ -320,15 +292,14 @@ function playAudio(cellNumber, startOffset = 0) {
     }, 100);
 }
 
-
 // --- Controles de Velocidade e Pitch ---
 speedSlider.addEventListener('input', (e) => {
     const newSpeed = parseFloat(e.target.value);
-    applySpeed(newSpeed); // Atualiza o display do slider
-    if (currentSourceNode) {
-        // Se houver um áudio a tocar, aplica as novas configurações
-        const currentPitch = parseInt(pitchSlider.value);
-        applyAudioSettings(currentSourceNode, newSpeed, currentPitch);
+    applySpeedToDisplay(newSpeed); // Atualiza apenas o display
+    if (isPlaying && currentCell !== null) {
+        // Se estiver a tocar, reinicia a reprodução com as novas configurações
+        const currentTime = (audioContext.currentTime - currentSourceNode._startTime) * currentSourceNode.playbackRate.value + currentSourceNode._seekOffset;
+        playAudio(currentCell, currentTime);
     }
 });
 speedSlider.addEventListener('mouseup', function() { this.blur(); });
@@ -336,77 +307,78 @@ speedSlider.addEventListener('touchend', function() { this.blur(); });
 
 pitchSlider.addEventListener('input', (e) => {
     const newPitch = parseInt(e.target.value);
-    applyPitch(newPitch); // Atualiza o display do slider
-    if (currentSourceNode) {
-        // Se houver um áudio a tocar, aplica as novas configurações
-        const currentSpeed = parseFloat(speedSlider.value);
-        applyAudioSettings(currentSourceNode, currentSpeed, newPitch);
+    applyPitchToDisplay(newPitch); // Atualiza apenas o display
+    if (isPlaying && currentCell !== null) {
+        // Se estiver a tocar, reinicia a reprodução com as novas configurações
+        const currentTime = (audioContext.currentTime - currentSourceNode._startTime) * currentSourceNode.playbackRate.value + currentSourceNode._seekOffset;
+        playAudio(currentCell, currentTime);
     }
 });
 pitchSlider.addEventListener('mouseup', function() { this.blur(); });
 pitchSlider.addEventListener('touchend', function() { this.blur(); });
 
-function applySpeed(speed) {
+function applySpeedToDisplay(speed) {
     speedSlider.value = speed;
     speedValue.textContent = speed.toFixed(2) + 'x';
 }
 
-function applyPitch(pitchCents) {
+function applyPitchToDisplay(pitchCents) {
     pitchSlider.value = pitchCents;
     pitchValue.textContent = (pitchCents / 100) + ' semitons'; 
 }
 
+
 // --- Atalhos do Teclado ---
 document.addEventListener('keydown', function(e) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
+    // Ignora inputs de texto ou botões
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('.slider')) {
         return;
     }
 
-    if (!currentSourceNode || !audioFiles[currentCell]) return;
-
-    // Pausar/Reproduzir com a Web Audio API é um pouco diferente
-    const audioData = audioFiles[currentCell];
+    if (!audioFiles[currentCell]) return; // Precisa ter um áudio carregado em alguma célula
 
     switch(e.key.toLowerCase()) {
         case 'a':
-            setLoopPoint('start');
+            if (isPlaying) setLoopPoint('start');
             break;
         case 'b':
-            setLoopPoint('end');
+            if (isPlaying) setLoopPoint('end');
             break;
         case 'x':
             clearLoop();
             break;
         case ' ':
-            e.preventDefault();
-            if (isPlayingWithWebAudio) {
-                // Pausar: Para a reprodução e calcula o tempo atual para retomar
-                let currentPlaybackTime = (audioContext.currentTime - currentSourceNode._startTime) * currentSourceNode.playbackRate.value + currentSourceNode._seekOffset;
-                if (currentPlaybackTime < 0) currentPlaybackTime = 0; // Safeguard
-
-                currentSourceNode.stop();
-                currentSourceNode.disconnect();
-                currentSourceNode = null; // Zera o nó
-                
-                // Armazena o tempo de pausa na célula
-                audioFiles[currentCell].lastPlaybackTime = currentPlaybackTime;
-                isPlayingWithWebAudio = false;
-
-            } else {
-                // Reproduzir: Tenta retomar do último tempo conhecido ou do início
-                const resumeTime = audioFiles[currentCell].lastPlaybackTime || 0;
-                playAudio(currentCell, resumeTime);
-                audioFiles[currentCell].lastPlaybackTime = 0; // Limpa após retomar
-            }
+            e.preventDefault(); // Previne a rolagem da página
+            togglePlayPause();
             break;
     }
 });
+
+// Nova função para gerir play/pause
+function togglePlayPause() {
+    if (!currentCell || !audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) {
+        console.warn("Nenhum áudio selecionado ou carregado para reproduzir/pausar.");
+        return;
+    }
+
+    if (isPlaying) {
+        // Pausar: Guarda o tempo atual e para o áudio
+        const currentTime = (audioContext.currentTime - currentSourceNode._startTime) * currentSourceNode.playbackRate.value + currentSourceNode._seekOffset;
+        audioFiles[currentCell].lastPlaybackTime = Math.max(0, currentTime); // Garante que não seja negativo
+        
+        stopCurrentAudio();
+    } else {
+        // Reproduzir: Inicia do último tempo de pausa ou do início
+        const resumeTime = audioFiles[currentCell].lastPlaybackTime || 0;
+        playAudio(currentCell, resumeTime);
+        audioFiles[currentCell].lastPlaybackTime = 0; // Limpa após retomar
+    }
+}
 
 // --- Lógica de Loop ---
 function setLoopPoint(point) {
     if (!currentSourceNode || !audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) return;
     
-    // Calcular o tempo atual de forma mais precisa
     let currentTime = (audioContext.currentTime - currentSourceNode._startTime) * currentSourceNode.playbackRate.value + currentSourceNode._seekOffset;
     if (isNaN(currentTime) || currentTime < 0) currentTime = 0; 
     
@@ -479,7 +451,7 @@ function updateLoopDisplay() {
 }
 
 function updateLoopMarkers() {
-    if (!currentSourceNode || !audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) {
+    if (!audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) {
         loopMarkers.classList.remove('active');
         loopMarkers.style.display = 'none';
         loopHandleA.style.display = 'none';
@@ -527,7 +499,7 @@ function updateLoopMarkers() {
 
 // --- Lógica de Arraste dos Marcadores e Cliques na ProgressBar ---
 progressBar.addEventListener('mousedown', (e) => {
-    if (!currentSourceNode || !audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) return;
+    if (!audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) return;
 
     if (e.target === loopHandleA) {
         isDraggingLoopHandle = true;
@@ -541,21 +513,12 @@ progressBar.addEventListener('mousedown', (e) => {
         const percentage = clickX / rect.width;
         const newTime = percentage * audioFiles[currentCell].audioBuffer.duration;
         
-        // Parar e recriar o AudioBufferSourceNode para saltar no tempo
-        if (currentSourceNode) {
-            currentSourceNode.stop();
-            currentSourceNode.disconnect();
-            currentSourceNode = null; 
-            isPlayingWithWebAudio = false; // Define como não está a tocar até ser reiniciado
-        }
-
-        // Recria e inicia a reprodução do ponto clicado
         playAudio(currentCell, newTime); // Inicia do novo tempo
     }
 });
 
 document.addEventListener('mousemove', (e) => {
-    if (!isDraggingLoopHandle || !currentSourceNode || !audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) return;
+    if (!isDraggingLoopHandle || !audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) return;
 
     e.preventDefault();
 
@@ -587,34 +550,4 @@ document.addEventListener('mouseup', () => {
     if (isDraggingLoopHandle) {
         isDraggingLoopHandle = false;
         activeLoopHandle = null;
-        activateLoop(); 
-    }
-});
-
-// --- Delegação de Eventos para Células ---
-document.getElementById('cellGrid').addEventListener('click', function(event) {
-    const target = event.target;
-    const cellElement = target.closest('.cell'); 
-    if (cellElement) {
-        const cellNumber = parseInt(cellElement.dataset.cellNumber);
-        // Se a célula já está ativa e a tocar, pausar/retomar
-        if (currentCell === cellNumber && isPlayingWithWebAudio) {
-            // Pausar
-            let currentPlaybackTime = (audioContext.currentTime - currentSourceNode._startTime) * currentSourceNode.playbackRate.value + currentSourceNode._seekOffset;
-            if (currentPlaybackTime < 0) currentPlaybackTime = 0;
-
-            currentSourceNode.stop();
-            currentSourceNode.disconnect();
-            currentSourceNode = null;
-            audioFiles[currentCell].lastPlaybackTime = currentPlaybackTime;
-            isPlayingWithWebAudio = false;
-        } else if (currentCell === cellNumber && !isPlayingWithWebAudio && audioFiles[cellNumber] && audioFiles[cellNumber].lastPlaybackTime !== undefined) {
-            // Retomar
-            playAudio(cellNumber, audioFiles[cellNumber].lastPlaybackTime);
-            audioFiles[cellNumber].lastPlaybackTime = 0; // Limpa após retomar
-        } else {
-            // Iniciar nova reprodução (ou reiniciar do zero se não houver tempo de pausa)
-            playAudio(cellNumber);
-        }
-    }
-});
+        activateLoop();

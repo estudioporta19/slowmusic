@@ -388,7 +388,7 @@
         let loopB = 0; 
         let loopEnabled = false;
 
-        let animationFrameId; // Para a animação do indicador de reprodução
+        let animationFrameId; 
 
         // --- Elementos do DOM ---
         const audioFile = document.getElementById('audioFile');
@@ -410,28 +410,23 @@
         const setLoopABtn = document.getElementById('setLoopABtn');
         const setLoopBBtn = document.getElementById('setLoopBBtn');
         const toggleLoopBtn = document.getElementById('toggleLoopBtn');
-        const resetLoopBtn = document.getElementById('resetLoopBtn'); // NOVO: Botão de Reset de Loop
+        const resetLoopBtn = document.getElementById('resetLoopBtn'); 
         const waveformCanvas = document.getElementById('waveformCanvas');
         const waveformContainer = document.getElementById('waveformContainer');
         const playbackIndicator = document.getElementById('playbackIndicator');
         const loopIndicatorA = document.getElementById('loopIndicatorA');
         const loopIndicatorB = document.getElementById('loopIndicatorB');
 
-        // --- NOVOS Elementos do DOM para Loops Guardados ---
         const saveLoopBtn = document.getElementById('saveLoopBtn');
         const loopListContainer = document.getElementById('loopListContainer');
         const noLoopsMessage = document.getElementById('noLoopsMessage');
 
         // --- Nova Estrutura de Dados para Loops ---
-        // Vamos guardar os loops num objeto onde a chave é o nome do ficheiro de áudio
-        // e o valor é um array de loops para esse ficheiro.
-        // Cada loop será um objeto: { id: string, name: string, loopA: number, loopB: number }
-        let savedLoops = {}; // Carregado do localStorage ao iniciar
+        let savedLoops = {}; 
         const LOCAL_STORAGE_KEY = 'soundtouch_saved_loops';
 
         // --- Funções Auxiliares ---
 
-        // Formata o tempo de segundos para MM:SS
         function formatTime(seconds) {
             if (isNaN(seconds) || seconds < 0) return "00:00";
             const minutes = Math.floor(seconds / 60);
@@ -439,12 +434,10 @@
             return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // Função para gerar um ID único para cada loop
         function generateUniqueId() {
             return Date.now().toString(36) + Math.random().toString(36).substring(2);
         }
 
-        // Função para guardar loops no localStorage
         function saveLoopsToLocalStorage() {
             try {
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(savedLoops));
@@ -455,7 +448,6 @@
             }
         }
 
-        // Função para carregar loops do localStorage
         function loadLoopsFromLocalStorage() {
             try {
                 const data = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -465,13 +457,12 @@
                 }
             } catch (e) {
                 console.error('Erro ao carregar loops do localStorage:', e);
-                savedLoops = {}; // Resetar se houver erro de parsing
+                savedLoops = {}; 
             }
         }
 
-        // Função para renderizar a lista de loops na UI
         function renderLoopList() {
-            loopListContainer.innerHTML = ''; // Limpa a lista existente
+            loopListContainer.innerHTML = ''; 
 
             if (!audioBuffer) {
                 noLoopsMessage.textContent = 'Carregue um áudio para ver os loops.';
@@ -490,7 +481,7 @@
 
             loopsForCurrentFile.forEach(loop => {
                 const loopItem = document.createElement('div');
-                loopItem.className = 'loop-item'; // Use a classe CSS definida
+                loopItem.className = 'loop-item'; 
                 
                 const loopName = document.createElement('span');
                 loopName.className = 'loop-name';
@@ -505,13 +496,13 @@
 
                 const loadBtn = document.createElement('button');
                 loadBtn.textContent = 'Carregar';
-                loadBtn.className = 'reset-btn'; // Reutilizar o estilo de botão
+                loadBtn.className = 'reset-btn'; 
                 loadBtn.style.background = 'linear-gradient(45deg, #1abc9c, #16a085)';
                 loadBtn.onclick = () => loadLoop(loop.id, currentFileName);
 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.textContent = 'Apagar';
-                deleteBtn.className = 'reset-btn'; // Reutilizar o estilo de botão
+                deleteBtn.className = 'reset-btn'; 
                 deleteBtn.style.background = 'linear-gradient(45deg, #FF6B6B, #d9534f)';
                 deleteBtn.onclick = () => deleteLoop(loop.id, currentFileName);
 
@@ -558,7 +549,6 @@
         }
 
         function loadLoop(id, fileName) {
-            // Verifica se o ficheiro atual é o mesmo do loop que está a tentar carregar
             if (!audioBuffer || fileNameEl.textContent.replace('Ficheiro: ', '') !== fileName) {
                 alert('Por favor, carregue o ficheiro de áudio correto antes de carregar este loop.');
                 return;
@@ -568,20 +558,18 @@
             const loopToLoad = loopsForFile ? loopsForFile.find(loop => loop.id === id) : null;
 
             if (loopToLoad) {
-                stopPlayback(); // Parar playback atual para aplicar o novo loop
+                stopPlayback(); 
                 
-                // Aplicar os pontos do loop
                 loopA = loopToLoad.loopA;
                 loopB = loopToLoad.loopB;
                 loopAValueEl.textContent = formatTime(loopA);
                 loopBValueEl.textContent = formatTime(loopB);
                 
-                // Ativar o loop e atualizar o botão
                 loopEnabled = true; 
                 toggleLoopBtn.textContent = 'Loop ON ✅';
                 toggleLoopBtn.style.background = 'linear-gradient(45deg, #1abc9c, #16a085)';
                 
-                updateLoopIndicators(); // Atualizar os indicadores visuais na waveform
+                updateLoopIndicators(); 
                 alert(`Loop "${loopToLoad.name}" carregado. Loop ativado.`);
             } else {
                 alert('Loop não encontrado.');
@@ -595,7 +583,6 @@
 
             if (savedLoops[fileName]) {
                 savedLoops[fileName] = savedLoops[fileName].filter(loop => loop.id !== id);
-                // Se não houver mais loops para este ficheiro, remover a chave
                 if (savedLoops[fileName].length === 0) {
                     delete savedLoops[fileName];
                 }
@@ -608,7 +595,7 @@
 
         // --- Funções de Reprodução ---
 
-        function startPlayback() {
+        async function startPlayback() {
             if (!audioBuffer) {
                 alert('Por favor, carregue um ficheiro de áudio primeiro.');
                 return;
@@ -616,44 +603,43 @@
 
             // Garante que o AudioContext está em estado 'running' (essencial para políticas de autoplay)
             if (audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
+                try {
+                    await audioContext.resume();
                     console.log('AudioContext resumed successfully.');
-                    // Tentar iniciar novamente após o resume
-                    _actualStartPlayback();
-                }).catch(e => console.error('Erro ao resumir AudioContext:', e));
-            } else {
-                _actualStartPlayback();
+                } catch (e) {
+                    console.error('Erro ao resumir AudioContext:', e);
+                    alert('Não foi possível iniciar a reprodução. Por favor, tente novamente ou verifique as permissões de áudio do navegador.');
+                    return;
+                }
             }
+            
+            // Lógica de reprodução real
+            _actualStartPlayback();
         }
 
-        // Função auxiliar para o início real da reprodução
         function _actualStartPlayback() {
             if (isPlaying) {
-                stopPlayback();
+                stopPlayback(); 
             }
 
             sourceNode = audioContext.createBufferSource();
             sourceNode.buffer = audioBuffer;
 
-            // Se soundtouchWorkletNode já existe, podemos reutilizá-lo ou recriá-lo
-            // Para maior robustez, vamos recriar para garantir que as conexões estão limpas
-            if (soundtouchWorkletNode) {
+            // Recria o AudioWorkletNode para garantir um estado limpo
+            if (soundtouchWorkletNode) { 
                 soundtouchWorkletNode.disconnect();
+                soundtouchWorkletNode = null; 
             }
             soundtouchWorkletNode = new AudioWorkletNode(audioContext, 'scheduled-soundtouch-worklet');
 
-            // Conectar nós: Source -> Worklet -> Destino
             sourceNode.connect(soundtouchWorkletNode);
             soundtouchWorkletNode.connect(audioContext.destination);
 
-            // Enviar a duração total do buffer para o worklet
             soundtouchWorkletNode.port.postMessage({ type: 'setDuration', duration: audioBuffer.duration });
 
-            // Definir parâmetros iniciais (tempo e pitch)
             soundtouchWorkletNode.parameters.get('tempo').value = parseFloat(tempoSlider.value);
             soundtouchWorkletNode.parameters.get('pitchSemitones').value = parseFloat(pitchSlider.value);
             
-            // Enviar os pontos de loop e estado para o worklet
             soundtouchWorkletNode.port.postMessage({
                 type: 'setLoopPoints',
                 loopA: loopA,
@@ -661,29 +647,26 @@
                 loopEnabled: loopEnabled
             });
 
-            // Lidar com o fim da reprodução (e potencialmente looping)
             soundtouchWorkletNode.port.onmessage = (event) => {
                 if (event.data.type === 'playbackEnded') {
-                    if (!loopEnabled) { // Se não estiver em loop, para completamente
+                    if (!loopEnabled) { 
                         stopPlayback();
                     }
-                    // Se estiver em loop, o worklet já lidou com o salto para loopA
                 }
             };
 
             playbackStartTime = audioContext.currentTime - seekPosition;
-            sourceNode.start(0, seekPosition); // Iniciar a partir da posição atual
+            sourceNode.start(0, seekPosition); 
             isPlaying = true;
             playPauseBtn.textContent = '⏸️ Pausar';
             playPauseBtn.classList.add('playing');
             playbackIndicator.style.display = 'block';
-            updatePlaybackIndicator(); // Começar a animação
+            updatePlaybackIndicator(); 
         }
 
 
         function stopPlayback() {
             if (isPlaying) {
-                // Parar o sourceNode atual
                 if (sourceNode) {
                     try {
                         sourceNode.stop();
@@ -692,28 +675,24 @@
                         console.warn("Erro ao parar sourceNode (pode já ter parado):", e);
                     }
                 }
-                // Desconectar o worklet para garantir limpeza
                 if (soundtouchWorkletNode) {
                     soundtouchWorkletNode.disconnect();
-                    // Opcional: Anular a referência para que seja recriado na próxima startPlayback
                     soundtouchWorkletNode = null; 
                 }
 
                 isPlaying = false;
-                seekPosition = 0; // Resetar a posição de busca
+                seekPosition = 0; 
                 playPauseBtn.textContent = '▶️ Tocar';
                 playPauseBtn.classList.remove('playing');
                 playbackIndicator.style.display = 'none';
-                cancelAnimationFrame(animationFrameId); // Parar a animação
-                updatePlaybackIndicator(); // Coloca o indicador no início
+                cancelAnimationFrame(animationFrameId); 
+                updatePlaybackIndicator(); 
             }
         }
 
         function pausePlayback() {
             if (isPlaying) {
-                // Calcula a posição atual de reprodução
                 seekPosition = audioContext.currentTime - playbackStartTime;
-                // Parar o sourceNode atual
                 if (sourceNode) {
                     try {
                         sourceNode.stop();
@@ -722,15 +701,14 @@
                         console.warn("Erro ao parar sourceNode (pode já ter parado durante a pausa):", e);
                     }
                 }
-                 // Desconectar o worklet
                 if (soundtouchWorkletNode) {
                     soundtouchWorkletNode.disconnect();
-                    soundtouchWorkletNode = null; // Anular a referência
+                    soundtouchWorkletNode = null; 
                 }
                 isPlaying = false;
                 playPauseBtn.textContent = '▶️ Tocar';
                 playPauseBtn.classList.remove('playing');
-                cancelAnimationFrame(animationFrameId); // Parar a animação
+                cancelAnimationFrame(animationFrameId); 
             }
         }
 
@@ -755,7 +733,6 @@
                 soundtouchWorkletNode.parameters.get('pitchSemitones').value = 0;
             }
 
-            // Resetar loop (manter A e B, mas desativar o loop)
             loopEnabled = false;
             toggleLoopBtn.textContent = 'Loop OFF ❌';
             toggleLoopBtn.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
@@ -763,22 +740,21 @@
                 soundtouchWorkletNode.port.postMessage({ type: 'setLoopPoints', loopEnabled: loopEnabled });
             }
 
-            stopPlayback(); // Parar e resetar seekPosition
+            stopPlayback(); 
         }
         
-        // NOVO: Função para resetar os pontos de loop (A e B)
         function resetLoopPoints() {
             if (!audioBuffer) {
                 alert('Carregue um áudio primeiro para resetar o loop.');
                 return;
             }
-            stopPlayback(); // Para a reprodução para aplicar o reset
+            stopPlayback(); 
             loopA = 0;
             loopB = audioBuffer.duration;
             loopAValueEl.textContent = formatTime(loopA);
             loopBValueEl.textContent = formatTime(loopB);
-            updateLoopIndicators(); // Atualiza os indicadores visuais
-            loopEnabled = false; // Desativa o loop por padrão ao resetar
+            updateLoopIndicators(); 
+            loopEnabled = false; 
             toggleLoopBtn.textContent = 'Loop OFF ❌';
             toggleLoopBtn.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
             if (soundtouchWorkletNode) {
@@ -795,15 +771,15 @@
             const width = canvas.width = waveformContainer.clientWidth;
             const height = canvas.height = waveformContainer.clientHeight;
 
-            ctx.clearRect(0, 0, width, height); // Limpa o canvas
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; // Cor de fundo da waveform
+            ctx.clearRect(0, 0, width, height); 
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; 
             ctx.fillRect(0, 0, width, height);
 
-            const data = buffer.getChannelData(0); // Pega os dados do primeiro canal
+            const data = buffer.getChannelData(0); 
             const step = Math.ceil(data.length / width);
             const amp = height / 2;
 
-            ctx.strokeStyle = '#72efdd'; // Cor da linha da waveform
+            ctx.strokeStyle = '#72efdd'; 
             ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(0, amp);
@@ -816,8 +792,8 @@
                     if (datum < min) min = datum;
                     if (datum > max) max = datum;
                 }
-                ctx.lineTo(i, (1 + min * 0.8) * amp); // Desenha a parte inferior
-                ctx.lineTo(i, (1 + max * 0.8) * amp); // Desenha a parte superior
+                ctx.lineTo(i, (1 + min * 0.8) * amp); 
+                ctx.lineTo(i, (1 + max * 0.8) * amp); 
             }
             ctx.lineTo(width, amp);
             ctx.stroke();
@@ -826,12 +802,9 @@
         function updatePlaybackIndicator() {
             if (!audioBuffer) return;
 
-            // Calcula a posição atual em segundos
             let currentPlaybackTime = seekPosition;
             if (isPlaying) {
-                // Se estiver a tocar, calcula a posição real baseada no tempo do AudioContext
                 currentPlaybackTime = audioContext.currentTime - playbackStartTime;
-                // Ajusta se estiver fora dos limites (pode acontecer por pequenos arredondamentos ou no final da faixa)
                 if (currentPlaybackTime < 0) currentPlaybackTime = 0;
                 if (currentPlaybackTime > audioBuffer.duration) currentPlaybackTime = audioBuffer.duration;
             }
@@ -841,7 +814,7 @@
             const xPosition = positionRatio * waveformCanvas.width;
 
             playbackIndicator.style.left = `${xPosition}px`;
-            playbackIndicator.style.display = 'block'; // Garante que está visível
+            playbackIndicator.style.display = 'block'; 
 
             if (isPlaying) {
                 animationFrameId = requestAnimationFrame(updatePlaybackIndicator);
@@ -858,7 +831,6 @@
             const duration = audioBuffer.duration;
             const width = waveformCanvas.width;
 
-            // Garante que os pontos de loop estão dentro dos limites do buffer
             const effectiveLoopA = Math.max(0, Math.min(loopA, duration));
             const effectiveLoopB = Math.max(0, Math.min(loopB, duration));
 
@@ -918,17 +890,16 @@
 
         setLoopABtn.addEventListener('click', () => {
             if (!audioBuffer) return;
-            // Posição atual de reprodução, garantindo que é não-negativa
             let currentPlaybackTime = 0;
             if (isPlaying) {
                 currentPlaybackTime = audioContext.currentTime - playbackStartTime;
             } else {
-                currentPlaybackTime = seekPosition; // Se estiver pausado, usa a seekPosition
+                currentPlaybackTime = seekPosition; 
             }
             loopA = Math.max(0, currentPlaybackTime);
-            if (loopA > loopB) loopB = loopA; // Se A passar B, B acompanha A
+            if (loopA > loopB) loopB = loopA; 
             loopAValueEl.textContent = formatTime(loopA);
-            loopBValueEl.textContent = formatTime(loopB); // Atualiza B também
+            loopBValueEl.textContent = formatTime(loopB); 
             updateLoopIndicators();
             if (soundtouchWorkletNode) {
                 soundtouchWorkletNode.port.postMessage({ type: 'setLoopPoints', loopA: loopA, loopB: loopB });
@@ -944,8 +915,8 @@
                 currentPlaybackTime = seekPosition;
             }
             loopB = Math.max(0, currentPlaybackTime);
-            if (loopB < loopA) loopA = loopB; // Se B recuar de A, A acompanha B
-            loopAValueEl.textContent = formatTime(loopA); // Atualiza A também
+            if (loopB < loopA) loopA = loopB; 
+            loopAValueEl.textContent = formatTime(loopA); 
             loopBValueEl.textContent = formatTime(loopB);
             updateLoopIndicators();
             if (soundtouchWorkletNode) {
@@ -963,7 +934,6 @@
             }
         });
 
-        // NOVO: Event listener para o botão de resetar loop
         resetLoopBtn.addEventListener('click', resetLoopPoints);
 
 
@@ -975,17 +945,15 @@
             const clickTime = (clickX / waveformCanvas.width) * audioBuffer.duration;
 
             if (event.shiftKey) {
-                // Shift+Click para definir B
                 loopB = clickTime;
-                if (loopB < loopA) loopA = loopB; // Acompanha B se B for menor que A
+                if (loopB < loopA) loopA = loopB; 
                 loopBValueEl.textContent = formatTime(loopB);
-                loopAValueEl.textContent = formatTime(loopA); // Atualiza A também
+                loopAValueEl.textContent = formatTime(loopA); 
             } else {
-                // Click normal para definir A
                 loopA = clickTime;
-                if (loopA > loopB) loopB = loopA; // Acompanha A se A for maior que B
+                if (loopA > loopB) loopB = loopA; 
                 loopAValueEl.textContent = formatTime(loopA);
-                loopBValueEl.textContent = formatTime(loopB); // Atualiza B também
+                loopBValueEl.textContent = formatTime(loopB); 
             }
             updateLoopIndicators();
             if (soundtouchWorkletNode) {
@@ -993,20 +961,16 @@
             }
         });
 
-        // --- Adicionar listener ao botão de guardar loop ---
         saveLoopBtn.addEventListener('click', saveCurrentLoop);
 
-        // --- Função para carregar o ficheiro de áudio (modificada para inicializar AudioContext) ---
         async function loadAudioFile(file) {
-            // Reabilita o status de carregamento e esconde outros elementos
             fileNameEl.textContent = `Ficheiro: ${file.name}`;
-            durationEl.textContent = '00:00'; // Resetar duração
+            durationEl.textContent = '00:00'; 
             fileInfoEl.style.display = 'block';
             loadingStatusEl.textContent = 'A carregar e descodificar...';
-            loadingStatusEl.style.display = 'block'; // Mostrar status de carregamento
-            controlsEl.style.display = 'none'; // Esconder controles enquanto carrega
+            loadingStatusEl.style.display = 'block'; 
+            controlsEl.style.display = 'none'; 
 
-            // Inicializar AudioContext e AudioWorklet apenas uma vez e na primeira interação
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 try {
@@ -1015,36 +979,38 @@
                 } catch (error) {
                     console.error('Erro ao carregar AudioWorklet:', error);
                     loadingStatusEl.textContent = 'Erro fatal: Não foi possível carregar o processador de áudio! Verifique o console.';
-                    return; // Sai da função se o worklet não carregar
+                    return; 
                 }
             }
-            // Garante que o AudioContext está em estado 'running' (especialmente após políticas de autoplay)
+            // Tenta resumir o AudioContext logo após a interação de carregar ficheiro
             if (audioContext.state === 'suspended') {
-                await audioContext.resume();
+                try {
+                    await audioContext.resume();
+                    console.log('AudioContext resumed after file load.');
+                } catch (e) {
+                    console.error('Erro ao resumir AudioContext após carregar ficheiro:', e);
+                }
             }
             
             const reader = new FileReader();
             reader.onload = async (e) => {
-                // Descodificar os dados do áudio
                 audioContext.decodeAudioData(e.target.result)
                     .then(buffer => {
                         audioBuffer = buffer;
                         durationEl.textContent = formatTime(audioBuffer.duration);
                         drawWaveform(audioBuffer);
                         
-                        // Define A e B para a duração total do áudio por padrão
                         loopA = 0; 
                         loopB = audioBuffer.duration;
-                        updateLoopIndicators(); // Mostra os indicadores A/B
+                        updateLoopIndicators(); 
                         loopAValueEl.textContent = formatTime(loopA);
                         loopBValueEl.textContent = formatTime(loopB);
 
                         loadingStatusEl.textContent = 'Pronto a tocar!';
-                        setTimeout(() => { loadingStatusEl.style.display = 'none'; }, 2000); // Esconde a mensagem de status
-                        controlsEl.style.display = 'block'; // Mostra os controles
-                        resetControls(); // Reseta os sliders e a posição de reprodução, mas loopB já está definido
+                        setTimeout(() => { loadingStatusEl.style.display = 'none'; }, 2000); 
+                        controlsEl.style.display = 'block'; 
+                        resetControls(); 
                         
-                        // Renderizar loops para o novo áudio
                         renderLoopList(); 
                     })
                     .catch(error => {
@@ -1052,17 +1018,14 @@
                         loadingStatusEl.textContent = 'Erro ao carregar o ficheiro! Verifique o console para mais detalhes.';
                     });
             };
-            reader.readAsArrayBuffer(file); // Lê o ficheiro como um ArrayBuffer
+            reader.readAsArrayBuffer(file); 
         }
 
-        // Chamar loadLoopsFromLocalStorage e renderLoopList ao iniciar a página
         document.addEventListener('DOMContentLoaded', () => {
             loadLoopsFromLocalStorage();
-            // Renderiza a lista inicial vazia ou com a mensagem para carregar áudio
             renderLoopList(); 
         });
 
-        // Garantir que a waveform se redimensiona com a janela
         window.addEventListener('resize', () => {
             if (audioBuffer) {
                 drawWaveform(audioBuffer);

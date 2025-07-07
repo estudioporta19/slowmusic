@@ -872,24 +872,33 @@
         }
     }
 
-    waveformCanvas.addEventListener('click', (e) => {
+waveformCanvas.addEventListener('click', (e) => {
+        // Sai da função se não houver um ficheiro de áudio carregado.
         if (!audioBuffer) return;
 
+        // Calcula a posição do clique na waveform e o tempo correspondente no áudio.
         const rect = waveformCanvas.getBoundingClientRect();
-        const clickX = e.clientX - rect.left; 
+        const clickX = e.clientX - rect.left; // Posição X do clique dentro do canvas
         const percent = clickX / waveformCanvas.width;
         const clickedTime = percent * audioBuffer.duration;
 
-        if (e.shiftKey) {
-            loopB = Math.max(loopA + 0.1, clickedTime);    
-            loopB = Math.min(loopB, audioBuffer.duration); 
-            loopBValueEl.textContent = formatTime(loopB);
+        // Para a reprodução atual para que possamos reiniciar no novo ponto.
+        // É importante parar e reiniciar para que o AudioWorkletNode possa ser reconfigurado.
+        const wasPlaying = isPlaying; // Guarda o estado antes de parar
+        stopPlayback(); 
+
+        // Define a nova posição de busca no áudio.
+        seekPosition = clickedTime; 
+        console.log(`Posição de busca definida para: ${formatTime(seekPosition)}`);
+
+        // Se o áudio estava a tocar, reinicia a reprodução do novo ponto.
+        if (wasPlaying) { 
+            startPlayback();
         } else {
-            loopA = Math.min(loopB - 0.1, clickedTime);    
-            loopA = Math.max(0, loopA); 
-            loopAValueEl.textContent = formatTime(loopA);
+            // Se o áudio estava parado, apenas move o indicador visual de reprodução
+            // para a nova posição.
+            updateLoopIndicators(); 
         }
-        updateLoopIndicators();
     });
 
     function setLoopA() {

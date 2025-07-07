@@ -199,6 +199,21 @@
             font-style: italic;
             color: #ccc;
         }
+
+        /* --- Estilos para o Waveform e Loop --- */
+        .waveform-container {
+            position: relative;
+            cursor: crosshair; /* Muda o cursor para indicar que é clicável */
+        }
+
+        .loop-indicator {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 3px; /* Largura das linhas indicadoras */
+            opacity: 0.7;
+            pointer-events: none; /* Garante que não interfere com cliques no canvas */
+        }
     </style>
 </head>
 <body>
@@ -235,7 +250,31 @@
                     <button class="reset-btn" onclick="resetPitch()">Reset</button>
                 </div>
             </div>
-            
+
+            <div class="control-group">
+                <h3>🔄 Controlo de Loop</h3>
+                <div class="waveform-container" style="position: relative; width: 100%; height: 120px; background-color: rgba(255, 255, 255, 0.08); border-radius: 10px; margin-bottom: 15px; overflow: hidden;">
+                    <canvas id="waveformCanvas" width="760" height="120" style="display: block;"></canvas>
+                    <div id="loopIndicatorA" class="loop-indicator" style="left: 0%; background-color: #4CAF50;"></div>
+                    <div id="loopIndicatorB" class="loop-indicator" style="left: 100%; background-color: #FF6B6B;"></div>
+                    <div id="playbackIndicator" class="loop-indicator" style="left: 0%; background-color: #ffffff; width: 2px; z-index: 10; opacity: 0.8;"></div>
+                </div>
+                <div class="control-row">
+                    <label>Início (A):</label>
+                    <span id="loopAValue" class="value-display">00:00.000</span>
+                    <button class="reset-btn" onclick="setLoopA()">Definir A</button>
+                    <button class="reset-btn" onclick="resetLoopA()">Reset A</button>
+                </div>
+                <div class="control-row">
+                    <label>Fim (B):</label>
+                    <span id="loopBValue" class="value-display">00:00.000</span>
+                    <button class="reset-btn" onclick="setLoopB()">Definir B</button>
+                    <button class="reset-btn" onclick="resetLoopB()">Reset B</button>
+                </div>
+                <div class="control-row" style="justify-content: center;">
+                    <button id="toggleLoopBtn" class="play-btn" style="background: linear-gradient(45deg, #6c757d, #5a6268);" onclick="toggleLoop()">Loop OFF ❌</button>
+                </div>
+            </div>
             <div class="playback-controls">
                 <button id="playBtn" class="play-btn" onclick="togglePlayback()">▶️ Reproduzir</button>
                 <button id="stopBtn" class="play-btn" onclick="stopPlayback()">⏹️ Parar</button>
@@ -254,6 +293,13 @@
     let seekPosition = 0;    
     let playbackStartTime = 0;    
     
+    // --- Novas Variáveis Globais para Loop e Waveform ---
+    let loopA = 0; // Ponto A em segundos
+    let loopB = 0; // Ponto B em segundos
+    let loopEnabled = false;
+
+    let animationFrameId; // Para o loop de animação da waveform
+    
     // --- Elementos do DOM ---
     const audioFileEl = document.getElementById('audioFile');
     const fileInfoEl = document.getElementById('fileInfo');
@@ -265,6 +311,27 @@
     const pitchSlider = document.getElementById('pitchSlider');
     const pitchValue = document.getElementById('pitchValue');
     const playBtn = document.getElementById('playBtn');
+
+    // --- Novos Elementos do DOM para Loop e Waveform ---
+    const waveformCanvas = document.getElementById('waveformCanvas');
+    const waveformCtx = waveformCanvas.getContext('2d');
+    const loopAValueEl = document.getElementById('loopAValue');
+    const loopBValueEl = document.getElementById('loopBValue');
+    const loopIndicatorA = document.getElementById('loopIndicatorA');
+    const loopIndicatorB = document.getElementById('loopIndicatorB');
+    const playbackIndicator = document.getElementById('playbackIndicator');
+    const toggleLoopBtn = document.getElementById('toggleLoopBtn');
+
+    // Função auxiliar para formatar tempo (minutos:segundos.milissegundos)
+    function formatTime(seconds) {
+        if (isNaN(seconds) || seconds < 0) return '00:00.000';
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        const s = Math.floor(remainingSeconds);
+        const ms = Math.floor((remainingSeconds - s) * 1000);
+        return `${String(minutes).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
+    }
+
 
     // --- 1. CARREGAMENTO DO ÁUDIO ---
     audioFileEl.addEventListener('change', (e) => {
@@ -299,10 +366,19 @@
             audioContext.decodeAudioData(e.target.result)
                 .then(buffer => {
                     audioBuffer = buffer;
+                    // --- NOVO: Desenhar waveform e inicializar loopB ---
+                    drawWaveform(audioBuffer);
+                    loopA = 0; // Resetar A para 0 ao carregar novo áudio
+                    loopB = audioBuffer.duration; // Define B como o final da faixa por padrão
+                    updateLoopIndicators();
+                    loopAValueEl.textContent = formatTime(loopA);
+                    loopBValueEl.textContent = formatTime(loopB);
+                    // --- FIM NOVO ---
+
                     loadingStatusEl.textContent = 'Pronto a tocar!';
                     setTimeout(() => { loadingStatusEl.style.display = 'none'; }, 2000);
                     controlsEl.style.display = 'block';
-                    resetControls(); // Reseta os sliders e a posição de reprodução
+                    resetControls(); // Reseta os sliders e a posição de reprodução, mas loopB já está definido
                 })
                 .catch(error => {
                     console.error('Erro ao descodificar áudio:', error);
@@ -346,7 +422,6 @@
         // Instanciar o AudioWorkletNode com o nome correto
         soundtouchWorkletNode = new AudioWorkletNode(audioContext, 'scheduled-soundtouch-worklet');
 
-        // Ligar os nós
         sourceNode.connect(soundtouchWorkletNode);
         soundtouchWorkletNode.connect(audioContext.destination);
 
@@ -374,24 +449,44 @@
         soundtouchWorkletNode.port.onmessage = (event) => {
             if (event.data.message === 'PROCESSOR_READY') {
                 console.log('Worklet processador inicializado e pronto.');
-                updateSoundTouchSettings(); // Aplica as configurações iniciais dos sliders
-                sourceNode.start(0); // Começa o sourceNode do início do seu buffer
-                                     // O worklet gerenciará o 'offsetSamples' interno
+                updateSoundTouchSettings();
+                
+                // Inicia a reprodução do sourceNode a partir do seekPosition
+                // O worklet gerenciará o 'offsetSamples' interno.
+                sourceNode.start(0, seekPosition); 
                 playbackStartTime = audioContext.currentTime;
                 isPlaying = true;
                 updatePlayButton();
+                // Inicia o loop de animação para o indicador de reprodução
+                animatePlaybackIndicator(); 
+
             } else if (event.data.message === 'PROCESSOR_END') {
                 console.log('Reprodução terminada pelo processador.');
-                stopPlayback(); // O worklet indica o fim, então paramos tudo.
+                // --- NOVO: Lógica de loop ---
+                if (loopEnabled && audioContext && soundtouchWorkletNode) {
+                    // Reinicia a reprodução do ponto A
+                    seekPosition = loopA;
+                    console.log(`Looped to A: ${formatTime(loopA)}`);
+                    stopPlayback(); // Para o atual, quebra a ligação
+                    startPlayback(); // Inicia um novo playback a partir de loopA
+                } else {
+                    stopPlayback(); // Se não há loop, simplesmente para
+                }
+                // --- FIM NOVO ---
             }
         };
 
-        // Este onended do sourceNode pode ser menos crítico se o worklet gerir o fim,
-        // mas é um bom fallback.
+        // O sourceNode.onended agora é menos crítico, mas pode manter como fallback
         sourceNode.onended = () => {
             console.log('SourceNode terminou. Verificando o estado do worklet.');
-            if (isPlaying) { // Se ainda estiver a tocar (o worklet não enviou PROCESSOR_END)
-                 stopPlayback(); // Força a paragem se o sourceNode acabar.
+            if (isPlaying) {
+                 // Se o sourceNode acabou mas o worklet ainda não sinalizou o fim (e.g., porque está a esticar muito)
+                 // ou se não é um loop, vamos parar.
+                 // A lógica de loop acima já lida com o 'PROCESSOR_END' do worklet, que é mais preciso.
+                 // Se o sourceNode terminar e o loop NÃO estiver ativo OU o worklet não enviou PROCESSOR_END (improvável)
+                 if (!loopEnabled) { // Se não estiver em loop, para tudo
+                     stopPlayback();
+                 }
             }
         };
     }
@@ -399,16 +494,14 @@
     function pausePlayback() {
         if (!isPlaying || !sourceNode) return;
         
-        // Para uma verdadeira pausa, precisaria de uma lógica mais avançada
-        // para obter a posição atual do worklet e depois retomar.
-        // Por agora, vamos simular uma "paragem e reinício" para simplificar.
-        // Capturar a posição atual antes de parar
+        cancelAnimationFrame(animationFrameId); // Para a animação do indicador
+        
         const currentTempo = soundtouchWorkletNode ? soundtouchWorkletNode.parameters.get('tempo').value : 1.0;
         const elapsed = audioContext.currentTime - playbackStartTime;
-        seekPosition += elapsed * currentTempo; // Aproximação da posição com base no tempo
+        seekPosition += elapsed * currentTempo; 
 
-        stopPlayback(); // Irá parar e redefinir nodes, mas mantém seekPosition
-        isPlaying = false; // Define como pausado
+        stopPlayback();
+        isPlaying = false;
         updatePlayButton();
     }
     
@@ -423,9 +516,12 @@
             soundtouchWorkletNode.disconnect();
             soundtouchWorkletNode = null; // Important: Anular o node para permitir recriação
         }
+        cancelAnimationFrame(animationFrameId); // Para a animação do indicador
+        playbackIndicator.style.display = 'none'; // Garante que desaparece
         isPlaying = false;
-        seekPosition = 0; // Redefine a posição para o início
+        seekPosition = 0;
         updatePlayButton();
+        updateLoopIndicators(); // Para resetar a posição visual dos indicadores
     }
     
     function updatePlayButton() {
@@ -474,6 +570,169 @@
         resetSpeed();
         resetPitch();
         stopPlayback();
+        // --- NOVO: Resetar loops também ---
+        if (audioBuffer) { // Só reseta B para a duração se houver um buffer carregado
+            resetLoopB();
+        } else { // Caso contrário, reseta para 0
+            loopB = 0;
+            loopBValueEl.textContent = formatTime(0);
+        }
+        resetLoopA();
+        loopEnabled = false;
+        toggleLoopBtn.textContent = 'Loop OFF ❌';
+        toggleLoopBtn.style.background = 'linear-gradient(45deg, #6c757d, #5a6268)';
+        updateLoopIndicators();
+    }
+
+    // --- Funções de Waveform e Loop ---
+
+    // Função para desenhar a forma de onda
+    function drawWaveform(buffer) {
+        waveformCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+        if (!buffer) return;
+
+        const channelData = buffer.getChannelData(0); // Pega o primeiro canal
+        const samplesPerPixel = Math.floor(channelData.length / waveformCanvas.width);
+        const centerY = waveformCanvas.height / 2;
+        const amplitude = waveformCanvas.height / 2;
+
+        waveformCtx.lineWidth = 1;
+        waveformCtx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        waveformCtx.beginPath();
+        waveformCtx.moveTo(0, centerY);
+
+        for (let x = 0; x < waveformCanvas.width; x++) {
+            let sum = 0;
+            let min = 0;
+            let max = 0;
+            for (let i = 0; i < samplesPerPixel; i++) {
+                const sample = channelData[x * samplesPerPixel + i];
+                sum += sample;
+                min = Math.min(min, sample);
+                max = Math.max(max, sample);
+            }
+            // Desenha a linha vertical para cada "pixel"
+            waveformCtx.lineTo(x, centerY + (max * amplitude));
+            waveformCtx.lineTo(x, centerY + (min * amplitude));
+            waveformCtx.moveTo(x, centerY + (max * amplitude)); // Garante que a linha começa do topo ou de baixo para o próximo ponto
+        }
+        waveformCtx.stroke();
+
+        updateLoopIndicators(); // Garante que os indicadores estão visíveis
+    }
+
+    // Atualiza a posição visual dos indicadores A, B e de reprodução
+    function updateLoopIndicators() {
+        if (!audioBuffer) return;
+
+        const totalDuration = audioBuffer.duration;
+        
+        // Ponto A
+        const percentA = (loopA / totalDuration) * 100;
+        loopIndicatorA.style.left = `${percentA}%`;
+        loopIndicatorA.style.display = 'block'; // Garante que é visível
+
+        // Ponto B
+        const percentB = (loopB / totalDuration) * 100;
+        loopIndicatorB.style.left = `${percentB}%`;
+        loopIndicatorB.style.display = 'block'; // Garante que é visível
+
+        // Indicador de reprodução (só atualiza durante a reprodução)
+        if (isPlaying && audioContext) {
+            const currentTempo = soundtouchWorkletNode ? soundtouchWorkletNode.parameters.get('tempo').value : 1.0;
+            const elapsed = audioContext.currentTime - playbackStartTime;
+            const currentPlaybackTime = seekPosition + (elapsed * currentTempo); // Calcula a posição real no áudio
+            const percentPlayback = (currentPlaybackTime / totalDuration) * 100;
+            playbackIndicator.style.left = `${percentPlayback}%`;
+            playbackIndicator.style.display = 'block';
+        } else {
+            playbackIndicator.style.display = 'none'; // Esconde quando não está a tocar
+        }
+    }
+
+    // Adicionar event listeners para cliques no waveform
+    waveformCanvas.addEventListener('click', (e) => {
+        if (!audioBuffer) return;
+
+        const rect = waveformCanvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left; // Posição X do clique dentro do canvas
+        const percent = clickX / waveformCanvas.width;
+        const clickedTime = percent * audioBuffer.duration;
+
+        // Se shift for pressionado, define B, caso contrário, define A
+        if (e.shiftKey) {
+            // Garante que B é depois de A, com um mínimo de 0.1s de diferença
+            loopB = Math.max(loopA + 0.1, clickedTime); 
+            loopBValueEl.textContent = formatTime(loopB);
+        } else {
+            // Garante que A é antes de B, com um mínimo de 0.1s de diferença
+            loopA = Math.min(loopB - 0.1, clickedTime); 
+            loopAValueEl.textContent = formatTime(loopA);
+        }
+        updateLoopIndicators();
+    });
+
+    // Funções para os botões "Definir A" e "Definir B"
+    function setLoopA() {
+        if (!audioBuffer || !isPlaying) return; // Só define A se estiver a tocar para capturar a posição
+        const currentTempo = soundtouchWorkletNode ? soundtouchWorkletNode.parameters.get('tempo').value : 1.0;
+        const elapsed = audioContext.currentTime - playbackStartTime;
+        const currentPlaybackTime = seekPosition + (elapsed * currentTempo);
+        loopA = Math.min(loopB - 0.1, currentPlaybackTime);
+        loopAValueEl.textContent = formatTime(loopA);
+        updateLoopIndicators();
+    }
+
+    function setLoopB() {
+        if (!audioBuffer || !isPlaying) return; // Só define B se estiver a tocar
+        const currentTempo = soundtouchWorkletNode ? soundtouchWorkletNode.parameters.get('tempo').value : 1.0;
+        const elapsed = audioContext.currentTime - playbackStartTime;
+        const currentPlaybackTime = seekPosition + (elapsed * currentTempo);
+        loopB = Math.max(loopA + 0.1, currentPlaybackTime);
+        loopBValueEl.textContent = formatTime(loopB);
+        updateLoopIndicators();
+    }
+
+    function resetLoopA() {
+        if (!audioBuffer) return;
+        loopA = 0;
+        loopAValueEl.textContent = formatTime(loopA);
+        updateLoopIndicators();
+    }
+
+    function resetLoopB() {
+        if (!audioBuffer) return;
+        loopB = audioBuffer.duration;
+        loopBValueEl.textContent = formatTime(loopB);
+        updateLoopIndicators();
+    }
+
+    function toggleLoop() {
+        loopEnabled = !loopEnabled;
+        toggleLoopBtn.textContent = loopEnabled ? 'Loop ON ✅' : 'Loop OFF ❌';
+        toggleLoopBtn.style.background = loopEnabled ? 'linear-gradient(45deg, #1abc9c, #16a085)' : 'linear-gradient(45deg, #6c757d, #5a6268)';
+        console.log('Loop:', loopEnabled);
+    }
+
+    // --- Função para animar o indicador de reprodução ---
+    function animatePlaybackIndicator() {
+        if (!isPlaying || !audioBuffer || !audioContext || !soundtouchWorkletNode) {
+            cancelAnimationFrame(animationFrameId);
+            playbackIndicator.style.display = 'none'; // Esconde no final
+            return;
+        }
+
+        const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
+        const elapsed = audioContext.currentTime - playbackStartTime;
+        const currentPlaybackTime = seekPosition + (elapsed * currentTempo); // Calcula a posição real no áudio
+
+        const totalDuration = audioBuffer.duration;
+        const percentPlayback = (currentPlaybackTime / totalDuration) * 100;
+        
+        playbackIndicator.style.left = `${percentPlayback}%`;
+        playbackIndicator.style.display = 'block';
+
+        animationFrameId = requestAnimationFrame(animatePlaybackIndicator);
     }
 
 </script>

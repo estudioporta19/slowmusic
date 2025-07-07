@@ -3,768 +3,450 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slow Music!</title>
+    <title>SoundTouch.js Audio Manipulator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/soundtouch-js/0.1.30/soundtouch.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #1a1a1a; /* Fundo preto mais suave */
-            min-height: 100vh;
-            padding: 20px;
-            color: white; /* Letras brancas */
-        }
-
-        .container {
-            max-width: 1300px; /* Aumentado para acomodar 5 colunas */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
             margin: 0 auto;
-            background: rgba(30, 30, 30, 0.9); /* Fundo do container mais escuro e opaco */
-            backdrop-filter: blur(5px); /* Efeito de blur mais subtil */
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); /* Sombra mais intensa */
-            border: 1px solid rgba(255, 255, 255, 0.1); /* Borda suave */
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
         }
-
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
         h1 {
             text-align: center;
             margin-bottom: 30px;
-            font-size: 2.8em;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6); /* Sombra de texto mais escura */
-            color: #e0e0e0; /* Título ligeiramente acinzentado para contraste */
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-
-        /* Estilos para o novo botão de upload global */
-        .global-upload-section {
+        
+        .file-input-container {
+            margin-bottom: 30px;
             text-align: center;
-            margin-bottom: 25px;
-            padding: 15px;
-            background: rgba(40, 40, 40, 0.8);
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            display: flex; /* Adicionado para alinhar os botões */
-            justify-content: center; /* Centraliza os botões */
-            align-items: center; /* Alinha verticalmente */
-            flex-wrap: wrap; /* Permite quebrar linha em ecrãs pequenos */
         }
-
-        .global-upload-section button,
-        .global-upload-section input { /* Ajustar input para alinhamento se necessário */
-            margin: 5px; /* Pequena margem para espaçar os elementos */
+        
+        .file-input {
+            display: none;
         }
-
-        .upload-btn { /* Reutilizado para o botão global e os dentro das células */
-            background: linear-gradient(45deg, #e74c3c, #c0392b); /* Vermelho vibrante */
+        
+        .file-label {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
             color: white;
-            border: none;
-            padding: 10px 20px;
             border-radius: 25px;
             cursor: pointer;
-            font-size: 1em;
-            font-weight: bold;
+            font-size: 16px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            border: none;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
         }
-
-        .upload-btn:hover {
-            background: linear-gradient(45deg, #c0392b, #a03025);
+        
+        .file-label:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
         }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Células mais pequenas */
-            gap: 10px; /* Espaçamento menor entre células */
-            margin-bottom: 30px;
-        }
-
-        .cell {
-            background: rgba(40, 40, 40, 0.8); /* Fundo da célula mais escuro */
-            border-radius: 8px; /* Cantos um pouco menos arredondados */
-            padding: 10px; /* Padding menor */
-            border: 1px solid rgba(255, 255, 255, 0.1); /* Borda suave */
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: center; /* Centraliza conteúdo verticalmente */
-            align-items: center; /* Centraliza conteúdo horizontalmente */
-            cursor: pointer; /* Indica que a célula é clicável */
-            min-height: 80px; /* Altura mínima para células vazias */
-            text-align: center;
-            word-break: break-word; /* Quebra palavras longas */
-        }
-
-        .cell:hover {
-            background: rgba(60, 60, 60, 0.9); /* Escurece no hover */
-            transform: translateY(-2px); /* Efeito de elevação mais subtil */
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Sombra mais pronunciada */
-        }
-
-        .cell.active {
-            background: rgba(70, 70, 70, 0.95); /* Célula ativa mais escura */
-            border-color: #e74c3c; /* Borda vermelha para ativa */
-            box-shadow: 0 0 15px rgba(231, 76, 60, 0.5); /* Sombra vermelha para ativa */
-        }
-
-        /* Removido .cell-header e .cell-number */
-
-        .file-name {
-            font-size: 0.8em; /* Fonte ainda menor para o nome do ficheiro */
-            margin: 0; /* Remove margem */
-            color: #ccc; /* Nome do ficheiro em cinzento claro */
-            /* word-break: break-all; - Já está na .cell */
-            /* flex-grow: 1; - Não é mais necessário com centralização */
-        }
-
-        /* .play-btn - Removido */
-
+        
         .controls {
-            background: rgba(40, 40, 40, 0.8);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+            margin-top: 30px;
         }
-
+        
         .control-group {
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .control-group h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #fff;
+            font-size: 1.2em;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
             margin-bottom: 15px;
         }
-
-        .control-group label {
-            display: block;
-            margin-bottom: 8px; /* Margem aumentada */
-            font-weight: bold;
-            color: #e0e0e0;
+        
+        .control-row:last-child {
+            margin-bottom: 0;
         }
-
-        .slider {
-            width: 100%;
-            height: 8px; /* Slider mais alto */
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.2); /* Fundo do slider mais suave */
+        
+        label {
+            min-width: 80px;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
             outline: none;
             -webkit-appearance: none;
         }
-
-        .slider::-webkit-slider-thumb {
+        
+        input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 22px; /* Polegar maior */
-            height: 22px;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
             border-radius: 50%;
-            background: #e74c3c; /* Polegar vermelho */
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6); /* Sombra vermelha */
+            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
         }
-
-        .slider::-moz-range-thumb {
-            width: 22px;
-            height: 22px;
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
             border-radius: 50%;
-            background: #e74c3c;
             cursor: pointer;
             border: none;
-            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
         }
-
-        .keyboard-shortcuts {
-            background: rgba(40, 40, 40, 0.8);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .keyboard-shortcuts h3 {
-            color: #e0e0e0;
-            margin-bottom: 15px;
-        }
-
-        .shortcut-info {
-            display: flex;
-            flex-wrap: wrap; /* Para quebrar linha se não houver espaço */
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        .shortcut-info span {
-            margin-right: 15px; /* Espaçamento entre os atalhos */
-            margin-bottom: 8px;
-        }
-
-        .key {
-            background: rgba(60, 60, 60, 0.8); /* Fundo da tecla mais escuro */
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-weight: bold;
-            color: #e0e0e0;
-            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
-        }
-
-        .loop-indicator {
-            background: rgba(40, 40, 40, 0.8);
-            border-radius: 10px;
-            padding: 15px;
+        
+        .value-display {
+            min-width: 80px;
             text-align: center;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .loop-active {
-            background: rgba(231, 76, 60, 0.2); /* Fundo vermelho suave para loop ativo */
-            border: 2px solid #e74c3c; /* Borda vermelha para loop ativo */
-        }
-
-        /* Estilo para o destaque temporário dos pontos de loop (A e B) */
-        .loop-point-highlight {
-            color: #f1c40f; /* Cor amarela para destaque */
             font-weight: bold;
-            transition: color 0.3s ease-in-out, font-weight 0.3s ease-in-out;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 10px; /* Barra de progresso mais alta */
+            font-size: 14px;
             background: rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            margin: 10px 0;
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+        
+        .reset-btn {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 15px;
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
         }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #e74c3c, #c0392b); /* Preenchimento vermelho */
-            border-radius: 5px;
-            transition: width 0.1s ease;
+        
+        .reset-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
         }
-
-        .loop-markers {
-            position: absolute;
-            top: 0;
-            height: 100%;
-            background: rgba(255, 255, 0, 0.2); /* Marcador de loop amarelo suave */
-            border-radius: 5px;
-            display: none; /* Inicia oculto */
-            pointer-events: none;
+        
+        .playback-controls {
+            text-align: center;
+            margin-top: 20px;
         }
-
-        .loop-markers::before,
-        .loop-markers::after {
-            content: '';
-            position: absolute;
-            top: -5px; /* Ajuste para que a linha fique fora da barra */
-            bottom: -5px; /* Ajuste para que a linha fique fora da barra */
-            width: 2px;
-            background-color: #f1c40f; /* Cor amarela mais vibrante para as linhas */
-            z-index: 1;
+        
+        .play-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
         }
-
-        .loop-markers::before {
-            left: 0;
+        
+        .play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
         }
-
-        .loop-markers::after {
-            right: 0;
+        
+        .play-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
-
-        .loop-markers.active {
-            display: block; /* Ativa a visibilidade */
+        
+        .file-info {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 14px;
         }
-
-        .time-display {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9em;
-            margin-top: 5px;
+        
+        .loading {
+            text-align: center;
+            font-style: italic;
             color: #ccc;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎵 Slow Music!</h1>
+        <h1>🎵 SoundTouch Audio Manipulator</h1>
         
-        <div class="global-upload-section">
-            <input type="file" id="globalFileInput" accept="audio/mp3, audio/wav, audio/*" multiple style="display: none;">
-            <button id="globalUploadBtn" class="upload-btn">
-                ⬆️ Carregar Múltiplos Ficheiros
-            </button>
-            <button id="clearCellsBtn" class="upload-btn" style="background: #6c757d; margin-left: 10px;">
-                🗑️ Limpar Células
-            </button>
-            <span id="globalUploadStatus" class="file-name"></span>
+        <div class="file-input-container">
+            <input type="file" id="audioFile" class="file-input" accept="audio/*">
+            <label for="audioFile" class="file-label">📁 Selecionar Ficheiro de Áudio</label>
         </div>
-
-        <div class="controls">
+        
+        <div id="fileInfo" class="file-info" style="display: none;">
+            <div id="fileName"></div>
+            <div id="loadingStatus" class="loading">A carregar...</div>
+        </div>
+        
+        <div id="controls" class="controls">
             <div class="control-group">
-                <label for="speedSlider">Velocidade de Reprodução: <span id="speedValue">1.0x</span></label>
-                <input type="range" id="speedSlider" class="slider" min="0.25" max="1" step="0.05" value="1">
+                <h3>🏃 Controlo de Velocidade</h3>
+                <div class="control-row">
+                    <label>Velocidade:</label>
+                    <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1">
+                    <span id="speedValue" class="value-display">1.0x</span>
+                    <button class="reset-btn" onclick="resetSpeed()">Reset</button>
+                </div>
             </div>
             
             <div class="control-group">
-                <label>Presets:</label>
-                <button id="speedPreset05" class="upload-btn" style="background: #3498db; margin-right: 10px;">0.5x</button>
-                <button id="speedPreset10" class="upload-btn" style="background: #2ecc71;">1x</button>
-            </div>
-
-            <div class="progress-bar" id="progressBar">
-                <div class="progress-fill" id="progressFill"></div>
-                <div class="loop-markers" id="loopMarkers"></div>
+                <h3>🎼 Controlo de Pitch</h3>
+                <div class="control-row">
+                    <label>Pitch:</label>
+                    <input type="range" id="pitchSlider" min="-12" max="12" step="1" value="0">
+                    <span id="pitchValue" class="value-display">0 meios tons</span>
+                    <button class="reset-btn" onclick="resetPitch()">Reset</button>
+                </div>
             </div>
             
-            <div class="time-display">
-                <span id="currentTime">0:00</span>
-                <span id="totalTime">0:00</span>
+            <div class="playback-controls">
+                <button id="playBtn" class="play-btn" onclick="togglePlayback()">▶️ Reproduzir</button>
+                <button id="stopBtn" class="play-btn" onclick="stopPlayback()">⏹️ Parar</button>
             </div>
         </div>
-
-        <div class="loop-indicator" id="loopIndicator">
-            <div>🔄 Loop: <span id="loopStatus">Desativado</span></div>
-            <div id="loopPoints" style="display: none;">
-                Ponto A: <span id="pointA">--</span> | Ponto B: <span id="pointB">--</span>
-            </div>
-        </div>
-
-        <div class="keyboard-shortcuts">
-            <h3>⌨️ Atalhos do Teclado:</h3>
-            <div class="shortcut-info">
-                <span><span class="key">A</span> - Definir ponto inicial do loop</span>
-                <span><span class="key">B</span> - Definir ponto final do loop</span>
-                <span><span class="key">X</span> - Limpar loop</span>
-                <span><span class="key">Espaço</span> - Reproduzir/Pausar</span>
-            </div>
-        </div>
-
-        <div class="grid" id="cellGrid">
-        </div>
-
-        <audio id="audioPlayer" preload="metadata"></audio>
     </div>
 
     <script>
-        let currentAudio = null;
-        let audioFiles = {}; // Guarda { cellNumber: fileURL }
-        let currentCell = null; // Guarda o número da célula ativa
-        let loopPoints = { start: null, end: null };
-        let isLooping = false;
-        const audioPlayer = document.getElementById('audioPlayer');
-        const progressBar = document.getElementById('progressBar');
-        const progressFill = document.getElementById('progressFill');
-        const loopMarkers = document.getElementById('loopMarkers');
-        const globalFileInput = document.getElementById('globalFileInput');
-        const globalUploadBtn = document.getElementById('globalUploadBtn');
-        const globalUploadStatus = document.getElementById('globalUploadStatus');
-        const clearCellsBtn = document.getElementById('clearCellsBtn'); // Adicionado
+        let audioContext;
+        let sourceNode;
+        let soundTouch;
+        let audioBuffer;
+        let isPlaying = false;
+        let startTime = 0;
+        let pauseTime = 0;
+        
+        // Inicializar contexto de áudio
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+        
+        // Manipular seleção de ficheiro
+        document.getElementById('audioFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                loadAudioFile(file);
+            }
+        });
+        
+        // Carregar ficheiro de áudio
+        function loadAudioFile(file) {
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const loadingStatus = document.getElementById('loadingStatus');
+            
+            fileName.textContent = `Ficheiro: ${file.name}`;
+            fileInfo.style.display = 'block';
+            loadingStatus.style.display = 'block';
+            loadingStatus.textContent = 'A carregar...';
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                initAudioContext();
+                audioContext.decodeAudioData(e.target.result)
+                    .then(buffer => {
+                        audioBuffer = buffer;
+                        loadingStatus.textContent = 'Carregamento concluído!';
+                        setTimeout(() => {
+                            loadingStatus.style.display = 'none';
+                        }, 1000);
+                        
+                        // Mostrar controlos
+                        document.getElementById('controls').style.display = 'block';
+                        
+                        // Inicializar SoundTouch
+                        initSoundTouch();
+                    })
+                    .catch(error => {
+                        console.error('Erro ao descodificar áudio:', error);
+                        loadingStatus.textContent = 'Erro ao carregar o ficheiro!';
+                        loadingStatus.style.color = '#ff6b6b';
+                    });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // Inicializar SoundTouch
+        function initSoundTouch() {
+            soundTouch = new SoundTouch();
+            soundTouch.tempo = 1.0;
+            soundTouch.pitch = 1.0;
+        }
+        
+        // Controlo de velocidade
         const speedSlider = document.getElementById('speedSlider');
         const speedValue = document.getElementById('speedValue');
-        const speedPreset05 = document.getElementById('speedPreset05');
-        const speedPreset10 = document.getElementById('speedPreset10');
-        const totalCells = 20; // Definir o número total de células
-
-        // Criar as células dinamicamente
-        function createCells() {
-            const grid = document.getElementById('cellGrid');
-            grid.innerHTML = ''; // Limpar células existentes
-            for (let i = 1; i <= totalCells; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.setAttribute('data-cell-number', i); // Atributo para identificar a célula
-                // Células sem número e sem botão de reprodução explícito
-                cell.innerHTML = `
-                    <div class="file-name" id="fileName${i}">Vazia</div>
-                `;
-                grid.appendChild(cell);
+        
+        speedSlider.addEventListener('input', function() {
+            const speed = parseFloat(this.value);
+            speedValue.textContent = `${speed.toFixed(1)}x`;
+            if (soundTouch) {
+                soundTouch.tempo = speed;
+            }
+        });
+        
+        // Controlo de pitch
+        const pitchSlider = document.getElementById('pitchSlider');
+        const pitchValue = document.getElementById('pitchValue');
+        
+        pitchSlider.addEventListener('input', function() {
+            const semitones = parseInt(this.value);
+            pitchValue.textContent = `${semitones > 0 ? '+' : ''}${semitones} meios tons`;
+            if (soundTouch) {
+                // Converter semitons para ratio (2^(semitones/12))
+                const pitchRatio = Math.pow(2, semitones / 12);
+                soundTouch.pitch = pitchRatio;
+            }
+        });
+        
+        // Funções de reset
+        function resetSpeed() {
+            speedSlider.value = 1;
+            speedValue.textContent = '1.0x';
+            if (soundTouch) {
+                soundTouch.tempo = 1.0;
             }
         }
-
-        // Acionar o input de ficheiro global
-        globalUploadBtn.addEventListener('click', () => {
-            globalFileInput.click();
-        });
-
-        // Lidar com o upload de múltiplos ficheiros
-        globalFileInput.addEventListener('change', (event) => {
-            const files = event.target.files;
-            if (files.length === 0) {
-                globalUploadStatus.textContent = 'Nenhum ficheiro selecionado.';
-                return;
-            }
-
-            globalUploadStatus.textContent = `A carregar ${files.length} ficheiro(s)...`;
-            
-            // Limpar ficheiros anteriores e desativar células
-            // Reutiliza a lógica de limpeza para garantir um estado limpo antes de carregar novos
-            clearAllCells(); // Chama a nova função de limpeza
-
-            let filesLoaded = 0;
-            let cellIndex = 1;
-
-            // Distribuir ficheiros pelas células
-            for (let i = 0; i < files.length && cellIndex <= totalCells; i++) {
-                const file = files[i];
-
-                if (!file.type.startsWith('audio/')) {
-                    console.warn(`Ficheiro "${file.name}" não é um ficheiro de áudio. Ignorando.`);
-                    continue; // Pular para o próximo ficheiro
-                }
-
-                const fileURL = URL.createObjectURL(file);
-                audioFiles[cellIndex] = fileURL;
-                
-                // Exibe apenas o nome do ficheiro, sem extensão
-                const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('.');
-                document.getElementById(`fileName${cellIndex}`).textContent = fileNameWithoutExtension || file.name; // Fallback para o nome completo
-                
-                filesLoaded++;
-                cellIndex++;
-            }
-            globalUploadStatus.textContent = `${filesLoaded} ficheiro(s) carregado(s) com sucesso.`;
-            if (filesLoaded === 0 && files.length > 0) {
-                 globalUploadStatus.textContent = 'Nenhum ficheiro de áudio válido carregado.';
-            }
-            event.target.value = ''; // Limpar o input para permitir carregar os mesmos ficheiros novamente
-        });
-
-        // Função para limpar todas as células - Nova função
-        function clearAllCells() {
-            // Parar qualquer áudio a tocar
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-                currentAudio = null;
-                currentCell = null;
-                clearLoop(); // Isso já limpa o loop, status e marcadores
-                progressFill.style.width = '0%';
-                document.getElementById('currentTime').textContent = '0:00';
-                document.getElementById('totalTime').textContent = '0:00';
-            }
-
-            // Limpar ficheiros de cada célula
-            for (let i = 1; i <= totalCells; i++) {
-                if (audioFiles[i]) {
-                    URL.revokeObjectURL(audioFiles[i]); // Libera a memória do URL do objeto
-                }
-                delete audioFiles[i]; // Remove a entrada do objeto audioFiles
-                document.getElementById(`fileName${i}`).textContent = 'Vazia'; // Volta o texto para "Vazia"
-                const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
-                if (cell) cell.classList.remove('active'); // Remove a classe 'active'
-            }
-            globalUploadStatus.textContent = 'Células limpas.';
-        }
-
-        // Event listener para o botão de limpar células - Novo
-        clearCellsBtn.addEventListener('click', clearAllCells);
-
-
-        // Funções de reprodução de áudio - Agora ativada pelo clique na célula
-        function playAudio(cellNumber) {
-            const newAudioSrc = audioFiles[cellNumber];
-
-            if (!newAudioSrc) { // Se não há ficheiro na célula
-                console.warn(`Nenhum ficheiro de áudio na célula ${cellNumber}.`);
-                return;
-            }
-
-            // Se o áudio atual é o mesmo, alternar play/pause
-            if (currentAudio && currentAudio.src === newAudioSrc) {
-                if (currentAudio.paused) {
-                    currentAudio.play();
-                } else {
-                    currentAudio.pause();
-                }
-                return;
-            }
-
-            // Parar áudio anterior e desmarcar célula
-            if (currentAudio) {
-                currentAudio.pause();
-                currentAudio.currentTime = 0;
-                if (currentCell) {
-                    document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
-                }
-            }
-
-            clearLoop(); // Limpar loop ao trocar de ficheiro
-
-            audioPlayer.src = newAudioSrc;
-            audioPlayer.load();
-            audioPlayer.play();
-            currentAudio = audioPlayer;
-            currentCell = cellNumber;
-            
-            document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
-            
-            // Aplicar velocidade atual
-            const speed = speedSlider.value;
-            audioPlayer.playbackRate = parseFloat(speed);
-        }
-
-        // Função para aplicar a velocidade
-        function applySpeed(speed) {
-            speedSlider.value = speed;
-            speedValue.textContent = speed.toFixed(2) + 'x'; // Exibe com duas casas decimais
-            if (currentAudio) {
-                currentAudio.playbackRate = speed;
+        
+        function resetPitch() {
+            pitchSlider.value = 0;
+            pitchValue.textContent = '0 meios tons';
+            if (soundTouch) {
+                soundTouch.pitch = 1.0;
             }
         }
-
-        // Event listeners para os botões de preset
-        speedPreset05.addEventListener('click', () => {
-            applySpeed(0.5);
-            speedSlider.blur(); // Remover foco após clicar no preset
-        });
-
-        speedPreset10.addEventListener('click', () => {
-            applySpeed(1.0);
-            speedSlider.blur(); // Remover foco após clicar no preset
-        });
-
-        // Controle de velocidade
-        speedSlider.addEventListener('input', function(e) {
-            const speed = parseFloat(e.target.value);
-            speedValue.textContent = speed.toFixed(2) + 'x'; // Exibe com duas casas decimais
-            if (currentAudio) {
-                currentAudio.playbackRate = speed;
-            }
-        });
-
-        // Remover foco do slider após a interação para permitir atalhos de teclado
-        speedSlider.addEventListener('mouseup', function() {
-            this.blur(); // 'this' refere-se ao próprio speedSlider
-        });
-        // Também para touch devices (para melhor compatibilidade em telemóveis/tablets)
-        speedSlider.addEventListener('touchend', function() {
-            this.blur();
-        });
-
-        // Atalhos do teclado
-        document.addEventListener('keydown', function(e) {
-            // Evita que os atalhos funcionem se um input estiver focado (como um input de texto futuro)
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
-                return;
-            }
-
-            if (!currentAudio) return;
-
-            switch(e.key.toLowerCase()) {
-                case 'a':
-                    setLoopPoint('start');
-                    break;
-                case 'b':
-                    setLoopPoint('end');
-                    break;
-                case 'x':
-                    clearLoop();
-                    break;
-                case ' ': // Espaço para play/pause
-                    e.preventDefault(); // Prevenir rolagem da página
-                    if (currentAudio) {
-                        if (currentAudio.paused) {
-                            currentAudio.play();
-                        } else {
-                            currentAudio.pause();
-                        }
-                    }
-                    break;
-            }
-        });
-
-        function setLoopPoint(point) {
-            if (!currentAudio) return;
+        
+        // Controlo de reprodução
+        function togglePlayback() {
+            if (!audioBuffer) return;
             
-            const currentTime = currentAudio.currentTime;
-            loopPoints[point] = currentTime;
-            
-            const pointAElement = document.getElementById('pointA');
-            const pointBElement = document.getElementById('pointB');
-
-            if (point === 'start') {
-                pointAElement.textContent = formatTime(currentTime);
-                // Adicionar classe de destaque
-                pointAElement.classList.add('loop-point-highlight');
-                // Remover classe de destaque após um breve período
-                setTimeout(() => {
-                    pointAElement.classList.remove('loop-point-highlight');
-                }, 800); // 800ms = 0.8 segundos para o destaque
+            if (isPlaying) {
+                pausePlayback();
             } else {
-                pointBElement.textContent = formatTime(currentTime);
-                // Adicionar classe de destaque ao Ponto B também (opcional, mas faz sentido para consistência)
-                pointBElement.classList.add('loop-point-highlight');
-                setTimeout(() => {
-                    pointBElement.classList.remove('loop-point-highlight');
-                }, 800);
-                
-                // Quando define o ponto B, ativa o loop
-                if (loopPoints.start !== null) {
-                    activateLoop();
-                }
-            }
-            
-            updateLoopDisplay();
-            updateLoopMarkers(); // Chamar aqui para atualizar o visual do marcador imediatamente
-        }
-
-        function activateLoop() {
-            if (loopPoints.start !== null && loopPoints.end !== null) {
-                // Garantir que o start é antes do end
-                if (loopPoints.start > loopPoints.end) {
-                    [loopPoints.start, loopPoints.end] = [loopPoints.end, loopPoints.start]; // Trocar os valores
-                    document.getElementById('pointA').textContent = formatTime(loopPoints.start);
-                    document.getElementById('pointB').textContent = formatTime(loopPoints.end);
-                }
-                isLooping = true;
-                updateLoopDisplay();
-                updateLoopMarkers();
+                startPlayback();
             }
         }
-
-        function clearLoop() {
-            loopPoints.start = null;
-            loopPoints.end = null;
-            isLooping = false;
-            document.getElementById('pointA').textContent = '--';
-            document.getElementById('pointB').textContent = '--';
-            updateLoopDisplay();
-            updateLoopMarkers(); // Chamar aqui para esconder o marcador completamente
-        }
-
-        function updateLoopDisplay() {
-            const loopIndicator = document.getElementById('loopIndicator');
-            const loopStatus = document.getElementById('loopStatus');
-            const loopPointsDiv = document.getElementById('loopPoints');
+        
+        function startPlayback() {
+            if (!audioBuffer) return;
             
-            if (isLooping) {
-                loopIndicator.classList.add('loop-active');
-                loopStatus.textContent = 'Ativado';
-                loopPointsDiv.style.display = 'block';
+            initAudioContext();
+            
+            // Parar reprodução anterior se existir
+            if (sourceNode) {
+                sourceNode.stop();
+            }
+            
+            // Criar novo source node
+            sourceNode = audioContext.createBufferSource();
+            sourceNode.buffer = audioBuffer;
+            
+            // Aplicar efeitos SoundTouch (simulado com mudança de playback rate)
+            const tempo = parseFloat(speedSlider.value);
+            const pitchSemitones = parseInt(pitchSlider.value);
+            const pitchRatio = Math.pow(2, pitchSemitones / 12);
+            
+            // Para uma implementação completa do SoundTouch, seria necessário
+            // processar o buffer através da biblioteca SoundTouch
+            // Por agora, vamos simular com playbackRate
+            sourceNode.playbackRate.value = tempo * pitchRatio;
+            
+            sourceNode.connect(audioContext.destination);
+            
+            sourceNode.onended = () => {
+                stopPlayback();
+            };
+            
+            sourceNode.start(0, pauseTime);
+            startTime = audioContext.currentTime - pauseTime;
+            isPlaying = true;
+            
+            updatePlayButton();
+        }
+        
+        function pausePlayback() {
+            if (sourceNode && isPlaying) {
+                pauseTime = audioContext.currentTime - startTime;
+                sourceNode.stop();
+                isPlaying = false;
+                updatePlayButton();
+            }
+        }
+        
+        function stopPlayback() {
+            if (sourceNode) {
+                sourceNode.stop();
+                sourceNode = null;
+            }
+            isPlaying = false;
+            pauseTime = 0;
+            startTime = 0;
+            updatePlayButton();
+        }
+        
+        function updatePlayButton() {
+            const playBtn = document.getElementById('playBtn');
+            if (isPlaying) {
+                playBtn.textContent = '⏸️ Pausar';
             } else {
-                loopIndicator.classList.remove('loop-active');
-                loopStatus.textContent = 'Desativado';
-                loopPointsDiv.style.display = 'none';
+                playBtn.textContent = '▶️ Reproduzir';
             }
         }
-
-        function updateLoopMarkers() {
-            if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) {
-                loopMarkers.classList.remove('active');
-                loopMarkers.style.display = 'none'; // Certifica-se que está oculto
-                return;
-            }
-            
-            const duration = currentAudio.duration;
-            
-            // Se ambos os pontos estão definidos (loop ativo)
-            if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
-                const startPercent = (loopPoints.start / duration) * 100;
-                const endPercent = (loopPoints.end / duration) * 100;
-                
-                loopMarkers.style.left = startPercent + '%';
-                loopMarkers.style.width = (endPercent - startPercent) + '%';
-                loopMarkers.classList.add('active');
-                loopMarkers.style.display = 'block'; // Certifica-se que é visível
-            } 
-            // Se apenas o ponto A está definido (feedback visual para o Ponto A)
-            else if (loopPoints.start !== null) {
-                const startPercent = (loopPoints.start / duration) * 100;
-                
-                loopMarkers.style.left = startPercent + '%';
-                loopMarkers.style.width = '2px'; // Uma linha fina para o Ponto A
-                loopMarkers.classList.add('active'); // Mantém a classe 'active' para que as linhas funcionem
-                loopMarkers.style.display = 'block'; // Certifica-se que é visível
-                loopMarkers.style.background = 'transparent'; // Fundo transparente quando é apenas o ponto A
-            }
-            // Se nenhum ponto está definido
-            else {
-                loopMarkers.classList.remove('active');
-                loopMarkers.style.display = 'none'; // Esconde completamente
-            }
-             // Restaura o fundo para a cor normal quando for um loop completo
-            if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
-                loopMarkers.style.background = 'rgba(255, 255, 0, 0.2)';
-            }
-        }
-
-        // Atualizar barra de progresso
-        audioPlayer.addEventListener('timeupdate', function() {
-            if (audioPlayer.duration && !isNaN(audioPlayer.duration)) {
-                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-                progressFill.style.width = progress + '%';
-                
-                document.getElementById('currentTime').textContent = formatTime(audioPlayer.currentTime);
-                document.getElementById('totalTime').textContent = formatTime(audioPlayer.duration);
-                
-                // Verificar loop
-                if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
-                    if (audioPlayer.currentTime >= loopPoints.end) {
-                        audioPlayer.currentTime = loopPoints.start;
-                    }
-                }
+        
+        // Lidar com mudanças nos controlos durante a reprodução
+        speedSlider.addEventListener('input', function() {
+            if (isPlaying) {
+                pausePlayback();
+                setTimeout(startPlayback, 50);
             }
         });
-
-        // Carregar metadata do áudio
-        audioPlayer.addEventListener('loadedmetadata', function() {
-            updateLoopMarkers(); // Chamar aqui para garantir que o marcador seja desenhado se já houver pontos definidos
-            document.getElementById('totalTime').textContent = formatTime(audioPlayer.duration);
-        });
-
-        // Quando o áudio termina
-        audioPlayer.addEventListener('ended', function() {
-            if (currentCell) {
-                document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
-            }
-            currentAudio = null;
-            currentCell = null;
-            clearLoop(); // Isso já chama updateLoopMarkers para esconder tudo
-            progressFill.style.width = '0%';
-            document.getElementById('currentTime').textContent = '0:00';
-            document.getElementById('totalTime').textContent = '0:00';
-        });
-
-        // Clique na barra de progresso para navegar
-        progressBar.addEventListener('click', function(e) {
-            if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) return;
-            
-            const rect = progressBar.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const percentage = clickX / rect.width;
-            const newTime = percentage * currentAudio.duration;
-            
-            currentAudio.currentTime = newTime;
-        });
-
-        function formatTime(seconds) {
-            if (isNaN(seconds) || seconds < 0) return '0:00';
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
-
-        // Delegação de eventos para as células (agora elas são clicáveis)
-        document.getElementById('cellGrid').addEventListener('click', function(event) {
-            const target = event.target;
-            // Encontrar a célula clicada, mesmo se o clique for no texto dentro dela
-            const cellElement = target.closest('.cell'); 
-            if (cellElement) {
-                const cellNumber = parseInt(cellElement.dataset.cellNumber);
-                playAudio(cellNumber);
+        
+        pitchSlider.addEventListener('input', function() {
+            if (isPlaying) {
+                pausePlayback();
+                setTimeout(startPlayback, 50);
             }
         });
-
-        // Inicializar
-        createCells();
-        updateLoopDisplay();
-        applySpeed(parseFloat(speedSlider.value)); // Garante que o valor inicial do slider é exibido corretamente
     </script>
 </body>
 </html>

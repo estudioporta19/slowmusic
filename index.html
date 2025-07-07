@@ -7,7 +7,7 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/soundtouch-js/0.1.30/soundtouch.min.js"></script>
-    <script src="./WebAudioSoundtouchNode.js"></script>
+    <script src="./soundtouch-worklet.js"></script> 
 
     <style>
         body {
@@ -248,9 +248,9 @@
 
 <script>
     // --- Variáveis Globais ---
-    let audioContext;
+    let audioContext = null; // Inicialize como null, será criado na interação do utilizador
     let sourceNode;
-    let soundtouchNode; // Nó que faz o processamento
+    let soundtouchWorkletNode; // Agora é um AudioWorkletNode
     let audioBuffer;
 
     let isPlaying = false;
@@ -278,7 +278,7 @@
         }
     });
 
-    function loadAudioFile(file) {
+    async function loadAudioFile(file) { // Tornar esta função assíncrona
         fileNameEl.textContent = `Ficheiro: ${file.name}`;
         fileInfoEl.style.display = 'block';
         loadingStatusEl.style.display = 'block';
@@ -286,9 +286,18 @@
         controlsEl.style.display = 'none';
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => { // Tornar o handler de onload assíncrono
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                // ** IMPORTANTE: Carregar o AudioWorklet aqui **
+                try {
+                    await audioContext.audioWorklet.addModule('./soundtouch-worklet.js'); 
+                    console.log('AudioWorklet "soundtouch-processor" carregado com sucesso.');
+                } catch (error) {
+                    console.error('Erro ao carregar AudioWorklet:', error);
+                    loadingStatusEl.textContent = 'Erro fatal: Não foi possível carregar o processador de áudio!';
+                    return; // Interrompe se o worklet não carregar
+                }
             }
             audioContext.decodeAudioData(e.target.result)
                 .then(buffer => {
@@ -307,39 +316,68 @@
     }
 
     // --- 2. CONTROLOS DE REPRODUÇÃO ---
-    function togglePlayback() {
+    async function togglePlayback() { // Tornar assíncrona
         if (!audioBuffer) return;
         
-        if (audioContext.state === 'suspended') {
-            audioContext.resume();
+        // Resume o contexto se estiver suspenso
+        if (audioContext && audioContext.state === 'suspended') {
+            await audioContext.resume();
         }
 
         if (isPlaying) {
             pausePlayback();
         } else {
-            startPlayback();
+            await startPlayback(); // Aguardar o início da reprodução
         }
     }
 
-    function startPlayback() {
+    async function startPlayback() { // Tornar assíncrona para o addModule
         if (isPlaying || !audioBuffer) return;
         
+        // Garante que o audioContext e o worklet estão prontos antes de tocar
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            try {
+                await audioContext.audioWorklet.addModule('./soundtouch-worklet.js');
+                console.log('AudioWorklet "soundtouch-processor" carregado com sucesso.');
+            } catch (error) {
+                console.error('Erro ao carregar AudioWorklet:', error);
+                alert('Não foi possível carregar o processador de áudio. Verifique a consola para detalhes.');
+                return;
+            }
+        }
+        
+        if (audioContext.state === 'suspended') {
+            await audioContext.resume();
+        }
+
         sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = audioBuffer;
 
-        // AQUI ESTÁ A CORREÇÃO PRINCIPAL:
-        // 'WebAudioSoundtouchNode' e 'SoundTouch' são agora globalmente disponíveis
-        // devido aos scripts que adicionámos no cabeçalho.
-        soundtouchNode = new WebAudioSoundtouchNode(audioContext, new SoundTouch());
+        // ** AQUI ESTÁ A MUDANÇA PRINCIPAL: Usar AudioWorkletNode **
+        // 'soundtouch-processor' é o nome registado dentro do seu soundtouch-worklet.js
+        soundtouchWorkletNode = new AudioWorkletNode(audioContext, 'soundtouch-processor');
 
+        // Ligar o AudioBufferSource ao worklet e o worklet ao destino
+        sourceNode.connect(soundtouchWorkletNode);
+        soundtouchWorkletNode.connect(audioContext.destination);
+
+        // Aplicar as definições iniciais/atuais dos sliders ao worklet
         updateSoundTouchSettings();
         
-        sourceNode.connect(soundtouchNode.input);
-        soundtouchNode.output.connect(audioContext.destination);
-
         sourceNode.onended = () => {
-            if (seekPosition >= audioBuffer.duration - 0.1) {
+            // Este onended é para o SourceNode, não para o AudioWorkletNode.
+            // Para loops, precisará de uma lógica mais sofisticada
+            // que envolva a monitorização do tempo do worklet ou recriação do sourceNode.
+            if (seekPosition >= audioBuffer.duration - 0.1) { // Verifica se chegou perto do fim
                 stopPlayback();
+            } else if (!isPlaying) { // Se parou manualmente ou foi pausado
+                // Não faz nada, a pausa já lidou com isso
+            } else {
+                // Se a reprodução terminou mas não chegou ao fim (por exemplo, erro ou interrupção)
+                // Isto pode acontecer com worklets, a lógica de fim pode ser mais complexa.
+                // Por agora, assumimos que se sourceNode.onended foi chamado e não estamos em loop, é o fim.
+                stopPlayback(); // Assegura que o estado é 'parado'
             }
         };
 
@@ -353,14 +391,14 @@
     function pausePlayback() {
         if (!isPlaying || !sourceNode) return;
         
+        const currentTempo = soundtouchWorkletNode ? soundtouchWorkletNode.parameters.get('tempo').value : 1.0;
         const elapsed = audioContext.currentTime - playbackStartTime;
-        // A posição tem de ser ajustada pela velocidade atual
-        seekPosition += elapsed * soundtouchNode.soundtouch.tempo;
+        seekPosition += elapsed * currentTempo; // Ajusta a posição de busca pela velocidade atual
 
         sourceNode.stop();
         sourceNode.disconnect();
-        if (soundtouchNode) { // Verifica se soundtouchNode existe antes de desconectar
-            soundtouchNode.disconnect();
+        if (soundtouchWorkletNode) { // Desconectar o worklet também
+            soundtouchWorkletNode.disconnect();
         }
         
         isPlaying = false;
@@ -371,12 +409,12 @@
         if (sourceNode) {
             sourceNode.stop();
             sourceNode.disconnect();
-            if (soundtouchNode) {
-                soundtouchNode.disconnect();
-            }
+        }
+        if (soundtouchWorkletNode) { // Desconectar o worklet também
+            soundtouchWorkletNode.disconnect();
         }
         isPlaying = false;
-        seekPosition = 0;
+        seekPosition = 0; // Resetar a posição de busca
         updatePlayButton();
     }
     
@@ -386,13 +424,18 @@
 
     // --- 3. SLIDERS E ATUALIZAÇÃO DE EFEITOS ---
     function updateSoundTouchSettings() {
-        if (!soundtouchNode) return; // Garante que o nó existe
+        // Agora usamos 'soundtouchWorkletNode' e os seus 'parameters'
+        if (!soundtouchWorkletNode) return; 
+
         const speed = parseFloat(speedSlider.value);
         const semitones = parseInt(pitchSlider.value);
         
-        // O objeto "soundtouch" aqui refere-se à propriedade do "soundtouchNode"
-        soundtouchNode.soundtouch.tempo = speed;
-        soundtouchNode.soundtouch.pitch = Math.pow(2, semitones / 12);
+        // Controlar 'tempo' diretamente via AudioParam
+        soundtouchWorkletNode.parameters.get('tempo').value = speed;
+        
+        // Controlar 'pitchSemitones' diretamente via AudioParam
+        // Esta é a maneira mais direta de controlar o pitch em semitons
+        soundtouchWorkletNode.parameters.get('pitchSemitones').value = semitones; 
     }
     
     speedSlider.addEventListener('input', () => {

@@ -1053,13 +1053,13 @@ waveformCanvas.addEventListener('click', (e) => {
         }
     }
 
-    async function applyLoop(index) {
+   async function applyLoop(index) {
         if (index < 0 || index >= savedLoops.length) return;
 
         const loopToApply = savedLoops[index];
         const targetFileName = loopToApply.fileName;
 
-        // --- NOVO: Encontra o ficheiro correspondente ---
+        // Encontra o ficheiro correspondente
         const fileIndex = audioFiles.findIndex(file => file.name === targetFileName);
 
         if (fileIndex === -1) {
@@ -1071,7 +1071,7 @@ waveformCanvas.addEventListener('click', (e) => {
         // seleciona-o primeiro. Isso vai parar o áudio e redefinir os controlos.
         if (fileIndex !== activeFileIndex) {
             console.log(`Ficheiro "${targetFileName}" encontrado. Selecionando-o...`);
-            selectFile(fileIndex); // Esta função já faz stopPlayback e resetControls
+            selectFile(fileIndex); 
             // Pequeno atraso para garantir que a seleção e o reset ocorram antes de aplicar o loop
             await new Promise(resolve => setTimeout(resolve, 50)); 
         }
@@ -1084,17 +1084,19 @@ waveformCanvas.addEventListener('click', (e) => {
         loopBValueEl.textContent = formatTime(loopB);
         updateLoopIndicators(); 
 
-        alert(`Loop "${loopToApply.name}" para "${loopToApply.fileName}" aplicado!`);
+        // --- NOVAS LINHAS AQUI ---
+        loopEnabled = true; // Ativa o modo de loop
+        toggleLoopBtn.textContent = 'Loop ON ✅'; // Atualiza o texto do botão
+        toggleLoopBtn.style.background = 'linear-gradient(45deg, #1abc9c, #16a085)'; // Atualiza o estilo do botão
+        // --- FIM DAS NOVAS LINHAS ---
 
-        // Se estiver a tocar, reinicia a reprodução para aplicar o novo loop imediatamente
-        if (isPlaying) {
-            seekPosition = loopA; 
-            stopPlayback(); 
-            startPlayback(); 
-        } else {
-            seekPosition = loopA;
-        }
-    }
+        alert(`Loop "${loopToApply.name}" para "${loopToApply.fileName}" aplicado e a reproduzir!`);
+
+        // Inicia a reprodução a partir do ponto A do loop
+        seekPosition = loopA; 
+        stopPlayback(); // Garante que qualquer reprodução anterior é parada e os nós são limpos
+        startPlayback(); // Inicia a reprodução com o loop ativado
+    } 
 
     function renderSavedLoops() {
         savedLoopsListEl.innerHTML = ''; 

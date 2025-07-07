@@ -7,6 +7,7 @@
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     
     <style>
+        /* ... (seu CSS existente, sem alterações significativas aqui) ... */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             max-width: 800px;
@@ -214,6 +215,69 @@
             opacity: 0.7;
             pointer-events: none; /* Garante que não interfere com cliques no canvas */
         }
+
+        /* --- NOVOS ESTILOS PARA AS CÉLULAS DE FICHEIROS --- */
+        .file-list-container {
+            margin-top: 20px;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Layout responsivo de grelha */
+            gap: 15px;
+            max-height: 250px; /* Limita a altura e adiciona scroll */
+            overflow-y: auto;
+        }
+
+        .file-cell {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+            font-size: 0.9em;
+            word-break: break-word; /* Quebra palavras longas */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .file-cell:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .file-cell.selected {
+            background: linear-gradient(45deg, #007bff, #0056b3); /* Azul para selecionado */
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+            border-color: rgba(0, 123, 255, 0.6);
+            transform: scale(1.02);
+        }
+
+        .file-cell-remove {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .file-cell-remove:hover {
+            opacity: 1;
+            color: #ff4d4d;
+        }
     </style>
 </head>
 <body>
@@ -221,10 +285,13 @@
         <h1>🎵 SoundTouch Audio Manipulator</h1>
         
         <div class="file-input-container">
-            <input type="file" id="audioFile" class="file-input" accept="audio/*">
-            <label for="audioFile" class="file-label">📁 Selecionar Ficheiro de Áudio</label>
+            <input type="file" id="audioFile" class="file-input" accept="audio/*" **multiple**>
+            <label for="audioFile" class="file-label">📁 Selecionar Ficheiros de Áudio</label>
         </div>
         
+        <div id="fileListContainer" class="file-list-container" style="display: none;">
+            </div>
+
         <div id="fileInfo" class="file-info" style="display: none;">
             <div id="fileName"></div>
             <div id="loadingStatus" class="loading">A carregar...</div>
@@ -300,11 +367,11 @@
     let audioContext = null;    
     let sourceNode;
     let soundtouchWorkletNode; // AudioWorkletNode
-    let audioBuffer;
+    let audioBuffer; // O buffer do ficheiro atualmente SELECIONADO para reprodução
 
     let isPlaying = false;
-    let seekPosition = 0;    
-    let playbackStartTime = 0;    
+    let seekPosition = 0;   
+    let playbackStartTime = 0;   
     
     // --- Novas Variáveis Globais para Loop e Waveform ---
     let loopA = 0; // Ponto A em segundos
@@ -316,6 +383,11 @@
     // --- NOVAS VARIÁVEIS GLOBAIS PARA LOOPS GUARDADOS ---
     let savedLoops = []; // Array para armazenar os objetos de loop { name, loopA, loopB }
     const LOOP_STORAGE_KEY = 'soundtouch_saved_loops'; // Chave para o LocalStorage
+
+    // --- NOVAS VARIÁVEIS GLOBAIS PARA MÚLTIPLOS FICHEIROS ---
+    let audioFiles = []; // Array para armazenar {name, buffer, originalFile} de todos os ficheiros carregados
+    let activeFileIndex = -1; // Índice do ficheiro atualmente selecionado (o que está a ser manipulado/reproduzido)
+    const FILE_STORAGE_KEY = 'soundtouch_loaded_files'; // Chave para o LocalStorage (opcional, para persistência dos ficheiros)
 
     // --- Elementos do DOM ---
     const audioFileEl = document.getElementById('audioFile');
@@ -344,6 +416,9 @@
     const saveLoopBtn = document.getElementById('saveLoopBtn');
     const savedLoopsListEl = document.getElementById('savedLoopsList');
 
+    // --- NOVO ELEMENTO DO DOM PARA A LISTA DE FICHEIROS ---
+    const fileListContainer = document.getElementById('fileListContainer');
+
     // Função auxiliar para formatar tempo (minutos:segundos.milissegundos)
     function formatTime(seconds) {
         if (isNaN(seconds) || seconds < 0) return '00:00.000';
@@ -354,68 +429,129 @@
         return `${String(minutes).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
     }
 
+    // --- 1. CARREGAMENTO DOS ÁUDIOS ---
+    audioFileEl.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
 
-    // --- 1. CARREGAMENTO DO ÁUDIO ---
-    audioFileEl.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            stopPlayback(); // Para qualquer reprodução anterior e reseta seekPosition
-            loadAudioFile(file);
+        stopPlayback(); // Para qualquer reprodução anterior
+
+        fileInfoEl.style.display = 'block';
+        loadingStatusEl.style.display = 'block';
+        loadingStatusEl.textContent = 'A carregar e descodificar múltiplos ficheiros...';
+        controlsEl.style.display = 'none';
+
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('AudioContext inicializado. Estado:', audioContext.state);
+            try {
+                await audioContext.audioWorklet.addModule('./soundtouch-worklet.js');
+                console.log('AudioWorklet "scheduled-soundtouch-worklet" carregado com sucesso.');
+            } catch (error) {
+                console.error('Erro ao carregar AudioWorklet:', error);
+                loadingStatusEl.textContent = 'Erro fatal: Não foi possível carregar o processador de áudio!';
+                return;
+            }
+        }
+
+        let loadedCount = 0;
+        const totalFiles = files.length;
+        
+        for (const file of files) {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const buffer = await audioContext.decodeAudioData(event.target.result);
+                    console.log(`Ficheiro '${file.name}' descodificado. Duração: ${buffer.duration} segundos.`);
+                    
+                    audioFiles.push({
+                        name: file.name,
+                        buffer: buffer,
+                        originalFile: file // Armazena a referência ao ficheiro original se necessário
+                    });
+                    loadedCount++;
+                    loadingStatusEl.textContent = `A carregar e descodificar... (${loadedCount}/${totalFiles}) ${file.name}`;
+
+                    if (loadedCount === totalFiles) {
+                        console.log('Todos os ficheiros foram carregados e descodificados.');
+                        renderFileList(); // Atualiza a UI com os novos ficheiros
+                        loadingStatusEl.textContent = 'Todos os ficheiros prontos!';
+                        setTimeout(() => { loadingStatusEl.style.display = 'none'; }, 2000);
+                        fileListContainer.style.display = 'grid'; // Mostra o container da lista de ficheiros
+                        controlsEl.style.display = 'block';
+                        // Seleciona o primeiro ficheiro automaticamente ou o último adicionado
+                        if (audioFiles.length > 0 && activeFileIndex === -1) {
+                            selectFile(0); 
+                        } else if (audioFiles.length > 0) {
+                            selectFile(audioFiles.length - 1); // Seleciona o último adicionado
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Erro ao descodificar áudio para '${file.name}':`, error);
+                    loadingStatusEl.textContent = `Erro ao carregar ficheiro: ${file.name}!`;
+                    // Remover o ficheiro falhado da lista temporariamente se necessário, ou apenas reportar
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
     });
 
-    async function loadAudioFile(file) {
-        fileNameEl.textContent = `Ficheiro: ${file.name}`;
-        fileInfoEl.style.display = 'block';
-        loadingStatusEl.style.display = 'block';
-        loadingStatusEl.textContent = 'A carregar e descodificar...';
-        controlsEl.style.display = 'none';
+    // --- NOVO: Renderizar a lista de ficheiros carregados ---
+    function renderFileList() {
+        fileListContainer.innerHTML = ''; // Limpa a lista existente
+        if (audioFiles.length === 0) {
+            fileListContainer.style.display = 'none';
+            return;
+        }
 
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                console.log('AudioContext inicializado. Estado:', audioContext.state);
-                // AQUI É ONDE O AUDIO WORKLET É ADICIONADO AO CONTEXTO DE ÁUDIO PELA PRIMEIRA VEZ
-                try {
-                    await audioContext.audioWorklet.addModule('./soundtouch-worklet.js');
-                    console.log('AudioWorklet "scheduled-soundtouch-worklet" carregado com sucesso.');
-                } catch (error) {
-                    console.error('Erro ao carregar AudioWorklet:', error);
-                    loadingStatusEl.textContent = 'Erro fatal: Não foi possível carregar o processador de áudio!';
-                    return;
-                }
+        audioFiles.forEach((file, index) => {
+            const fileCell = document.createElement('div');
+            fileCell.className = 'file-cell';
+            fileCell.dataset.index = index; // Para identificar o ficheiro ao clicar
+            fileCell.textContent = file.name;
+
+            if (index === activeFileIndex) {
+                fileCell.classList.add('selected');
             }
-            audioContext.decodeAudioData(e.target.result)
-                .then(buffer => {
-                    audioBuffer = buffer;
-                    console.log('Áudio descodificado. Duração:', audioBuffer.duration, 'segundos.');
-                    // --- NOVO: Desenhar waveform e inicializar loopB ---
-                    drawWaveform(audioBuffer);
-                    loopA = 0; // Resetar A para 0 ao carregar novo áudio
-                    loopB = audioBuffer.duration; // Define B como o final da faixa por padrão
-                    updateLoopIndicators();
-                    loopAValueEl.textContent = formatTime(loopA);
-                    loopBValueEl.textContent = formatTime(loopB);
-                    // --- FIM NOVO ---
 
-                    loadingStatusEl.textContent = 'Pronto a tocar!';
-                    setTimeout(() => { loadingStatusEl.style.display = 'none'; }, 2000);
-                    controlsEl.style.display = 'block';
-                    resetControls(); // Reseta os sliders e a posição de reprodução, mas loopB já está definido
-                })
-                .catch(error => {
-                    console.error('Erro ao descodificar áudio:', error);
-                    loadingStatusEl.textContent = 'Erro ao carregar o ficheiro!';
-                });
-        };
-        reader.readAsArrayBuffer(file);
+            fileCell.addEventListener('click', () => selectFile(index));
+            fileListContainer.appendChild(fileCell);
+        });
+    }
+
+    // --- NOVO: Selecionar um ficheiro da lista ---
+    function selectFile(index) {
+        if (index === activeFileIndex) return; // Já está selecionado
+
+        stopPlayback(); // Para qualquer reprodução do ficheiro anterior
+
+        activeFileIndex = index;
+        audioBuffer = audioFiles[activeFileIndex].buffer; // Define o buffer ativo
+        fileNameEl.textContent = `Ficheiro: ${audioFiles[activeFileIndex].name}`;
+        
+        // Atualizar classes 'selected'
+        document.querySelectorAll('.file-cell').forEach((cell, i) => {
+            if (i === activeFileIndex) {
+                cell.classList.add('selected');
+            } else {
+                cell.classList.remove('selected');
+            }
+        });
+
+        // Resetar e desenhar waveform para o novo ficheiro
+        resetControls(); // Reseta speed, pitch, loop settings, seekPosition
+        drawWaveform(audioBuffer);
+        loopB = audioBuffer.duration; // Reinicializa loopB para a duração do novo áudio
+        loopBValueEl.textContent = formatTime(loopB);
+        updateLoopIndicators();
+
+        console.log(`Ficheiro '${audioFiles[activeFileIndex].name}' selecionado.`);
     }
 
     // --- 2. CONTROLOS DE REPRODUÇÃO ---
     async function togglePlayback() {    
         if (!audioBuffer) {
-            alert('Por favor, carregue um ficheiro de áudio primeiro.');
+            alert('Por favor, carregue e selecione um ficheiro de áudio primeiro.');
             return;
         }
         
@@ -465,19 +601,25 @@
 
         // Preparar os dados para o worklet, criando CÓPIAS para transferência
         // Isso é necessário porque os buffers são transferíveis e não podem ser usados novamente no thread principal
+        const leftChannelData = audioBuffer.getChannelData(0).slice(); // .slice() cria uma cópia
+        const rightChannelData = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1).slice() : audioBuffer.getChannelData(0).slice();
+
+        // Enviar os dados do buffer para o worklet, transferindo as cópias
+        // Adicionar bufferProps como um objeto separado, não diretamente no array transferível
         const bufferProps = {
             sampleRate: audioBuffer.sampleRate,
             numberOfChannels: audioBuffer.numberOfChannels,
             length: audioBuffer.length,
             duration: audioBuffer.duration
         };
-        const leftChannelData = audioBuffer.getChannelData(0).slice(); // .slice() cria uma cópia
-        const rightChannelData = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1).slice() : audioBuffer.getChannelData(0).slice();
-
-        // Enviar os dados do buffer para o worklet, transferindo as cópias
+        
         soundtouchWorkletNode.port.postMessage({
             message: 'INITIALIZE_PROCESSOR',
-            detail: [bufferProps, leftChannelData, rightChannelData]
+            detail: { 
+                bufferProps: bufferProps,
+                leftChannelData: leftChannelData,
+                rightChannelData: rightChannelData
+            }
         }, [leftChannelData.buffer, rightChannelData.buffer]); // Transferir os buffers para o Worklet
 
         // --- INÍCIO DA LÓGICA DE LOOP E POSIÇÃO DE REPRODUÇÃO PARA O WORKLET ---
@@ -509,7 +651,6 @@
         const actualSourceNodeStartOffset = loopEnabled ? loopA : seekPosition;
         // --- FIM DA LÓGICA DE LOOP E POSIÇÃO DE REPRODUÇÃO PARA O WORKLET ---
 
-
         // Ouve a mensagem de "pronto" do worklet ANTES de começar a reprodução do sourceNode
         soundtouchWorkletNode.port.onmessage = (event) => {
             if (event.data.message === 'PROCESSOR_READY') {
@@ -525,7 +666,7 @@
                 // Inicia o loop de animação para o indicador de reprodução na UI
                 animatePlaybackIndicator();    
 
-            } else if (event.data.data.message === 'PROCESSOR_END') { // Alterado para event.data.data.message para compatibilidade
+            } else if (event.data.data && event.data.data.message === 'PROCESSOR_END') { // Alterado para event.data.data.message para compatibilidade
                 console.log('Reprodução terminada pelo processador (Worklet).');
                 // Lógica de loop: se o worklet sinalizou o fim e o loop está ativo
                 if (loopEnabled && audioContext && soundtouchWorkletNode) {
@@ -547,7 +688,7 @@
             // Se o sourceNode terminar e não estivermos em modo de loop (pois o worklet gerencia o loop)
             // Ou se o worklet falhou em sinalizar o fim do loop por algum motivo
             if (isPlaying && !loopEnabled) {    
-                 stopPlayback(); // Finaliza a reprodução
+                    stopPlayback(); // Finaliza a reprodução
             }
         };
     }
@@ -701,7 +842,12 @@
 
     // Atualiza a posição visual dos indicadores A, B e de reprodução
     function updateLoopIndicators() {
-        if (!audioBuffer) return;
+        if (!audioBuffer) {
+            loopIndicatorA.style.display = 'none';
+            loopIndicatorB.style.display = 'none';
+            playbackIndicator.style.display = 'none';
+            return;
+        }
 
         const totalDuration = audioBuffer.duration;
         
@@ -900,7 +1046,9 @@
         const newLoop = {
             name: name,
             loopA: loopA,
-            loopB: loopB
+            loopB: loopB,
+            // Opcional: associar o loop ao nome do ficheiro, se quiser ter loops por ficheiro
+            // fileName: audioFiles[activeFileIndex].name 
         };
 
         savedLoops.push(newLoop);
@@ -1000,9 +1148,16 @@
     }
 
     // --- CHAMADA INICIAL: CARREGAR LOOPS QUANDO A PÁGINA CARREGA ---
-    // Adicione esta linha no final do seu script, mas antes do fechamento da tag 
     document.addEventListener('DOMContentLoaded', loadSavedLoops);
 
+    // --- Nota sobre persistência de múltiplos ficheiros ---
+    // A persistência dos *buffers de áudio* em si através do LocalStorage
+    // é impraticável devido ao seu tamanho. O LocalStorage destina-se a pequenos
+    // volumes de dados (strings). Portanto, a lista de ficheiros carregados
+    // (`audioFiles`) é volátil e será limpa ao recarregar a página.
+    // Se a persistência dos ficheiros carregados for um requisito, seria
+    // necessário implementar um sistema de backend para armazenamento e re-carregamento.
+    // Apenas os loops guardados (que são dados pequenos) são persistidos.
 </script>
     
 </body>

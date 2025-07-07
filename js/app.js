@@ -182,11 +182,16 @@ clearCellsBtn.addEventListener('click', clearAllCells);
 function stopCurrentAudio() {
     if (currentCell !== null && audioFiles[currentCell] && audioFiles[currentCell].player) {
         audioFiles[currentCell].player.stop(); // Para o player ativo
+        // Resetar o lastPlaybackTime para a célula atual apenas se a reprodução for completamente parada.
+        // Se a intenção é pausar, togglePlayPause lidará com isso.
+        audioFiles[currentCell].lastPlaybackTime = 0; // Reseta o tempo para que a próxima reprodução comece do zero
     }
     isPlaying = false;
     // Limpa o intervalo de atualização da barra de progresso
     clearInterval(progressUpdateInterval);
     progressUpdateInterval = null;
+    progressFill.style.width = '0%'; // Garante que a barra de progresso zera
+    document.getElementById('currentTime').textContent = '0:00'; // Reseta o tempo exibido
 }
 
 // Função para iniciar a reprodução com Tone.js
@@ -198,7 +203,7 @@ async function playAudio(cellNumber, startOffset = 0) {
         return;
     }
 
-    // Parar qualquer reprodução existente antes de iniciar uma nova
+    // --- IMPORTANTE: Parar e limpar *antes* de configurar uma nova reprodução ---
     stopCurrentAudio(); 
 
     // Desativar célula ativa anterior, se houver
@@ -244,7 +249,10 @@ async function playAudio(cellNumber, startOffset = 0) {
     }
 
     // Iniciar o player
-    player.start(0, startOffset); // O primeiro 0 é o tempo em que o player deve começar a tocar (imediatamente), o segundo é o offset no buffer
+    // player.start(when, offset, duration, playbackRate)
+    // "when" (0): inicia imediatamente
+    // "offset" (startOffset): onde começar na faixa de áudio
+    player.start(0, startOffset); 
     isPlaying = true;
 
     // Inicia ou reinicia o intervalo de atualização da barra de progresso
@@ -283,6 +291,7 @@ async function playAudio(cellNumber, startOffset = 0) {
         document.getElementById('totalTime').textContent = formatTime(duration);
 
         // Verificação manual de fim de faixa para não-loop, pois player.onEnded não é chamado em tempo real pelo setInterval
+        // O player.onEnded existe, mas para esta lógica complexa de UI e loop, o setInterval é mais robusto
         if (!isLooping && currentTime >= duration - 0.05) { // Uma pequena margem de erro
              stopCurrentAudio();
              if (currentCell) {
@@ -303,8 +312,9 @@ async function playAudio(cellNumber, startOffset = 0) {
 speedSlider.addEventListener('input', (e) => {
     const newSpeed = parseFloat(e.target.value);
     applySpeedToDisplay(newSpeed); 
+    // Aplica a nova velocidade ao player ativo em tempo real
     if (isPlaying && currentCell !== null && audioFiles[currentCell].player) {
-        audioFiles[currentCell].player.playbackRate = newSpeed; // Aplica em tempo real
+        audioFiles[currentCell].player.playbackRate = newSpeed; 
     }
 });
 // Eventos para remover o foco dos sliders após soltar o mouse/dedo
@@ -314,8 +324,9 @@ speedSlider.addEventListener('touchend', function() { this.blur(); });
 pitchSlider.addEventListener('input', (e) => {
     const newPitch = parseInt(e.target.value);
     applyPitchToDisplay(newPitch); 
+    // Aplica o novo pitch ao player ativo em tempo real (em cents)
     if (isPlaying && currentCell !== null && audioFiles[currentCell].player) {
-        audioFiles[currentCell].player.detune = newPitch; // Aplica em tempo real (em cents)
+        audioFiles[currentCell].player.detune = newPitch; 
     }
 });
 pitchSlider.addEventListener('mouseup', function() { this.blur(); });
@@ -381,7 +392,8 @@ function togglePlayPause() {
         // Reproduzir: Inicia do último tempo de pausa ou do início
         const resumeTime = audioData.lastPlaybackTime || 0;
         playAudio(currentCell, resumeTime);
-        audioData.lastPlaybackTime = 0; // Reseta após retomar a reprodução
+        // O lastPlaybackTime é resetado dentro de stopCurrentAudio()
+        // ou quando uma nova faixa é iniciada.
     }
 }
 
@@ -439,6 +451,12 @@ function activateLoop() {
             audioFiles[currentCell].player.loop = true;
             audioFiles[currentCell].player.loopStart = loopPoints.start;
             audioFiles[currentCell].player.loopEnd = loopPoints.end;
+            // Se já estiver a tocar e os pontos de loop forem definidos, 
+            // precisamos reiniciar o player para que ele "pegue" os novos limites de loop imediatamente.
+            // Para evitar o "eco", vamos parar e iniciar de novo, mantendo o tempo atual.
+            const currentPlayerTime = audioFiles[currentCell].player.toSeconds(audioFiles[currentCell].player.immediate());
+            stopCurrentAudio(); // Limpa completamente o player anterior
+            playAudio(currentCell, currentPlayerTime); // Inicia do tempo atual com os novos loops
         }
         updateLoopDisplay();
         updateLoopMarkers();
@@ -452,6 +470,11 @@ function clearLoop() {
     // Remove o loop do player se estiver a tocar
     if (currentCell && audioFiles[currentCell] && audioFiles[currentCell].player) {
         audioFiles[currentCell].player.loop = false;
+        // Se o loop foi desativado enquanto tocava, precisamos reiniciar o player
+        // para que ele não tente loopar mais.
+        const currentPlayerTime = audioFiles[currentCell].player.toSeconds(audioFiles[currentCell].player.immediate());
+        stopCurrentAudio(); // Limpa o player anterior
+        playAudio(currentCell, currentPlayerTime); // Inicia do tempo atual sem loop
     }
     document.getElementById('pointA').textContent = '--';
     document.getElementById('pointB').textContent = '--';
@@ -572,15 +595,16 @@ document.addEventListener('mousemove', (e) => {
         }
         document.getElementById('pointB').textContent = formatTime(loopPoints.end);
     }
-    activateLoop(); // Ativa/atualiza o loop com os novos pontos
-    updateLoopMarkers(); // Atualiza a posição visual dos marcadores
+    // Não chame activateLoop() no mousemove, apenas no mouseup, para evitar múltiplos inícios.
+    updateLoopMarkers(); // Atualiza a posição visual dos marcadores em tempo real
 });
 
 document.addEventListener('mouseup', () => {
     if (isDraggingLoopHandle) {
         isDraggingLoopHandle = false;
         activeLoopHandle = null;
-        activateLoop(); // Garante que o loop é ativado com os pontos finais após o arraste
+        // Chame activateLoop() APENAS quando o arrastar terminar
+        activateLoop(); 
     }
 });
 

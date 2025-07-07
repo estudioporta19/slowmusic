@@ -7,18 +7,27 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container"> <header>
+    <div class="container">
+        <header>
             <h1>Sample Player</h1>
         </header>
 
         <main>
-            <section class="global-upload-section"> <button id="globalUploadBtn" class="upload-btn">Carregar Ficheiro(s) de Áudio</button> <input type="file" id="globalFileInput" accept="audio/*" multiple style="display: none;">
+            <section class="global-upload-section">
+                <button id="globalUploadBtn" class="upload-btn">Carregar Ficheiro(s) de Áudio</button>
+                <input type="file" id="globalFileInput" accept="audio/*" multiple style="display: none;">
                 <span id="globalUploadStatus">Nenhum ficheiro carregado.</span>
-                <button id="clearCellsBtn" class="upload-btn">Limpar Todas as Células</button> </section>
+                <button id="clearCellsBtn" class="upload-btn">Limpar Todas as Células</button>
+            </section>
 
-            <section class="controls"> <div class="progress-bar"> <div class="progress-fill" id="progressFill"></div>
+            <section class="controls">
+                <!-- AQUI ESTÁ A CORREÇÃO: Adicionado id="progressBar" -->
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
                     <div class="loop-markers" id="loopMarkers">
-                        <div class="loop-handle loop-handle-start" id="loopHandleA"></div> <div class="loop-handle loop-handle-end" id="loopHandleB"></div> </div>
+                        <div class="loop-handle loop-handle-start" id="loopHandleA"></div>
+                        <div class="loop-handle loop-handle-end" id="loopHandleB"></div>
+                    </div>
                 </div>
                 <div class="time-display">
                     <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
@@ -26,12 +35,14 @@
                 
                 <div class="control-group">
                     <label for="speedSlider">Velocidade:</label>
-                    <input type="range" id="speedSlider" min="0.5" max="2.0" value="1.0" step="0.01" class="slider"> <span id="speedValue">1.00x</span>
+                    <input type="range" id="speedSlider" min="0.5" max="2.0" value="1.0" step="0.01" class="slider">
+                    <span id="speedValue">1.00x</span>
                 </div>
 
                 <div class="control-group">
                     <label for="pitchSlider">Transposição (Semitons):</label>
-                    <input type="range" id="pitchSlider" min="-1200" max="1200" value="0" step="1" class="slider"> <span id="pitchValue">0 semitons</span>
+                    <input type="range" id="pitchSlider" min="-1200" max="1200" value="0" step="1" class="slider">
+                    <span id="pitchValue">0 semitons</span>
                 </div>
 
                 <div class="loop-controls">
@@ -42,10 +53,13 @@
                 </div>
             </section>
 
-            <section id="cellGrid" class="grid"> </section>
+            <section id="cellGrid" class="grid">
+                <!-- As células individuais (div class="cell") serão provavelmente adicionadas aqui via JavaScript. -->
+            </section>
         </main>
 
-        <section class="keyboard-shortcuts"> <h3>Atalhos de Teclado</h3>
+        <section class="keyboard-shortcuts">
+            <h3>Atalhos de Teclado</h3>
             <div class="shortcut-info">
                 <span>Ativar/Desativar Loop A:</span> <span class="key">A</span>
             </div>
@@ -63,8 +77,10 @@
             </div>
         </section>
 
-    </div> <footer>
-        <p>Desenvolvido com ❤️</p> </footer>
+    </div>
+    <footer>
+        <p>Desenvolvido com ❤️</p>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.min.js"></script>
     <script src="js/app.js"></script>

@@ -424,7 +424,7 @@
         return `${String(minutes).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
     }
 
-    audioFileEl.addEventListener('change', async (e) => {
+   audioFileEl.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
@@ -451,6 +451,10 @@
         let loadedCount = 0;
         const totalFiles = files.length;
         
+        // Limpa a lista de ficheiros anterior se novos ficheiros forem carregados
+        audioFiles = [];
+        activeFileIndex = -1;
+
         for (const file of files) {
             const reader = new FileReader();
             reader.onload = async (event) => {
@@ -476,8 +480,14 @@
                         if (audioFiles.length > 0 && activeFileIndex === -1) {
                             selectFile(0); 
                         } else if (audioFiles.length > 0) {
+                            // Se já havia ficheiros e o usuário adicionou mais, manter o foco no último adicionado
                             selectFile(audioFiles.length - 1); 
                         }
+                        // --- LINHA ADICIONADA/CORRIGIDA AQUI ---
+                        // Chama renderSavedLoops() para atualizar o estado dos botões "Aplicar"
+                        // depois que todos os ficheiros são carregados.
+                        renderSavedLoops(); 
+                        // --- FIM DA LINHA ADICIONADA/CORRIGIDA ---
                     }
                 } catch (error) {
                     console.error(`Erro ao descodificar áudio para '${file.name}':`, error);
@@ -486,7 +496,7 @@
             };
             reader.readAsArrayBuffer(file);
         }
-    });
+    }); 
 
     function renderFileList() {
         fileListContainer.innerHTML = ''; 

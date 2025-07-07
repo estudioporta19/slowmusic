@@ -3,1161 +3,745 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoundTouch.js Audio Manipulator</title>
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    
+    <title>Slow Music!</title>
     <style>
-        /* ... (seu CSS existente, sem alterações significativas aqui) ... */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a1a; /* Fundo preto mais suave */
             min-height: 100vh;
-            color: white;
+            padding: 20px;
+            color: white; /* Letras brancas */
         }
-        
+
         .container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
+            max-width: 1300px; /* Aumentado para acomodar 5 colunas */
+            margin: 0 auto;
+            background: rgba(30, 30, 30, 0.9); /* Fundo do container mais escuro e opaco */
+            backdrop-filter: blur(5px); /* Efeito de blur mais subtil */
+            border-radius: 15px;
             padding: 30px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); /* Sombra mais intensa */
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Borda suave */
         }
-        
+
         h1 {
             text-align: center;
             margin-bottom: 30px;
-            font-size: 2.5em;
-            background: linear-gradient(45deg, #fff, #f0f0f0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 2.8em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6); /* Sombra de texto mais escura */
+            color: #e0e0e0; /* Título ligeiramente acinzentado para contraste */
         }
-        
-        .file-input-container {
-            margin-bottom: 30px;
+
+        /* Estilos para o novo botão de upload global */
+        .global-upload-section {
             text-align: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: rgba(40, 40, 40, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
-        
-        .file-input {
-            display: none;
-        }
-        
-        .file-label {
-            display: inline-block;
-            padding: 15px 30px;
-            background: linear-gradient(45deg, #4CAF50, #45a049);
+
+        .upload-btn { /* Reutilizado para o botão global e os dentro das células */
+            background: linear-gradient(45deg, #e74c3c, #c0392b); /* Vermelho vibrante */
             color: white;
+            border: none;
+            padding: 10px 20px;
             border-radius: 25px;
             cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            border: none;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-        }
-        
-        .file-label:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-        }
-        
-        .controls {
-            display: none;
-            margin-top: 30px;
-        }
-        
-        .control-group {
-            margin-bottom: 25px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .control-group h3 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #fff;
-            font-size: 1.2em;
-        }
-        
-        .control-row {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .control-row:last-child {
-            margin-bottom: 0;
-        }
-        
-        label {
-            min-width: 80px;
+            font-size: 1em;
             font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
         }
-        
-        input[type="range"] {
-            flex: 1;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
+
+        .upload-btn:hover {
+            background: linear-gradient(45deg, #c0392b, #a03025);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Células mais pequenas */
+            gap: 10px; /* Espaçamento menor entre células */
+            margin-bottom: 30px;
+        }
+
+        .cell {
+            background: rgba(40, 40, 40, 0.8); /* Fundo da célula mais escuro */
+            border-radius: 8px; /* Cantos um pouco menos arredondados */
+            padding: 10px; /* Padding menor */
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Borda suave */
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centraliza conteúdo verticalmente */
+            align-items: center; /* Centraliza conteúdo horizontalmente */
+            cursor: pointer; /* Indica que a célula é clicável */
+            min-height: 80px; /* Altura mínima para células vazias */
+            text-align: center;
+            word-break: break-word; /* Quebra palavras longas */
+        }
+
+        .cell:hover {
+            background: rgba(60, 60, 60, 0.9); /* Escurece no hover */
+            transform: translateY(-2px); /* Efeito de elevação mais subtil */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Sombra mais pronunciada */
+        }
+
+        .cell.active {
+            background: rgba(70, 70, 70, 0.95); /* Célula ativa mais escura */
+            border-color: #e74c3c; /* Borda vermelha para ativa */
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.5); /* Sombra vermelha para ativa */
+        }
+
+        /* Removido .cell-header e .cell-number */
+
+        .file-name {
+            font-size: 0.8em; /* Fonte ainda menor para o nome do ficheiro */
+            margin: 0; /* Remove margem */
+            color: #ccc; /* Nome do ficheiro em cinzento claro */
+            /* word-break: break-all; - Já está na .cell */
+            /* flex-grow: 1; - Não é mais necessário com centralização */
+        }
+
+        /* .play-btn - Removido */
+
+        .controls {
+            background: rgba(40, 40, 40, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px; /* Margem aumentada */
+            font-weight: bold;
+            color: #e0e0e0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px; /* Slider mais alto */
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.2); /* Fundo do slider mais suave */
             outline: none;
             -webkit-appearance: none;
         }
-        
-        input[type="range"]::-webkit-slider-thumb {
+
+        .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 20px;
-            height: 20px;
-            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+            width: 22px; /* Polegar maior */
+            height: 22px;
             border-radius: 50%;
+            background: #e74c3c; /* Polegar vermelho */
             cursor: pointer;
-            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
-        }
-        
-        input[type="range"]::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
-        }
-        
-        .value-display {
-            min-width: 80px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 5px 10px;
-            border-radius: 10px;
-        }
-        
-        .reset-btn {
-            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
-        }
-        
-        .reset-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
-        }
-        
-        .playback-controls {
-            text-align: center;
-            margin-top: 20px;
-        }
-        
-        .play-btn {
-            background: linear-gradient(45deg, #4CAF50, #45a049);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 0 10px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-        }
-        
-        .play-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-        }
-        
-        .play-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .file-info {
-            text-align: center;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            font-size: 14px;
-        }
-        
-        .loading {
-            text-align: center;
-            font-style: italic;
-            color: #ccc;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6); /* Sombra vermelha */
         }
 
-        /* --- Estilos para o Waveform e Loop --- */
-        .waveform-container {
-            position: relative;
-            cursor: crosshair; /* Muda o cursor para indicar que é clicável */
+        .slider::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #e74c3c;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+        }
+
+        .keyboard-shortcuts {
+            background: rgba(40, 40, 40, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .keyboard-shortcuts h3 {
+            color: #e0e0e0;
+            margin-bottom: 15px;
+        }
+
+        .shortcut-info {
+            display: flex;
+            flex-wrap: wrap; /* Para quebrar linha se não houver espaço */
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .shortcut-info span {
+            margin-right: 15px; /* Espaçamento entre os atalhos */
+            margin-bottom: 8px;
+        }
+
+        .key {
+            background: rgba(60, 60, 60, 0.8); /* Fundo da tecla mais escuro */
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #e0e0e0;
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
         }
 
         .loop-indicator {
+            background: rgba(40, 40, 40, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loop-active {
+            background: rgba(231, 76, 60, 0.2); /* Fundo vermelho suave para loop ativo */
+            border: 2px solid #e74c3c; /* Borda vermelha para loop ativo */
+        }
+
+        /* Estilo para o destaque temporário dos pontos de loop (A e B) */
+        .loop-point-highlight {
+            color: #f1c40f; /* Cor amarela para destaque */
+            font-weight: bold;
+            transition: color 0.3s ease-in-out, font-weight 0.3s ease-in-out;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px; /* Barra de progresso mais alta */
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            margin: 10px 0;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #c0392b); /* Preenchimento vermelho */
+            border-radius: 5px;
+            transition: width 0.1s ease;
+        }
+
+        .loop-markers {
             position: absolute;
             top: 0;
             height: 100%;
-            width: 3px; /* Largura das linhas indicadoras */
-            opacity: 0.7;
-            pointer-events: none; /* Garante que não interfere com cliques no canvas */
+            background: rgba(255, 255, 0, 0.2); /* Marcador de loop amarelo suave */
+            border-radius: 5px;
+            display: none; /* Inicia oculto */
+            pointer-events: none;
         }
 
-        /* --- NOVOS ESTILOS PARA AS CÉLULAS DE FICHEIROS --- */
-        .file-list-container {
-            margin-top: 20px;
-            margin-bottom: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Layout responsivo de grelha */
-            gap: 15px;
-            max-height: 250px; /* Limita a altura e adiciona scroll */
-            overflow-y: auto;
-        }
-
-        .file-cell {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-weight: bold;
-            font-size: 0.9em;
-            word-break: break-word; /* Quebra palavras longas */
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-
-        .file-cell:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        .file-cell.selected {
-            background: linear-gradient(45deg, #007bff, #0056b3); /* Azul para selecionado */
-            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
-            border-color: rgba(0, 123, 255, 0.6);
-            transform: scale(1.02);
-        }
-
-        .file-cell-remove {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.2em;
-            font-weight: bold;
+        .loop-markers::before,
+        .loop-markers::after {
+            content: '';
             position: absolute;
-            top: 5px;
-            right: 8px;
-            cursor: pointer;
-            opacity: 0.7;
-            transition: opacity 0.2s ease;
+            top: -5px; /* Ajuste para que a linha fique fora da barra */
+            bottom: -5px; /* Ajuste para que a linha fique fora da barra */
+            width: 2px;
+            background-color: #f1c40f; /* Cor amarela mais vibrante para as linhas */
+            z-index: 1;
         }
 
-        .file-cell-remove:hover {
-            opacity: 1;
-            color: #ff4d4d;
+        .loop-markers::before {
+            left: 0;
+        }
+
+        .loop-markers::after {
+            right: 0;
+        }
+
+        .loop-markers.active {
+            display: block; /* Ativa a visibilidade */
+        }
+
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            margin-top: 5px;
+            color: #ccc;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎵 SoundTouch Audio Manipulator</h1>
+        <h1>🎵 Slow Music!</h1>
         
-        <div class="file-input-container">
-            <input type="file" id="audioFile" class="file-input" accept="audio/*" **multiple**>
-            <label for="audioFile" class="file-label">📁 Selecionar Ficheiros de Áudio</label>
+        <div class="global-upload-section">
+            <input type="file" id="globalFileInput" accept="audio/mp3, audio/wav, audio/*" multiple style="display: none;">
+            <button id="globalUploadBtn" class="upload-btn">
+                ⬆️ Carregar Múltiplos Ficheiros
+            </button>
+            <span id="globalUploadStatus" class="file-name"></span>
         </div>
-        
-        <div id="fileListContainer" class="file-list-container" style="display: none;">
-            </div>
 
-        <div id="fileInfo" class="file-info" style="display: none;">
-            <div id="fileName"></div>
-            <div id="loadingStatus" class="loading">A carregar...</div>
-        </div>
-        
-        <div id="controls" class="controls">
+        <div class="controls">
             <div class="control-group">
-                <h3>🏃 Controlo de Velocidade</h3>
-                <div class="control-row">
-                    <label>Velocidade:</label>
-                    <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1">
-                    <span id="speedValue" class="value-display">1.0x</span>
-                    <button class="reset-btn" onclick="resetSpeed()">Reset</button>
-                </div>
+                <label for="speedSlider">Velocidade de Reprodução: <span id="speedValue">1.0x</span></label>
+                <input type="range" id="speedSlider" class="slider" min="0.25" max="1" step="0.05" value="1">
             </div>
             
             <div class="control-group">
-                <h3>🎼 Controlo de Pitch</h3>
-                <div class="control-row">
-                    <label>Pitch:</label>
-                    <input type="range" id="pitchSlider" min="-12" max="12" step="1" value="0">
-                    <span id="pitchValue" class="value-display">0 meios tons</span>
-                    <button class="reset-btn" onclick="resetPitch()">Reset</button>
-                </div>
+                <label>Presets:</label>
+                <button id="speedPreset05" class="upload-btn" style="background: #3498db; margin-right: 10px;">0.5x</button>
+                <button id="speedPreset10" class="upload-btn" style="background: #2ecc71;">1x</button>
             </div>
 
-            <div class="control-group">
-                <h3>🔄 Controlo de Loop</h3>
-                <div class="waveform-container" style="position: relative; width: 100%; height: 120px; background-color: rgba(255, 255, 255, 0.08); border-radius: 10px; margin-bottom: 15px; overflow: hidden;">
-                    <canvas id="waveformCanvas" width="760" height="120" style="display: block;"></canvas>
-                    <div id="loopIndicatorA" class="loop-indicator" style="left: 0%; background-color: #4CAF50;"></div>
-                    <div id="loopIndicatorB" class="loop-indicator" style="left: 100%; background-color: #FF6B6B;"></div>
-                    <div id="playbackIndicator" class="loop-indicator" style="left: 0%; background-color: #ffffff; width: 2px; z-index: 10; opacity: 0.8;"></div>
-                </div>
-                <div class="control-row">
-                    <label>Início (A):</label>
-                    <span id="loopAValue" class="value-display">00:00.000</span>
-                    <button class="reset-btn" onclick="setLoopA()">Definir A</button>
-                    <button class="reset-btn" onclick="resetLoopA()">Reset A</button>
-                </div>
-                <div class="control-row">
-                    <label>Fim (B):</label>
-                    <span id="loopBValue" class="value-display">00:00.000</span>
-                    <button class="reset-btn" onclick="setLoopB()">Definir B</button>
-                    <button class="reset-btn" onclick="resetLoopB()">Reset B</button>
-                </div>
-                <div class="control-row" style="justify-content: center;">
-                    <button id="toggleLoopBtn" class="play-btn" style="background: linear-gradient(45deg, #6c757d, #5a6268);" onclick="toggleLoop()">Loop OFF ❌</button>
-                </div>
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+                <div class="loop-markers" id="loopMarkers"></div>
             </div>
-
-            <div class="control-group">
-                <h3>💾 Loops Guardados</h3>
-                <div class="control-row" style="margin-bottom: 10px;">
-                    <input type="text" id="loopNameInput" placeholder="Nome do loop (ex: Refrão, Solo)" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-size: 1em;">
-                    <button id="saveLoopBtn" class="play-btn" style="background: linear-gradient(45deg, #007bff, #0056b3); padding: 10px 20px;" onclick="saveCurrentLoop()">💾 Guardar Loop</button>
-                </div>
-                <div class="loop-list-container" style="max-height: 200px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; padding: 10px; background: rgba(255, 255, 255, 0.05);">
-                    <ul id="savedLoopsList" style="list-style: none; padding: 0; margin: 0;">
-                        <li style="color: rgba(255,255,255,0.7); text-align: center; padding: 10px;">Nenhum loop guardado ainda.</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="playback-controls">
-                <button id="playBtn" class="play-btn" onclick="togglePlayback()">▶️ Reproduzir</button>
-                <button id="stopBtn" class="play-btn" onclick="stopPlayback()">⏹️ Parar</button>
+            
+            <div class="time-display">
+                <span id="currentTime">0:00</span>
+                <span id="totalTime">0:00</span>
             </div>
         </div>
+
+        <div class="loop-indicator" id="loopIndicator">
+            <div>🔄 Loop: <span id="loopStatus">Desativado</span></div>
+            <div id="loopPoints" style="display: none;">
+                Ponto A: <span id="pointA">--</span> | Ponto B: <span id="pointB">--</span>
+            </div>
+        </div>
+
+        <div class="keyboard-shortcuts">
+            <h3>⌨️ Atalhos do Teclado:</h3>
+            <div class="shortcut-info">
+                <span><span class="key">A</span> - Definir ponto inicial do loop</span>
+                <span><span class="key">B</span> - Definir ponto final do loop</span>
+                <span><span class="key">X</span> - Limpar loop</span>
+                <span><span class="key">Espaço</span> - Reproduzir/Pausar</span>
+            </div>
+        </div>
+
+        <div class="grid" id="cellGrid">
+        </div>
+
+        <audio id="audioPlayer" preload="metadata"></audio>
     </div>
 
     <script>
-    // --- Variáveis Globais ---
-    let audioContext = null;    
-    let sourceNode;
-    let soundtouchWorkletNode; // AudioWorkletNode
-    let audioBuffer; // O buffer do ficheiro atualmente SELECIONADO para reprodução
+        let currentAudio = null;
+        let audioFiles = {}; // Guarda { cellNumber: fileURL }
+        let currentCell = null; // Guarda o número da célula ativa
+        let loopPoints = { start: null, end: null };
+        let isLooping = false;
+        const audioPlayer = document.getElementById('audioPlayer');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const loopMarkers = document.getElementById('loopMarkers');
+        const globalFileInput = document.getElementById('globalFileInput');
+        const globalUploadBtn = document.getElementById('globalUploadBtn');
+        const globalUploadStatus = document.getElementById('globalUploadStatus');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const speedPreset05 = document.getElementById('speedPreset05');
+        const speedPreset10 = document.getElementById('speedPreset10');
+        const totalCells = 20; // Definir o número total de células
 
-    let isPlaying = false;
-    let seekPosition = 0;   
-    let playbackStartTime = 0;   
-    
-    // --- Novas Variáveis Globais para Loop e Waveform ---
-    let loopA = 0; // Ponto A em segundos
-    let loopB = 0; // Ponto B em segundos
-    let loopEnabled = false;
-
-    let animationFrameId; // Para o loop de animação da waveform
-    
-    // --- NOVAS VARIÁVEIS GLOBAIS PARA LOOPS GUARDADOS ---
-    let savedLoops = []; // Array para armazenar os objetos de loop { name, loopA, loopB }
-    const LOOP_STORAGE_KEY = 'soundtouch_saved_loops'; // Chave para o LocalStorage
-
-    // --- NOVAS VARIÁVEIS GLOBAIS PARA MÚLTIPLOS FICHEIROS ---
-    let audioFiles = []; // Array para armazenar {name, buffer, originalFile} de todos os ficheiros carregados
-    let activeFileIndex = -1; // Índice do ficheiro atualmente selecionado (o que está a ser manipulado/reproduzido)
-    const FILE_STORAGE_KEY = 'soundtouch_loaded_files'; // Chave para o LocalStorage (opcional, para persistência dos ficheiros)
-
-    // --- Elementos do DOM ---
-    const audioFileEl = document.getElementById('audioFile');
-    const fileInfoEl = document.getElementById('fileInfo');
-    const fileNameEl = document.getElementById('fileName');
-    const loadingStatusEl = document.getElementById('loadingStatus');
-    const controlsEl = document.getElementById('controls');
-    const speedSlider = document.getElementById('speedSlider');
-    const speedValue = document.getElementById('speedValue');
-    const pitchSlider = document.getElementById('pitchSlider');
-    const pitchValue = document.getElementById('pitchValue');
-    const playBtn = document.getElementById('playBtn');
-
-    // --- Novos Elementos do DOM para Loop e Waveform ---
-    const waveformCanvas = document.getElementById('waveformCanvas');
-    const waveformCtx = waveformCanvas.getContext('2d');
-    const loopAValueEl = document.getElementById('loopAValue');
-    const loopBValueEl = document.getElementById('loopBValue');
-    const loopIndicatorA = document.getElementById('loopIndicatorA');
-    const loopIndicatorB = document.getElementById('loopIndicatorB');
-    const playbackIndicator = document.getElementById('playbackIndicator');
-    const toggleLoopBtn = document.getElementById('toggleLoopBtn');
-
-    // --- NOVOS ELEMENTOS DO DOM PARA LOOPS GUARDADOS ---
-    const loopNameInput = document.getElementById('loopNameInput');
-    const saveLoopBtn = document.getElementById('saveLoopBtn');
-    const savedLoopsListEl = document.getElementById('savedLoopsList');
-
-    // --- NOVO ELEMENTO DO DOM PARA A LISTA DE FICHEIROS ---
-    const fileListContainer = document.getElementById('fileListContainer');
-
-    // Função auxiliar para formatar tempo (minutos:segundos.milissegundos)
-    function formatTime(seconds) {
-        if (isNaN(seconds) || seconds < 0) return '00:00.000';
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        const s = Math.floor(remainingSeconds);
-        const ms = Math.floor((remainingSeconds - s) * 1000);
-        return `${String(minutes).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms).padStart(3, '0')}`;
-    }
-
-    // --- 1. CARREGAMENTO DOS ÁUDIOS ---
-    audioFileEl.addEventListener('change', async (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length === 0) return;
-
-        stopPlayback(); // Para qualquer reprodução anterior
-
-        fileInfoEl.style.display = 'block';
-        loadingStatusEl.style.display = 'block';
-        loadingStatusEl.textContent = 'A carregar e descodificar múltiplos ficheiros...';
-        controlsEl.style.display = 'none';
-
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('AudioContext inicializado. Estado:', audioContext.state);
-            try {
-                await audioContext.audioWorklet.addModule('./soundtouch-worklet.js');
-                console.log('AudioWorklet "scheduled-soundtouch-worklet" carregado com sucesso.');
-            } catch (error) {
-                console.error('Erro ao carregar AudioWorklet:', error);
-                loadingStatusEl.textContent = 'Erro fatal: Não foi possível carregar o processador de áudio!';
-                return;
+        // Criar as células dinamicamente
+        function createCells() {
+            const grid = document.getElementById('cellGrid');
+            grid.innerHTML = ''; // Limpar células existentes
+            for (let i = 1; i <= totalCells; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.setAttribute('data-cell-number', i); // Atributo para identificar a célula
+                // Células sem número e sem botão de reprodução explícito
+                cell.innerHTML = `
+                    <div class="file-name" id="fileName${i}">Vazia</div>
+                `;
+                grid.appendChild(cell);
             }
         }
 
-        let loadedCount = 0;
-        const totalFiles = files.length;
-        
-        for (const file of files) {
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
-                    const buffer = await audioContext.decodeAudioData(event.target.result);
-                    console.log(`Ficheiro '${file.name}' descodificado. Duração: ${buffer.duration} segundos.`);
-                    
-                    audioFiles.push({
-                        name: file.name,
-                        buffer: buffer,
-                        originalFile: file // Armazena a referência ao ficheiro original se necessário
-                    });
-                    loadedCount++;
-                    loadingStatusEl.textContent = `A carregar e descodificar... (${loadedCount}/${totalFiles}) ${file.name}`;
+        // Acionar o input de ficheiro global
+        globalUploadBtn.addEventListener('click', () => {
+            globalFileInput.click();
+        });
 
-                    if (loadedCount === totalFiles) {
-                        console.log('Todos os ficheiros foram carregados e descodificados.');
-                        renderFileList(); // Atualiza a UI com os novos ficheiros
-                        loadingStatusEl.textContent = 'Todos os ficheiros prontos!';
-                        setTimeout(() => { loadingStatusEl.style.display = 'none'; }, 2000);
-                        fileListContainer.style.display = 'grid'; // Mostra o container da lista de ficheiros
-                        controlsEl.style.display = 'block';
-                        // Seleciona o primeiro ficheiro automaticamente ou o último adicionado
-                        if (audioFiles.length > 0 && activeFileIndex === -1) {
-                            selectFile(0); 
-                        } else if (audioFiles.length > 0) {
-                            selectFile(audioFiles.length - 1); // Seleciona o último adicionado
+        // Lidar com o upload de múltiplos ficheiros
+        globalFileInput.addEventListener('change', (event) => {
+            const files = event.target.files;
+            if (files.length === 0) {
+                globalUploadStatus.textContent = 'Nenhum ficheiro selecionado.';
+                return;
+            }
+
+            globalUploadStatus.textContent = `A carregar ${files.length} ficheiro(s)...`;
+            
+            // Limpar ficheiros anteriores e desativar células
+            for (let i = 1; i <= totalCells; i++) {
+                // Revogar URL anterior para liberar memória
+                if (audioFiles[i]) {
+                    URL.revokeObjectURL(audioFiles[i]);
+                }
+                delete audioFiles[i];
+                document.getElementById(`fileName${i}`).textContent = 'Vazia'; // Resetar texto para 'Vazia'
+                const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
+                if (cell) cell.classList.remove('active'); // Remover classe 'active'
+            }
+            
+            // Parar qualquer áudio a tocar
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+                currentCell = null;
+                clearLoop();
+                progressFill.style.width = '0%';
+                document.getElementById('currentTime').textContent = '0:00';
+                document.getElementById('totalTime').textContent = '0:00';
+            }
+
+            let filesLoaded = 0;
+            let cellIndex = 1;
+
+            // Distribuir ficheiros pelas células
+            for (let i = 0; i < files.length && cellIndex <= totalCells; i++) {
+                const file = files[i];
+
+                // A verificação é um pouco mais abrangente agora, usando file.type.startsWith('audio/')
+                if (!file.type.startsWith('audio/')) {
+                    console.warn(`Ficheiro "${file.name}" não é um ficheiro de áudio. Ignorando.`);
+                    continue; // Pular para o próximo ficheiro
+                }
+
+                const fileURL = URL.createObjectURL(file);
+                audioFiles[cellIndex] = fileURL;
+                
+                // Exibe apenas o nome do ficheiro, sem extensão
+                const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('.');
+                document.getElementById(`fileName${cellIndex}`).textContent = fileNameWithoutExtension || file.name; // Fallback para o nome completo
+                
+                filesLoaded++;
+                cellIndex++;
+            }
+            globalUploadStatus.textContent = `${filesLoaded} ficheiro(s) carregado(s) com sucesso.`;
+            if (filesLoaded === 0 && files.length > 0) {
+                 globalUploadStatus.textContent = 'Nenhum ficheiro de áudio válido carregado.';
+            }
+            event.target.value = ''; // Limpar o input para permitir carregar os mesmos ficheiros novamente
+        });
+
+        // Funções de reprodução de áudio - Agora ativada pelo clique na célula
+        function playAudio(cellNumber) {
+            const newAudioSrc = audioFiles[cellNumber];
+
+            if (!newAudioSrc) { // Se não há ficheiro na célula
+                console.warn(`Nenhum ficheiro de áudio na célula ${cellNumber}.`);
+                return;
+            }
+
+            // Se o áudio atual é o mesmo, alternar play/pause
+            if (currentAudio && currentAudio.src === newAudioSrc) {
+                if (currentAudio.paused) {
+                    currentAudio.play();
+                } else {
+                    currentAudio.pause();
+                }
+                return;
+            }
+
+            // Parar áudio anterior e desmarcar célula
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                if (currentCell) {
+                    document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
+                }
+            }
+
+            clearLoop(); // Limpar loop ao trocar de ficheiro
+
+            audioPlayer.src = newAudioSrc;
+            audioPlayer.load();
+            audioPlayer.play();
+            currentAudio = audioPlayer;
+            currentCell = cellNumber;
+            
+            document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
+            
+            // Aplicar velocidade atual
+            const speed = speedSlider.value;
+            audioPlayer.playbackRate = parseFloat(speed);
+        }
+
+        // Função para aplicar a velocidade
+        function applySpeed(speed) {
+            speedSlider.value = speed;
+            speedValue.textContent = speed.toFixed(2) + 'x'; // Exibe com duas casas decimais
+            if (currentAudio) {
+                currentAudio.playbackRate = speed;
+            }
+        }
+
+        // Event listeners para os botões de preset
+        speedPreset05.addEventListener('click', () => {
+            applySpeed(0.5);
+            speedSlider.blur(); // Remover foco após clicar no preset
+        });
+
+        speedPreset10.addEventListener('click', () => {
+            applySpeed(1.0);
+            speedSlider.blur(); // Remover foco após clicar no preset
+        });
+
+        // Controle de velocidade
+        speedSlider.addEventListener('input', function(e) {
+            const speed = parseFloat(e.target.value);
+            speedValue.textContent = speed.toFixed(2) + 'x'; // Exibe com duas casas decimais
+            if (currentAudio) {
+                currentAudio.playbackRate = speed;
+            }
+        });
+
+        // Remover foco do slider após a interação para permitir atalhos de teclado
+        speedSlider.addEventListener('mouseup', function() {
+            this.blur(); // 'this' refere-se ao próprio speedSlider
+        });
+        // Também para touch devices (para melhor compatibilidade em telemóveis/tablets)
+        speedSlider.addEventListener('touchend', function() {
+            this.blur();
+        });
+
+        // Atalhos do teclado
+        document.addEventListener('keydown', function(e) {
+            // Evita que os atalhos funcionem se um input estiver focado (como um input de texto futuro)
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
+                return;
+            }
+
+            if (!currentAudio) return;
+
+            switch(e.key.toLowerCase()) {
+                case 'a':
+                    setLoopPoint('start');
+                    break;
+                case 'b':
+                    setLoopPoint('end');
+                    break;
+                case 'x':
+                    clearLoop();
+                    break;
+                case ' ': // Espaço para play/pause
+                    e.preventDefault(); // Prevenir rolagem da página
+                    if (currentAudio) {
+                        if (currentAudio.paused) {
+                            currentAudio.play();
+                        } else {
+                            currentAudio.pause();
                         }
                     }
-                } catch (error) {
-                    console.error(`Erro ao descodificar áudio para '${file.name}':`, error);
-                    loadingStatusEl.textContent = `Erro ao carregar ficheiro: ${file.name}!`;
-                    // Remover o ficheiro falhado da lista temporariamente se necessário, ou apenas reportar
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-    });
-
-    // --- NOVO: Renderizar a lista de ficheiros carregados ---
-    function renderFileList() {
-        fileListContainer.innerHTML = ''; // Limpa a lista existente
-        if (audioFiles.length === 0) {
-            fileListContainer.style.display = 'none';
-            return;
-        }
-
-        audioFiles.forEach((file, index) => {
-            const fileCell = document.createElement('div');
-            fileCell.className = 'file-cell';
-            fileCell.dataset.index = index; // Para identificar o ficheiro ao clicar
-            fileCell.textContent = file.name;
-
-            if (index === activeFileIndex) {
-                fileCell.classList.add('selected');
+                    break;
             }
-
-            fileCell.addEventListener('click', () => selectFile(index));
-            fileListContainer.appendChild(fileCell);
         });
-    }
 
-    // --- NOVO: Selecionar um ficheiro da lista ---
-    function selectFile(index) {
-        if (index === activeFileIndex) return; // Já está selecionado
+        function setLoopPoint(point) {
+            if (!currentAudio) return;
+            
+            const currentTime = currentAudio.currentTime;
+            loopPoints[point] = currentTime;
+            
+            const pointAElement = document.getElementById('pointA');
+            const pointBElement = document.getElementById('pointB');
 
-        stopPlayback(); // Para qualquer reprodução do ficheiro anterior
-
-        activeFileIndex = index;
-        audioBuffer = audioFiles[activeFileIndex].buffer; // Define o buffer ativo
-        fileNameEl.textContent = `Ficheiro: ${audioFiles[activeFileIndex].name}`;
-        
-        // Atualizar classes 'selected'
-        document.querySelectorAll('.file-cell').forEach((cell, i) => {
-            if (i === activeFileIndex) {
-                cell.classList.add('selected');
+            if (point === 'start') {
+                pointAElement.textContent = formatTime(currentTime);
+                // Adicionar classe de destaque
+                pointAElement.classList.add('loop-point-highlight');
+                // Remover classe de destaque após um breve período
+                setTimeout(() => {
+                    pointAElement.classList.remove('loop-point-highlight');
+                }, 800); // 800ms = 0.8 segundos para o destaque
             } else {
-                cell.classList.remove('selected');
-            }
-        });
-
-        // Resetar e desenhar waveform para o novo ficheiro
-        resetControls(); // Reseta speed, pitch, loop settings, seekPosition
-        drawWaveform(audioBuffer);
-        loopB = audioBuffer.duration; // Reinicializa loopB para a duração do novo áudio
-        loopBValueEl.textContent = formatTime(loopB);
-        updateLoopIndicators();
-
-        console.log(`Ficheiro '${audioFiles[activeFileIndex].name}' selecionado.`);
-    }
-
-    // --- 2. CONTROLOS DE REPRODUÇÃO ---
-    async function togglePlayback() {    
-        if (!audioBuffer) {
-            alert('Por favor, carregue e selecione um ficheiro de áudio primeiro.');
-            return;
-        }
-        
-        if (audioContext && audioContext.state === 'suspended') {
-            console.log('Tentando retomar AudioContext...');
-            try {
-                await audioContext.resume();
-                console.log('AudioContext retomado com sucesso. Estado:', audioContext.state);
-            } catch (e) {
-                console.error('Erro ao retomar AudioContext:', e);
-                alert('Não foi possível iniciar a reprodução. Por favor, interaja com a página (clique) e tente novamente.');
-                return;
-            }
-        }
-
-        if (isPlaying) {
-            pausePlayback();
-        } else {
-            await startPlayback();    
-        }
-    }
-
-    async function startPlayback() {    
-        if (isPlaying || !audioBuffer) return;
-        
-        if (!audioContext) {
-            console.error('AudioContext não inicializado. Carregue um ficheiro de áudio primeiro.');
-            return;
-        }
-
-        if (audioContext.state === 'suspended') {
-            await audioContext.resume();
-        }
-
-        // SEMPRE RECRIAR sourceNode e soundtouchWorkletNode para evitar DataCloneError
-        // Isso é crucial para reiniciar o playback e aplicar novas configurações de loop
-        sourceNode = audioContext.createBufferSource();
-        sourceNode.buffer = audioBuffer;
-
-        // Instanciar o AudioWorkletNode com o nome correto
-        soundtouchWorkletNode = new AudioWorkletNode(audioContext, 'scheduled-soundtouch-worklet');
-        console.log('AudioWorkletNode criado.');
-
-        sourceNode.connect(soundtouchWorkletNode);
-        soundtouchWorkletNode.connect(audioContext.destination);
-        console.log('sourceNode e soundtouchWorkletNode conectados ao destino.');
-
-        // Preparar os dados para o worklet, criando CÓPIAS para transferência
-        // Isso é necessário porque os buffers são transferíveis e não podem ser usados novamente no thread principal
-        const leftChannelData = audioBuffer.getChannelData(0).slice(); // .slice() cria uma cópia
-        const rightChannelData = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1).slice() : audioBuffer.getChannelData(0).slice();
-
-        // Enviar os dados do buffer para o worklet, transferindo as cópias
-        // Adicionar bufferProps como um objeto separado, não diretamente no array transferível
-        const bufferProps = {
-            sampleRate: audioBuffer.sampleRate,
-            numberOfChannels: audioBuffer.numberOfChannels,
-            length: audioBuffer.length,
-            duration: audioBuffer.duration
-        };
-        
-        soundtouchWorkletNode.port.postMessage({
-            message: 'INITIALIZE_PROCESSOR',
-            detail: { 
-                bufferProps: bufferProps,
-                leftChannelData: leftChannelData,
-                rightChannelData: rightChannelData
-            }
-        }, [leftChannelData.buffer, rightChannelData.buffer]); // Transferir os buffers para o Worklet
-
-        // --- INÍCIO DA LÓGICA DE LOOP E POSIÇÃO DE REPRODUÇÃO PARA O WORKLET ---
-        let startSample;
-        let durationSamples;
-
-        if (loopEnabled) {
-            // Se o loop estiver ativo, define o início e a duração do segmento de loop
-            startSample = Math.round(loopA * audioBuffer.sampleRate);
-            durationSamples = Math.round((loopB - loopA) * audioBuffer.sampleRate);
-            // Garante uma duração mínima para evitar problemas com segmentos muito curtos
-            if (durationSamples <= 0) {
-                durationSamples = Math.round(0.1 * audioBuffer.sampleRate); // 0.1 segundos como mínimo
-            }
-        } else {
-            // Se o loop não estiver ativo, começa da posição atual de busca e vai até o final do áudio
-            startSample = Math.round(seekPosition * audioBuffer.sampleRate);
-            durationSamples = audioBuffer.length - startSample;
-        }
-
-        // Define os parâmetros do AudioWorklet para controlar o ponto de início e fim da reprodução
-        // Estes são os parâmetros que o worklet usará para ler do buffer interno
-        soundtouchWorkletNode.parameters.get('offsetSamples').value = startSample;
-        soundtouchWorkletNode.parameters.get('playbackDurationSamples').value = durationSamples;
-
-        // O `sourceNode` sempre iniciará do `seekPosition` que é o "ponto de partida" no buffer original.
-        // O Worklet usará `offsetSamples` para saber de onde **realmente** começar a processar no contexto do loop.
-        // Se o loop está ativo, o `sourceNode` na verdade pode começar do `loopA` para o processamento do worklet iniciar corretamente
-        const actualSourceNodeStartOffset = loopEnabled ? loopA : seekPosition;
-        // --- FIM DA LÓGICA DE LOOP E POSIÇÃO DE REPRODUÇÃO PARA O WORKLET ---
-
-        // Ouve a mensagem de "pronto" do worklet ANTES de começar a reprodução do sourceNode
-        soundtouchWorkletNode.port.onmessage = (event) => {
-            if (event.data.message === 'PROCESSOR_READY') {
-                console.log('Worklet processador inicializado e pronto.');
-                // Aplica as configurações atuais de pitch/tempo/rate
-                updateSoundTouchSettings();
+                pointBElement.textContent = formatTime(currentTime);
+                // Adicionar classe de destaque ao Ponto B também (opcional, mas faz sentido para consistência)
+                pointBElement.classList.add('loop-point-highlight');
+                setTimeout(() => {
+                    pointBElement.classList.remove('loop-point-highlight');
+                }, 800);
                 
-                // Inicia a reprodução do sourceNode a partir do offset
-                sourceNode.start(0, actualSourceNodeStartOffset);    
-                playbackStartTime = audioContext.currentTime;
-                isPlaying = true;
-                updatePlayButton();
-                // Inicia o loop de animação para o indicador de reprodução na UI
-                animatePlaybackIndicator();    
-
-            } else if (event.data.data && event.data.data.message === 'PROCESSOR_END') { // Alterado para event.data.data.message para compatibilidade
-                console.log('Reprodução terminada pelo processador (Worklet).');
-                // Lógica de loop: se o worklet sinalizou o fim e o loop está ativo
-                if (loopEnabled && audioContext && soundtouchWorkletNode) {
-                    // Reinicia a `seekPosition` para o ponto A do loop para o próximo ciclo
-                    seekPosition = loopA;    
-                    console.log(`Looped to A: ${formatTime(loopA)}`);
-                    stopPlayback(); // Para o playback atual (desconecta nós)
-                    startPlayback(); // Inicia um novo playback a partir de loopA
-                } else {
-                    stopPlayback(); // Se não há loop, simplesmente para o playback
+                // Quando define o ponto B, ativa o loop
+                if (loopPoints.start !== null) {
+                    activateLoop();
                 }
             }
-        };
-
-        // O `sourceNode.onended` agora é menos crítico para o loop (o worklet controla o fim do loop),
-        // mas pode ser mantido como um fallback ou para outros casos.
-        sourceNode.onended = () => {
-            console.log('SourceNode terminou.');
-            // Se o sourceNode terminar e não estivermos em modo de loop (pois o worklet gerencia o loop)
-            // Ou se o worklet falhou em sinalizar o fim do loop por algum motivo
-            if (isPlaying && !loopEnabled) {    
-                    stopPlayback(); // Finaliza a reprodução
-            }
-        };
-    }
-
-    function pausePlayback() {
-        if (!isPlaying || !sourceNode) return;
-        
-        cancelAnimationFrame(animationFrameId); // Para a animação do indicador
-        
-        // Calcula a posição atual de reprodução considerando as alterações de tempo do SoundTouch.
-        // Isso garante que `seekPosition` seja preciso ao pausar.
-        // A `seekPosition` deve ser o tempo no *áudio original* para onde paramos.
-        // O worklet internamente lida com a leitura do seu próprio buffer.
-        
-        let currentPlaybackTimeInOriginalAudio;
-        if (soundtouchWorkletNode && audioBuffer) {
-            // tempo reproduzido no worklet = (tempo atual do contexto - tempo que começou a reprodução) * tempo do soundtouch
-            const elapsedProcessedTime = (audioContext.currentTime - playbackStartTime) * soundtouchWorkletNode.parameters.get('tempo').value;
-            // a posição no áudio original é o ponto de partida (loopA ou seekPosition anterior) + tempo processado
-            const startOffsetForProcessing = loopEnabled ? loopA : seekPosition;
-            currentPlaybackTimeInOriginalAudio = startOffsetForProcessing + elapsedProcessedTime;
-        } else {
-            // Fallback se o worklet não estiver disponível ou não pronto
-            currentPlaybackTimeInOriginalAudio = seekPosition + (audioContext.currentTime - playbackStartTime);
-        }
-
-        seekPosition = currentPlaybackTimeInOriginalAudio; // Atualiza a posição de busca global
-        seekPosition = Math.min(Math.max(0, seekPosition), audioBuffer.duration); // Garante que a posição está dentro dos limites
-
-        stopPlayback(); // Para a reprodução
-        isPlaying = false;
-        updatePlayButton();
-    }
-    
-    function stopPlayback() {
-        if (sourceNode) {
-            sourceNode.stop();
-            sourceNode.disconnect();
-            sourceNode = null; // Important: Anular o node para permitir recriação
-        }
-        if (soundtouchWorkletNode) {    
-            soundtouchWorkletNode.port.postMessage({ message: 'STOP' }); // Informa o worklet para parar
-            soundtouchWorkletNode.disconnect();
-            soundtouchWorkletNode = null; // Important: Anular o node para permitir recriação
-        }
-        cancelAnimationFrame(animationFrameId); // Para a animação do indicador
-        playbackIndicator.style.display = 'none'; // Garante que desaparece
-        isPlaying = false;
-        seekPosition = 0; // Resetar a posição de busca para o início da faixa
-        updatePlayButton();
-        updateLoopIndicators(); // Para resetar a posição visual dos indicadores
-    }
-    
-    function updatePlayButton() {
-        playBtn.textContent = isPlaying ? '⏸️ Pausar' : '▶️ Reproduzir';
-    }
-
-    // --- 3. SLIDERS E ATUALIZAÇÃO DE EFEITOS ---
-    function updateSoundTouchSettings() {
-        if (!soundtouchWorkletNode) return;    
-
-        const speed = parseFloat(speedSlider.value);
-        const semitones = parseInt(pitchSlider.value);
-        
-        // Os parâmetros do AudioWorklet são AudioParam e são definidos diretamente
-        soundtouchWorkletNode.parameters.get('tempo').value = speed;
-        soundtouchWorkletNode.parameters.get('pitchSemitones').value = semitones;    
-    }
-    
-    speedSlider.addEventListener('input', () => {
-        const speed = parseFloat(speedSlider.value);
-        speedValue.textContent = `${speed.toFixed(1)}x`;
-        updateSoundTouchSettings();
-    });
-
-    pitchSlider.addEventListener('input', () => {
-        const semitones = parseInt(pitchSlider.value);
-        const label = semitones > 0 ? `+${semitones}` : semitones;
-        pitchValue.textContent = `${label} semitons`;
-        updateSoundTouchSettings();
-    });
-
-    // --- 4. FUNÇÕES DE RESET ---
-    function resetSpeed() {
-        speedSlider.value = 1;
-        speedValue.textContent = '1.0x';
-        updateSoundTouchSettings();
-    }
-
-    function resetPitch() {
-        pitchSlider.value = 0;
-        pitchValue.textContent = '0 semitons';
-        updateSoundTouchSettings();
-    }
-
-    function resetControls() {
-        resetSpeed();
-        resetPitch();
-        stopPlayback(); // Isso também reseta seekPosition para 0
-
-        // --- NOVO: Resetar loops também ---
-        if (audioBuffer) { // Só reseta B para a duração se houver um buffer carregado
-            resetLoopB();
-        } else { // Caso contrário, reseta para 0
-            loopB = 0;
-            loopBValueEl.textContent = formatTime(0);
-        }
-        resetLoopA();
-        loopEnabled = false;
-        toggleLoopBtn.textContent = 'Loop OFF ❌';
-        toggleLoopBtn.style.background = 'linear-gradient(45deg, #6c757d, #5a6268)';
-        updateLoopIndicators();
-    }
-
-    // --- Funções de Waveform e Loop ---
-
-    // Função para desenhar a forma de onda
-    function drawWaveform(buffer) {
-        waveformCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
-        if (!buffer) return;
-
-        const channelData = buffer.getChannelData(0); // Pega o primeiro canal
-        const samplesPerPixel = Math.floor(channelData.length / waveformCanvas.width);
-        const centerY = waveformCanvas.height / 2;
-        const amplitude = waveformCanvas.height / 2;
-
-        waveformCtx.lineWidth = 1;
-        waveformCtx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-        waveformCtx.beginPath();
-        waveformCtx.moveTo(0, centerY);
-
-        for (let x = 0; x < waveformCanvas.width; x++) {
-            let sum = 0;
-            let min = 0;
-            let max = 0;
-            for (let i = 0; i < samplesPerPixel; i++) {
-                const sample = channelData[x * samplesPerPixel + i];
-                sum += sample;
-                min = Math.min(min, sample);
-                max = Math.max(max, sample);
-            }
-            // Desenha a linha vertical para cada "pixel"
-            waveformCtx.lineTo(x, centerY + (max * amplitude));
-            waveformCtx.lineTo(x, centerY + (min * amplitude));
-            waveformCtx.moveTo(x, centerY + (max * amplitude)); // Garante que a linha começa do topo ou de baixo para o próximo ponto
-        }
-        waveformCtx.stroke();
-
-        updateLoopIndicators(); // Garante que os indicadores estão visíveis
-    }
-
-    // Atualiza a posição visual dos indicadores A, B e de reprodução
-    function updateLoopIndicators() {
-        if (!audioBuffer) {
-            loopIndicatorA.style.display = 'none';
-            loopIndicatorB.style.display = 'none';
-            playbackIndicator.style.display = 'none';
-            return;
-        }
-
-        const totalDuration = audioBuffer.duration;
-        
-        // Ponto A
-        const percentA = (loopA / totalDuration) * 100;
-        loopIndicatorA.style.left = `${percentA}%`;
-        loopIndicatorA.style.display = 'block'; // Garante que é visível
-
-        // Ponto B
-        const percentB = (loopB / totalDuration) * 100;
-        loopIndicatorB.style.left = `${percentB}%`;
-        loopIndicatorB.style.display = 'block'; // Garante que é visível
-
-        // Indicador de reprodução (só atualiza durante a reprodução)
-        if (isPlaying && audioContext) {
-            // A posição real do playback no áudio original
-            const currentTempo = soundtouchWorkletNode ? soundtouchWorkletNode.parameters.get('tempo').value : 1.0;
-            const elapsed = audioContext.currentTime - playbackStartTime;
-            const currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
             
-            const percentPlayback = (currentPlaybackTime / totalDuration) * 100;
+            updateLoopDisplay();
+            updateLoopMarkers(); // Chamar aqui para atualizar o visual do marcador imediatamente
+        }
+
+        function activateLoop() {
+            if (loopPoints.start !== null && loopPoints.end !== null) {
+                // Garantir que o start é antes do end
+                if (loopPoints.start > loopPoints.end) {
+                    [loopPoints.start, loopPoints.end] = [loopPoints.end, loopPoints.start]; // Trocar os valores
+                    document.getElementById('pointA').textContent = formatTime(loopPoints.start);
+                    document.getElementById('pointB').textContent = formatTime(loopPoints.end);
+                }
+                isLooping = true;
+                updateLoopDisplay();
+                updateLoopMarkers();
+            }
+        }
+
+        function clearLoop() {
+            loopPoints.start = null;
+            loopPoints.end = null;
+            isLooping = false;
+            document.getElementById('pointA').textContent = '--';
+            document.getElementById('pointB').textContent = '--';
+            updateLoopDisplay();
+            updateLoopMarkers(); // Chamar aqui para esconder o marcador completamente
+        }
+
+        function updateLoopDisplay() {
+            const loopIndicator = document.getElementById('loopIndicator');
+            const loopStatus = document.getElementById('loopStatus');
+            const loopPointsDiv = document.getElementById('loopPoints');
             
-            // Garante que o indicador não vá além de B se o loop estiver ativo
-            if (loopEnabled) {
-                const loopBPercent = (loopB / totalDuration) * 100;
-                playbackIndicator.style.left = `${Math.min(percentPlayback, loopBPercent)}%`;
+            if (isLooping) {
+                loopIndicator.classList.add('loop-active');
+                loopStatus.textContent = 'Ativado';
+                loopPointsDiv.style.display = 'block';
             } else {
-                playbackIndicator.style.left = `${percentPlayback}%`;
-            }
-            playbackIndicator.style.display = 'block';
-        } else {
-            playbackIndicator.style.display = 'none'; // Esconde quando não está a tocar
-        }
-    }
-
-    // Adicionar event listeners para cliques no waveform
-    waveformCanvas.addEventListener('click', (e) => {
-        if (!audioBuffer) return;
-
-        const rect = waveformCanvas.getBoundingClientRect();
-        const clickX = e.clientX - rect.left; // Posição X do clique dentro do canvas
-        const percent = clickX / waveformCanvas.width;
-        const clickedTime = percent * audioBuffer.duration;
-
-        // Se shift for pressionado, define B, caso contrário, define A
-        if (e.shiftKey) {
-            // Garante que B é depois de A, com um mínimo de 0.1s de diferença
-            loopB = Math.max(loopA + 0.1, clickedTime);    
-            loopB = Math.min(loopB, audioBuffer.duration); // Não excede a duração total
-            loopBValueEl.textContent = formatTime(loopB);
-        } else {
-            // Garante que A é antes de B, com um mínimo de 0.1s de diferença
-            loopA = Math.min(loopB - 0.1, clickedTime);    
-            loopA = Math.max(0, loopA); // Não fica abaixo de 0
-            loopAValueEl.textContent = formatTime(loopA);
-        }
-        updateLoopIndicators();
-    });
-
-    // Funções para os botões "Definir A" e "Definir B"
-    function setLoopA() {
-        if (!audioBuffer || !audioContext) return; // Precisa de um buffer e contexto
-        
-        let currentPlaybackTime = 0;
-        if (isPlaying && soundtouchWorkletNode) {
-            const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
-            const elapsed = audioContext.currentTime - playbackStartTime;
-            currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
-        } else if (audioBuffer) { // Se não estiver a tocar, mas houver um buffer, usa seekPosition
-            currentPlaybackTime = seekPosition;
-        }
-
-        loopA = Math.min(loopB - 0.1, currentPlaybackTime);
-        loopA = Math.max(0, loopA); // Garante que não fica abaixo de 0
-        loopAValueEl.textContent = formatTime(loopA);
-        updateLoopIndicators();
-    }
-
-    function setLoopB() {
-        if (!audioBuffer || !audioContext) return; // Precisa de um buffer e contexto
-
-        let currentPlaybackTime = 0;
-        if (isPlaying && soundtouchWorkletNode) {
-            const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
-            const elapsed = audioContext.currentTime - playbackStartTime;
-            currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
-        } else if (audioBuffer) { // Se não estiver a tocar, mas houver um buffer, usa seekPosition
-            currentPlaybackTime = seekPosition;
-        }
-
-        loopB = Math.max(loopA + 0.1, currentPlaybackTime);
-        loopB = Math.min(loopB, audioBuffer.duration); // Garante que não excede a duração total
-        loopBValueEl.textContent = formatTime(loopB);
-        updateLoopIndicators();
-    }
-
-    function resetLoopA() {
-        if (!audioBuffer) return;
-        loopA = 0;
-        loopAValueEl.textContent = formatTime(loopA);
-        updateLoopIndicators();
-    }
-
-    function resetLoopB() {
-        if (!audioBuffer) return;
-        loopB = audioBuffer.duration;
-        loopBValueEl.textContent = formatTime(loopB);
-        updateLoopIndicators();
-    }
-
-    function toggleLoop() {
-        loopEnabled = !loopEnabled;
-        toggleLoopBtn.textContent = loopEnabled ? 'Loop ON ✅' : 'Loop OFF ❌';
-        toggleLoopBtn.style.background = loopEnabled ? 'linear-gradient(45deg, #1abc9c, #16a085)' : 'linear-gradient(45deg, #6c757d, #5a6268)';
-        console.log('Loop:', loopEnabled);
-
-        // Se o loop for ativado e a reprodução já estiver ocorrendo, reinicie para aplicar o loop imediatamente
-        if (loopEnabled && isPlaying) {
-            seekPosition = loopA; // Posiciona o início da reprodução no ponto A
-            stopPlayback(); // Para o playback atual
-            startPlayback(); // Inicia um novo playback com as novas configurações de loop
-        }
-        // Se o loop for desativado e estiver a tocar, reinicie para parar o loop
-        else if (!loopEnabled && isPlaying) {
-            stopPlayback(); // Para o playback atual
-            // Não reinicia automaticamente, o usuário pode clicar em play novamente
-        }
-    }
-
-    // --- Função para animar o indicador de reprodução ---
-    function animatePlaybackIndicator() {
-        if (!isPlaying || !audioBuffer || !audioContext || !soundtouchWorkletNode) {
-            cancelAnimationFrame(animationFrameId);
-            playbackIndicator.style.display = 'none'; // Esconde no final
-            return;
-        }
-
-        const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
-        const elapsed = audioContext.currentTime - playbackStartTime;
-        const currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo); // Calcula a posição real no áudio
-
-        const totalDuration = audioBuffer.duration;
-        const percentPlayback = (currentPlaybackTime / totalDuration) * 100;
-        
-        playbackIndicator.style.left = `${percentPlayback}%`;
-        playbackIndicator.style.display = 'block';
-
-        animationFrameId = requestAnimationFrame(animatePlaybackIndicator);
-    }
-
-    // --- FUNÇÕES DE GESTÃO DE LOOPS GUARDADOS ---
-
-    // Carrega loops do LocalStorage ao iniciar
-    function loadSavedLoops() {
-        const storedLoops = localStorage.getItem(LOOP_STORAGE_KEY);
-        if (storedLoops) {
-            try {
-                savedLoops = JSON.parse(storedLoops);
-                renderSavedLoops(); // Desenha os loops na UI
-                console.log('Loops carregados:', savedLoops);
-            } catch (e) {
-                console.error('Erro ao carregar loops do LocalStorage:', e);
-                savedLoops = []; // Resetar se houver erro de parsing
+                loopIndicator.classList.remove('loop-active');
+                loopStatus.textContent = 'Desativado';
+                loopPointsDiv.style.display = 'none';
             }
         }
-    }
 
-    // Guarda loops no LocalStorage
-    function saveLoopsToLocalStorage() {
-        localStorage.setItem(LOOP_STORAGE_KEY, JSON.stringify(savedLoops));
-        console.log('Loops guardados no LocalStorage.');
-    }
-
-    // Adiciona o loop atual à lista de loops guardados
-    function saveCurrentLoop() {
-        if (!audioBuffer) {
-            alert('Por favor, carregue um ficheiro de áudio para guardar um loop.');
-            return;
-        }
-
-        const name = loopNameInput.value.trim();
-        if (!name) {
-            alert('Por favor, dê um nome ao loop.');
-            return;
-        }
-
-        // Verifica se já existe um loop com o mesmo nome
-        if (savedLoops.some(loop => loop.name === name)) {
-            if (!confirm(`Um loop com o nome "${name}" já existe. Deseja substituí-lo?`)) {
+        function updateLoopMarkers() {
+            if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) {
+                loopMarkers.classList.remove('active');
+                loopMarkers.style.display = 'none'; // Certifica-se que está oculto
                 return;
             }
-            // Se sim, remove o antigo antes de adicionar o novo
-            savedLoops = savedLoops.filter(loop => loop.name !== name);
-        }
-
-        const newLoop = {
-            name: name,
-            loopA: loopA,
-            loopB: loopB,
-            // Opcional: associar o loop ao nome do ficheiro, se quiser ter loops por ficheiro
-            // fileName: audioFiles[activeFileIndex].name 
-        };
-
-        savedLoops.push(newLoop);
-        saveLoopsToLocalStorage();
-        renderSavedLoops(); // Atualiza a UI
-        loopNameInput.value = ''; // Limpa o campo de nome
-        alert(`Loop "${name}" guardado!`);
-    }
-
-    // Remove um loop da lista
-    function removeLoop(index) {
-        if (confirm(`Tem a certeza que deseja remover o loop "${savedLoops[index].name}"?`)) {
-            savedLoops.splice(index, 1); // Remove o loop do array
-            saveLoopsToLocalStorage();
-            renderSavedLoops(); // Atualiza a UI
-        }
-    }
-
-    // Aplica um loop guardado aos pontos A e B atuais e reinicia a reprodução se necessário
-    function applyLoop(index) {
-        if (!audioBuffer) {
-            alert('Por favor, carregue um ficheiro de áudio primeiro.');
-            return;
-        }
-        if (index < 0 || index >= savedLoops.length) return;
-
-        const loopToApply = savedLoops[index];
-        loopA = loopToApply.loopA;
-        loopB = loopToApply.loopB;
-
-        loopAValueEl.textContent = formatTime(loopA);
-        loopBValueEl.textContent = formatTime(loopB);
-        updateLoopIndicators(); // Atualiza a visualização
-
-        alert(`Loop "${loopToApply.name}" aplicado!`);
-
-        // Se estiver a tocar, reinicia a reprodução para aplicar o novo loop imediatamente
-        if (isPlaying) {
-            seekPosition = loopA; // Posiciona o início da reprodução no ponto A do novo loop
-            stopPlayback(); // Para o playback atual
-            startPlayback(); // Inicia um novo playback com as novas configurações de loop
-        } else {
-            // Se não estiver a tocar, move a seekPosition para A, para que o próximo play comece lá
-            seekPosition = loopA;
-        }
-    }
-
-    // Renderiza a lista de loops guardados na UI
-    function renderSavedLoops() {
-        savedLoopsListEl.innerHTML = ''; // Limpa a lista existente
-
-        if (savedLoops.length === 0) {
-            savedLoopsListEl.innerHTML = '<li style="color: rgba(255,255,255,0.7); text-align: center; padding: 10px;">Nenhum loop guardado ainda.</li>';
-            return;
-        }
-
-        savedLoops.forEach((loop, index) => {
-            const li = document.createElement('li');
-            li.style.cssText = `
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 10px 0;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            `;
-            if (index === savedLoops.length - 1) {
-                li.style.borderBottom = 'none'; // Sem borda para o último item
+            
+            const duration = currentAudio.duration;
+            
+            // Se ambos os pontos estão definidos (loop ativo)
+            if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
+                const startPercent = (loopPoints.start / duration) * 100;
+                const endPercent = (loopPoints.end / duration) * 100;
+                
+                loopMarkers.style.left = startPercent + '%';
+                loopMarkers.style.width = (endPercent - startPercent) + '%';
+                loopMarkers.classList.add('active');
+                loopMarkers.style.display = 'block'; // Certifica-se que é visível
+            } 
+            // Se apenas o ponto A está definido (feedback visual para o Ponto A)
+            else if (loopPoints.start !== null) {
+                const startPercent = (loopPoints.start / duration) * 100;
+                
+                loopMarkers.style.left = startPercent + '%';
+                loopMarkers.style.width = '2px'; // Uma linha fina para o Ponto A
+                loopMarkers.classList.add('active'); // Mantém a classe 'active' para que as linhas funcionem
+                loopMarkers.style.display = 'block'; // Certifica-se que é visível
+                loopMarkers.style.background = 'transparent'; // Fundo transparente quando é apenas o ponto A
             }
+            // Se nenhum ponto está definido
+            else {
+                loopMarkers.classList.remove('active');
+                loopMarkers.style.display = 'none'; // Esconde completamente
+            }
+             // Restaura o fundo para a cor normal quando for um loop completo
+            if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
+                loopMarkers.style.background = 'rgba(255, 255, 0, 0.2)';
+            }
+        }
 
-            const loopDetails = document.createElement('span');
-            loopDetails.textContent = `${loop.name} (${formatTime(loop.loopA)} - ${formatTime(loop.loopB)})`;
-            loopDetails.style.fontWeight = 'bold';
-            loopDetails.style.marginRight = '10px';
-
-            const buttonsDiv = document.createElement('div');
-
-            const applyBtn = document.createElement('button');
-            applyBtn.textContent = 'Aplicar';
-            applyBtn.className = 'reset-btn'; // Reutiliza estilo de botão
-            applyBtn.style.background = 'linear-gradient(45deg, #28a745, #218838)';
-            applyBtn.style.marginRight = '5px';
-            applyBtn.onclick = () => applyLoop(index);
-
-            const removeBtn = document.createElement('button');
-            removeBtn.textContent = 'X';
-            removeBtn.className = 'reset-btn'; // Reutiliza estilo de botão
-            removeBtn.style.background = 'linear-gradient(45deg, #dc3545, #c82333)';
-            removeBtn.onclick = () => removeLoop(index);
-
-            buttonsDiv.appendChild(applyBtn);
-            buttonsDiv.appendChild(removeBtn);
-
-            li.appendChild(loopDetails);
-            li.appendChild(buttonsDiv);
-            savedLoopsListEl.appendChild(li);
+        // Atualizar barra de progresso
+        audioPlayer.addEventListener('timeupdate', function() {
+            if (audioPlayer.duration && !isNaN(audioPlayer.duration)) {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressFill.style.width = progress + '%';
+                
+                document.getElementById('currentTime').textContent = formatTime(audioPlayer.currentTime);
+                document.getElementById('totalTime').textContent = formatTime(audioPlayer.duration);
+                
+                // Verificar loop
+                if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
+                    if (audioPlayer.currentTime >= loopPoints.end) {
+                        audioPlayer.currentTime = loopPoints.start;
+                    }
+                }
+            }
         });
-    }
 
-    // --- CHAMADA INICIAL: CARREGAR LOOPS QUANDO A PÁGINA CARREGA ---
-    document.addEventListener('DOMContentLoaded', loadSavedLoops);
+        // Carregar metadata do áudio
+        audioPlayer.addEventListener('loadedmetadata', function() {
+            updateLoopMarkers(); // Chamar aqui para garantir que o marcador seja desenhado se já houver pontos definidos
+            document.getElementById('totalTime').textContent = formatTime(audioPlayer.duration);
+        });
 
-    // --- Nota sobre persistência de múltiplos ficheiros ---
-    // A persistência dos *buffers de áudio* em si através do LocalStorage
-    // é impraticável devido ao seu tamanho. O LocalStorage destina-se a pequenos
-    // volumes de dados (strings). Portanto, a lista de ficheiros carregados
-    // (`audioFiles`) é volátil e será limpa ao recarregar a página.
-    // Se a persistência dos ficheiros carregados for um requisito, seria
-    // necessário implementar um sistema de backend para armazenamento e re-carregamento.
-    // Apenas os loops guardados (que são dados pequenos) são persistidos.
-</script>
+        // Quando o áudio termina
+        audioPlayer.addEventListener('ended', function() {
+            if (currentCell) {
+                document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
+            }
+            currentAudio = null;
+            currentCell = null;
+            clearLoop(); // Isso já chama updateLoopMarkers para esconder tudo
+            progressFill.style.width = '0%';
+            document.getElementById('currentTime').textContent = '0:00';
+            document.getElementById('totalTime').textContent = '0:00';
+        });
+
+        // Clique na barra de progresso para navegar
+        progressBar.addEventListener('click', function(e) {
+            if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) return;
+            
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percentage = clickX / rect.width;
+            const newTime = percentage * currentAudio.duration;
+            
+            currentAudio.currentTime = newTime;
+        });
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds < 0) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Delegação de eventos para as células (agora elas são clicáveis)
+        document.getElementById('cellGrid').addEventListener('click', function(event) {
+            const target = event.target;
+            // Encontrar a célula clicada, mesmo se o clique for no texto dentro dela
+            const cellElement = target.closest('.cell'); 
+            if (cellElement) {
+                const cellNumber = parseInt(cellElement.dataset.cellNumber);
+                playAudio(cellNumber);
+            }
+        });
+
+        // Inicializar
+        createCells();
+        updateLoopDisplay();
+        applySpeed(parseFloat(speedSlider.value)); // Garante que o valor inicial do slider é exibido corretamente
+    </script>
 </body>
 </html>

@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoundTouch.js Audio Manipulator</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/soundtouch-js/0.1.30/soundtouch.min.js"></script>
+    <script src="https://raw.githubusercontent.com/web-audio-components/webaudio-soundtouch/master/WebAudioSoundtouchNode.js"></script>
+
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -323,8 +327,9 @@
         sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = audioBuffer;
 
-        // ✅ CORREÇÃO APLICADA AQUI
-        // As classes são globais, não dentro de um objeto "soundtouch".
+        // AQUI ESTÁ A CORREÇÃO PRINCIPAL:
+        // 'WebAudioSoundtouchNode' e 'SoundTouch' são agora globalmente disponíveis
+        // devido aos scripts que adicionámos no cabeçalho.
         soundtouchNode = new WebAudioSoundtouchNode(audioContext, new SoundTouch());
 
         updateSoundTouchSettings();
@@ -334,7 +339,7 @@
 
         sourceNode.onended = () => {
             if (seekPosition >= audioBuffer.duration - 0.1) {
-               stopPlayback();
+                stopPlayback();
             }
         };
 
@@ -354,7 +359,9 @@
 
         sourceNode.stop();
         sourceNode.disconnect();
-        soundtouchNode.disconnect();
+        if (soundtouchNode) { // Verifica se soundtouchNode existe antes de desconectar
+            soundtouchNode.disconnect();
+        }
         
         isPlaying = false;
         updatePlayButton();
@@ -379,7 +386,7 @@
 
     // --- 3. SLIDERS E ATUALIZAÇÃO DE EFEITOS ---
     function updateSoundTouchSettings() {
-        if (!soundtouchNode) return;
+        if (!soundtouchNode) return; // Garante que o nó existe
         const speed = parseFloat(speedSlider.value);
         const semitones = parseInt(pitchSlider.value);
         
@@ -421,6 +428,6 @@
     }
 
 </script>
-  
+    
 </body>
 </html>

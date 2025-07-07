@@ -1129,16 +1129,18 @@ function animatePlaybackIndicator() {
     function renderSavedLoops() {
         savedLoopsListEl.innerHTML = ''; 
 
-        const relevantLoops = savedLoops.filter(loop => 
-            audioFiles.some(file => file.name === loop.fileName)
-        );
+        // Não filtramos mais a lista aqui. Vamos exibir todos os loops guardados.
+        // A lógica de "relevância" será tratada visualmente dentro de cada item.
+        // const relevantLoops = savedLoops.filter(loop => 
+        //     audioFiles.some(file => file.name === loop.fileName)
+        // );
 
-        if (relevantLoops.length === 0) {
-            savedLoopsListEl.innerHTML = '<li style="color: rgba(255,255,255,0.7); text-align: center; padding: 10px;">Nenhum loop guardado para os ficheiros carregados.</li>';
+        if (savedLoops.length === 0) { // Verifica se savedLoops está vazio, não relevantLoops
+            savedLoopsListEl.innerHTML = '<li style="color: rgba(255,255,255,0.7); text-align: center; padding: 10px;">Nenhum loop guardado.</li>';
             return;
         }
 
-        relevantLoops.forEach((loop, index) => {
+        savedLoops.forEach((loop, index) => { // Itera sobre todos os savedLoops
             const li = document.createElement('li');
             li.style.cssText = `
                 display: flex;
@@ -1147,7 +1149,7 @@ function animatePlaybackIndicator() {
                 padding: 10px 0;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             `;
-            if (index === relevantLoops.length - 1) {
+            if (index === savedLoops.length - 1) { // Ajusta para o último item da lista total
                 li.style.borderBottom = 'none'; 
             }
 
@@ -1162,7 +1164,6 @@ function animatePlaybackIndicator() {
             loopDetails.style.color = 'rgba(255,255,255,0.8)';
             li.appendChild(loopDetails);
 
-            // --- NOVAS LINHAS AQUI: Exibe as informações de speed e pitch ---
             if (loop.speed !== undefined || loop.pitch !== undefined) {
                 const speedPitchDetails = document.createElement('span');
                 let detailsText = '';
@@ -1179,7 +1180,18 @@ function animatePlaybackIndicator() {
                 speedPitchDetails.style.marginTop = '3px';
                 li.appendChild(speedPitchDetails);
             }
-            // --- FIM DAS NOVAS LINHAS ---
+
+            // --- NOVA LÓGICA AQUI: Verifica se o ficheiro está carregado e adiciona um aviso ---
+            const isFileLoaded = audioFiles.some(file => file.name === loop.fileName);
+            if (!isFileLoaded) {
+                const fileMissingWarning = document.createElement('span');
+                fileMissingWarning.textContent = 'Ficheiro não carregado ⚠️';
+                fileMissingWarning.style.fontSize = '0.75em';
+                fileMissingWarning.style.color = '#ffc107'; // Cor de aviso (amarelo)
+                fileMissingWarning.style.marginTop = '5px';
+                li.appendChild(fileMissingWarning);
+            }
+            // --- FIM DA NOVA LÓGICA ---
 
             const buttonsDiv = document.createElement('div');
             buttonsDiv.style.marginTop = '8px'; 
@@ -1192,6 +1204,13 @@ function animatePlaybackIndicator() {
             applyBtn.style.marginRight = '5px';
             applyBtn.onclick = () => applyLoop(savedLoops.indexOf(loop)); 
             
+            // Desabilita o botão "Aplicar" se o ficheiro não estiver carregado
+            if (!isFileLoaded) {
+                applyBtn.disabled = true;
+                applyBtn.style.opacity = '0.5';
+                applyBtn.style.cursor = 'not-allowed';
+            }
+
             const removeBtn = document.createElement('button');
             removeBtn.textContent = 'X';
             removeBtn.className = 'reset-btn'; 

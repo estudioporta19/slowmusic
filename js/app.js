@@ -149,8 +149,8 @@ globalFileInput.addEventListener('change', async (event) => {
             
             const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('.');
 
-            // Criar uma nova instância do PitchShifter para cada célula
-            const shifter = new SoundTouchJS.PitchShifter(audioCtx, audioBuffer, 1024); // 1024 é o bufferSize, pode ajustar
+            // CORREÇÃO AQUI: Acessando PitchShifter diretamente sem SoundTouchJS.
+            const shifter = new PitchShifter(audioCtx, audioBuffer, 1024); // 1024 é o bufferSize, pode ajustar
             
             // Configurar o evento 'play' para atualizar o progresso
             shifter.on('play', (detail) => {

@@ -966,7 +966,7 @@ waveformCanvas.addEventListener('click', (e) => {
         }
     }
 
-    function animatePlaybackIndicator() {
+function animatePlaybackIndicator() {
         if (!isPlaying || !audioBuffer || !audioContext || !soundtouchWorkletNode) {
             cancelAnimationFrame(animationFrameId);
             playbackIndicator.style.display = 'none'; 
@@ -975,7 +975,24 @@ waveformCanvas.addEventListener('click', (e) => {
 
         const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
         const elapsed = audioContext.currentTime - playbackStartTime;
-        const currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo); 
+        
+        let currentPlaybackTime;
+        if (loopEnabled) {
+            // Quando o loop está ativo, a posição de reprodução deve ser calculada
+            // dentro do segmento do loop (B - A), e depois remapeada para a posição absoluta na waveform.
+            const loopDuration = loopB - loopA;
+            if (loopDuration <= 0) { // Proteção contra divisão por zero ou duração inválida
+                currentPlaybackTime = loopA; 
+            } else {
+                // Calcula o tempo decorrido dentro do ciclo do loop
+                const elapsedInLoopCycle = (elapsed * currentTempo) % loopDuration;
+                // A posição atual é o ponto A mais o tempo decorrido no ciclo
+                currentPlaybackTime = loopA + elapsedInLoopCycle;
+            }
+        } else {
+            // Se o loop não estiver ativo, a posição é a busca inicial + tempo decorrido * tempo
+            currentPlaybackTime = seekPosition + (elapsed * currentTempo); 
+        }
 
         const totalDuration = audioBuffer.duration;
         const percentPlayback = (currentPlaybackTime / totalDuration) * 100;

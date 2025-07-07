@@ -250,7 +250,7 @@ async function playAudio(cellNumber, startOffset = 0) {
     // Inicia ou reinicia o intervalo de atualização da barra de progresso
     if (progressUpdateInterval) {
         clearInterval(progressUpdateInterval);
-    Interval = null;
+        progressUpdateInterval = null;
     }
     progressUpdateInterval = setInterval(() => {
         if (!isPlaying || !player || !audioData.toneBuffer.loaded) {
@@ -546,4 +546,55 @@ progressBar.addEventListener('mousedown', (e) => {
 
 document.addEventListener('mousemove', (e) => {
     // Só permite arraste se estiver a arrastar um handle e houver áudio
-    if (!isDraggingLoopHandle || !audioFiles[currentCell] || !audioFiles[currentCell].toneBuffer || !audioFiles[currentC
+    if (!isDraggingLoopHandle || !audioFiles[currentCell] || !audioFiles[currentCell].toneBuffer || !audioFiles[currentCell].toneBuffer.loaded) return;
+
+    e.preventDefault(); // Previne a seleção de texto ao arrastar
+
+    const rect = progressBar.getBoundingClientRect();
+    let newX = e.clientX - rect.left;
+    newX = Math.max(0, Math.min(newX, rect.width)); // Limita dentro da barra de progresso
+
+    const percentage = newX / rect.width;
+    const newTime = percentage * audioFiles[currentCell].toneBuffer.duration;
+
+    if (activeLoopHandle === 'start') {
+        loopPoints.start = newTime;
+        // Se o ponto de início ultrapassar o de fim, ajusta
+        if (loopPoints.end !== null && loopPoints.start > loopPoints.end) {
+            loopPoints.start = loopPoints.end;
+        }
+        document.getElementById('pointA').textContent = formatTime(loopPoints.start);
+    } else if (activeLoopHandle === 'end') {
+        loopPoints.end = newTime;
+        // Se o ponto de fim for menor que o de início, ajusta
+        if (loopPoints.start !== null && loopPoints.end < loopPoints.start) {
+            loopPoints.end = loopPoints.start;
+        }
+        document.getElementById('pointB').textContent = formatTime(loopPoints.end);
+    }
+    activateLoop(); // Ativa/atualiza o loop com os novos pontos
+    updateLoopMarkers(); // Atualiza a posição visual dos marcadores
+});
+
+document.addEventListener('mouseup', () => {
+    if (isDraggingLoopHandle) {
+        isDraggingLoopHandle = false;
+        activeLoopHandle = null;
+        activateLoop(); // Garante que o loop é ativado com os pontos finais após o arraste
+    }
+});
+
+// --- Delegação de Eventos para Células ---
+document.getElementById('cellGrid').addEventListener('click', function(event) {
+    const target = event.target;
+    const cellElement = target.closest('.cell'); 
+    if (cellElement) {
+        const cellNumber = parseInt(cellElement.dataset.cellNumber);
+        
+        if (currentCell === cellNumber) { // Se clicou na célula já ativa
+            togglePlayPause(); // Alterna entre play/pause
+        } else { // Se clicou numa nova célula
+            playAudio(cellNumber); // Inicia a reprodução da nova célula
+        }
+    }
+});

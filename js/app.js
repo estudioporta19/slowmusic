@@ -1,7 +1,7 @@
 // js/app.js
 
 // --- Variáveis Globais e Referências de Elementos ---
-let audioFiles = {}; // Guarda { cellNumber: { fileURL: string, audioBuffer: AudioBuffer, fileName: string, shifter: SoundTouchJS.PitchShifter, lastPlaybackTime: number } }
+let audioFiles = {}; // Guarda { cellNumber: { fileURL: string, audioBuffer: AudioBuffer, fileName: string, shifter: SoundTouch.PitchShifter, lastPlaybackTime: number } }
 let currentCell = null; // Guarda o número da célula ativa
 
 let loopPoints = { start: null, end: null };
@@ -149,8 +149,8 @@ globalFileInput.addEventListener('change', async (event) => {
             
             const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('.');
 
-            // CORREÇÃO AQUI: Acessando PitchShifter diretamente sem SoundTouchJS.
-            const shifter = new PitchShifter(audioCtx, audioBuffer, 1024); // 1024 é o bufferSize, pode ajustar
+            // CORREÇÃO AQUI: Acessando PitchShifter através do objeto global SoundTouch
+            const shifter = new SoundTouch.PitchShifter(audioCtx, audioBuffer, 1024); // 1024 é o bufferSize, pode ajustar
             
             // Configurar o evento 'play' para atualizar o progresso
             shifter.on('play', (detail) => {

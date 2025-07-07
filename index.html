@@ -373,7 +373,7 @@
     let seekPosition = 0;   
     let playbackStartTime = 0;   
     
-    // --- Novas Variáveis Globais para Loop e Waveform ---
+    // --- Variáveis Globais para Loop e Waveform ---
     let loopA = 0; // Ponto A em segundos
     let loopB = 0; // Ponto B em segundos
     let loopEnabled = false;
@@ -387,7 +387,6 @@
     // --- NOVAS VARIÁVEIS GLOBAIS PARA MÚLTIPLOS FICHEIROS ---
     let audioFiles = []; // Array para armazenar {name, buffer, originalFile} de todos os ficheiros carregados
     let activeFileIndex = -1; // Índice do ficheiro atualmente selecionado (o que está a ser manipulado/reproduzido)
-    const FILE_STORAGE_KEY = 'soundtouch_loaded_files'; // Chave para o LocalStorage (opcional, para persistência dos ficheiros)
 
     // --- Elementos do DOM ---
     const audioFileEl = document.getElementById('audioFile');
@@ -445,6 +444,7 @@
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             console.log('AudioContext inicializado. Estado:', audioContext.state);
             try {
+                // Certifica-se de que o worklet é carregado apenas uma vez
                 await audioContext.audioWorklet.addModule('./soundtouch-worklet.js');
                 console.log('AudioWorklet "scheduled-soundtouch-worklet" carregado com sucesso.');
             } catch (error) {
@@ -508,7 +508,22 @@
             const fileCell = document.createElement('div');
             fileCell.className = 'file-cell';
             fileCell.dataset.index = index; // Para identificar o ficheiro ao clicar
-            fileCell.textContent = file.name;
+            
+            // Adicionar botão de remover
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'file-cell-remove';
+            removeBtn.textContent = 'X';
+            removeBtn.onclick = (e) => {
+                e.stopPropagation(); // Evita que o clique no "X" ative a seleção da célula
+                removeFile(index);
+            };
+            fileCell.style.position = 'relative'; // Para posicionar o botão de remover
+            fileCell.appendChild(removeBtn);
+
+            const fileNameSpan = document.createElement('span');
+            fileNameSpan.textContent = file.name;
+            fileCell.appendChild(fileNameSpan);
+
 
             if (index === activeFileIndex) {
                 fileCell.classList.add('selected');
@@ -519,9 +534,40 @@
         });
     }
 
+    // --- NOVO: Remover um ficheiro da lista ---
+    function removeFile(index) {
+        if (!confirm(`Tem a certeza que deseja remover o ficheiro "${audioFiles[index].name}"?`)) {
+            return;
+        }
+
+        stopPlayback(); // Para qualquer reprodução ativa do ficheiro a ser removido
+
+        audioFiles.splice(index, 1); // Remove o ficheiro do array
+
+        if (audioFiles.length === 0) {
+            activeFileIndex = -1;
+            audioBuffer = null;
+            fileInfoEl.style.display = 'none';
+            controlsEl.style.display = 'none';
+            waveformCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+            updateLoopIndicators(); // Esconde os indicadores
+        } else if (index === activeFileIndex) {
+            // Se o ficheiro removido era o ativo, seleciona o primeiro da lista restante (ou -1 se a lista estiver vazia)
+            selectFile(0); 
+        } else if (index < activeFileIndex) {
+            // Se um ficheiro antes do ativo foi removido, ajusta o índice ativo
+            activeFileIndex--;
+        }
+        
+        renderFileList(); // Renderiza a lista atualizada
+        console.log(`Ficheiro removido. Ficheiros restantes: ${audioFiles.length}`);
+    }
+
+
     // --- NOVO: Selecionar um ficheiro da lista ---
     function selectFile(index) {
         if (index === activeFileIndex) return; // Já está selecionado
+        if (!audioFiles[index]) return; // Índice inválido
 
         stopPlayback(); // Para qualquer reprodução do ficheiro anterior
 
@@ -531,7 +577,7 @@
         
         // Atualizar classes 'selected'
         document.querySelectorAll('.file-cell').forEach((cell, i) => {
-            if (i === activeFileIndex) {
+            if (parseInt(cell.dataset.index) === activeFileIndex) { // Usa dataset.index para maior robustez
                 cell.classList.add('selected');
             } else {
                 cell.classList.remove('selected');
@@ -541,7 +587,8 @@
         // Resetar e desenhar waveform para o novo ficheiro
         resetControls(); // Reseta speed, pitch, loop settings, seekPosition
         drawWaveform(audioBuffer);
-        loopB = audioBuffer.duration; // Reinicializa loopB para a duração do novo áudio
+        // Garante que loopB é inicializado para a duração do novo áudio
+        loopB = audioBuffer.duration; 
         loopBValueEl.textContent = formatTime(loopB);
         updateLoopIndicators();
 
@@ -605,7 +652,6 @@
         const rightChannelData = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1).slice() : audioBuffer.getChannelData(0).slice();
 
         // Enviar os dados do buffer para o worklet, transferindo as cópias
-        // Adicionar bufferProps como um objeto separado, não diretamente no array transferível
         const bufferProps = {
             sampleRate: audioBuffer.sampleRate,
             numberOfChannels: audioBuffer.numberOfChannels,
@@ -613,14 +659,15 @@
             duration: audioBuffer.duration
         };
         
+        // CORREÇÃO APLICADA AQUI: ENVIAR 'detail' COMO UM ARRAY
         soundtouchWorkletNode.port.postMessage({
             message: 'INITIALIZE_PROCESSOR',
-            detail: { 
-                bufferProps: bufferProps,
-                leftChannelData: leftChannelData,
-                rightChannelData: rightChannelData
-            }
-        }, [leftChannelData.buffer, rightChannelData.buffer]); // Transferir os buffers para o Worklet
+            detail: [ // <-- O 'detail' agora é um ARRAY, conforme o worklet espera
+                bufferProps,           
+                leftChannelData,       
+                rightChannelData       
+            ]
+        }, [leftChannelData.buffer, rightChannelData.buffer]); // Continuar a transferir os buffers
 
         // --- INÍCIO DA LÓGICA DE LOOP E POSIÇÃO DE REPRODUÇÃO PARA O WORKLET ---
         let startSample;

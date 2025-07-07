@@ -324,9 +324,9 @@ function playAudio(cellNumber, startOffset = 0) {
 // --- Controles de Velocidade e Pitch ---
 speedSlider.addEventListener('input', (e) => {
     const newSpeed = parseFloat(e.target.value);
-    applySpeed(newSpeed); // Atualiza apenas o display e os valores internos
+    applySpeed(newSpeed); // Atualiza o display do slider
     if (currentSourceNode) {
-        // Aplica as novas configurações ao nó de áudio ativo
+        // Se houver um áudio a tocar, aplica as novas configurações
         const currentPitch = parseInt(pitchSlider.value);
         applyAudioSettings(currentSourceNode, newSpeed, currentPitch);
     }
@@ -336,9 +336,9 @@ speedSlider.addEventListener('touchend', function() { this.blur(); });
 
 pitchSlider.addEventListener('input', (e) => {
     const newPitch = parseInt(e.target.value);
-    applyPitch(newPitch); // Atualiza apenas o display e os valores internos
+    applyPitch(newPitch); // Atualiza o display do slider
     if (currentSourceNode) {
-        // Aplica as novas configurações ao nó de áudio ativo
+        // Se houver um áudio a tocar, aplica as novas configurações
         const currentSpeed = parseFloat(speedSlider.value);
         applyAudioSettings(currentSourceNode, currentSpeed, newPitch);
     }
@@ -355,7 +355,6 @@ function applyPitch(pitchCents) {
     pitchSlider.value = pitchCents;
     pitchValue.textContent = (pitchCents / 100) + ' semitons'; 
 }
-
 
 // --- Atalhos do Teclado ---
 document.addEventListener('keydown', function(e) {

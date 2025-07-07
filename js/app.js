@@ -121,6 +121,12 @@ globalUploadBtn.addEventListener('click', () => {
 });
 
 globalFileInput.addEventListener('change', async (event) => {
+    // Garante que o AudioContext é inicializado antes de tentar decodificar áudio
+    if (!audioCtx || audioCtx.state === 'closed') {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('AudioContext inicializado ao carregar ficheiro.');
+    }
+
     const files = event.target.files;
     if (files.length === 0) {
         globalUploadStatus.textContent = 'Nenhum ficheiro selecionado.';
@@ -142,6 +148,13 @@ globalFileInput.addEventListener('change', async (event) => {
         }
 
         try {
+            // Verificação robusta para SoundTouch
+            if (typeof SoundTouch === 'undefined' || typeof SoundTouch.PitchShifter === 'undefined') {
+                console.error("Erro: A biblioteca SoundTouch ou a classe PitchShifter não está definida. Verifique o script SoundTouch.js no seu HTML.");
+                globalUploadStatus.textContent = "Erro: Biblioteca de áudio não carregada corretamente.";
+                return; // Sai da função se a biblioteca não estiver carregada
+            }
+
             // Ler o ficheiro como ArrayBuffer
             const arrayBuffer = await file.arrayBuffer();
             // Decodificar o ArrayBuffer para AudioBuffer usando o AudioContext
@@ -149,7 +162,7 @@ globalFileInput.addEventListener('change', async (event) => {
             
             const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('.');
 
-            // CORREÇÃO AQUI: Acessando PitchShifter através do objeto global SoundTouch
+            // Acessando PitchShifter através do objeto global SoundTouch
             const shifter = new SoundTouch.PitchShifter(audioCtx, audioBuffer, 1024); // 1024 é o bufferSize, pode ajustar
             
             // Configurar o evento 'play' para atualizar o progresso

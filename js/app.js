@@ -1,204 +1,7 @@
 // js/app.js
 
-// --- INÍCIO DO CÓDIGO INCORPORADO DO PITCHSHIFTER (SoundTouch.js) ---
-// Este código foi adaptado para ser auto-contido no app.js
-// Originalmente de https://github.com/cutterbl/SoundTouchJS/blob/master/src/PitchShifter.js
-// e outras partes da biblioteca SoundTouch.js
-
-// Classe auxiliar para o AudioContext (simplificada para este contexto)
-class WebAudioNode {
-    constructor(audioContext, bufferSize) {
-        this.audioContext = audioContext;
-        this.bufferSize = bufferSize;
-        this.scriptProcessor = audioContext.createScriptProcessor(bufferSize, 2, 2);
-        this.scriptProcessor.onaudioprocess = this.onaudioprocess.bind(this);
-        this.destination = audioContext.destination;
-        this.connected = false;
-    }
-
-    connect(destination) {
-        if (!this.connected) {
-            this.scriptProcessor.connect(destination || this.destination);
-            this.connected = true;
-        }
-    }
-
-    disconnect() {
-        if (this.connected) {
-            this.scriptProcessor.disconnect();
-            this.connected = false;
-        }
-    }
-
-    // Método a ser implementado pelas classes que herdam
-    onaudioprocess(audioProcessingEvent) {
-        // Implementar em subclasses
-    }
-}
-
-// Implementação básica do SoundTouch (para ser usada pelo PitchShifter)
-// Esta é uma versão mínima para que PitchShifter funcione.
-// A biblioteca SoundTouch original é mais complexa.
-class SoundTouch {
-    constructor(sampleRate, numChannels) {
-        this.sampleRate = sampleRate;
-        this.numChannels = numChannels;
-        this.tempo = 1.0; // Multiplicador de tempo (velocidade)
-        this.pitch = 1.0; // Multiplicador de pitch
-        this.loop = false;
-        this.loopStart = 0;
-        this.loopEnd = 0;
-
-        // Propriedades para simular o processamento
-        this.timePlayed = 0;
-        this._audioBuffer = null;
-        this._onPlayCallback = null;
-        this._playbackSource = null; // Para o AudioBufferSourceNode
-        this._gainNode = null; // Para controlar o volume/conexão
-    }
-
-    // Define o AudioBuffer a ser processado
-    setAudioBuffer(audioBuffer) {
-        this._audioBuffer = audioBuffer;
-        this.loopEnd = audioBuffer.duration; // Define o loopEnd inicial
-    }
-
-    // Configura um callback para o evento 'play'
-    on(eventName, callback) {
-        if (eventName === 'play') {
-            this._onPlayCallback = callback;
-        }
-    }
-
-    // Inicia a reprodução
-    play(offset = 0) {
-        if (!this._audioBuffer || !audioCtx) {
-            console.warn("Nenhum AudioBuffer ou AudioContext disponível para reprodução.");
-            return;
-        }
-
-        // Parar qualquer reprodução anterior deste shifter
-        this.disconnect();
-
-        this._playbackSource = audioCtx.createBufferSource();
-        this._playbackSource.buffer = this._audioBuffer;
-
-        // Criar um GainNode para controlar a conexão e volume
-        this._gainNode = audioCtx.createGain();
-        this._playbackSource.connect(this._gainNode);
-        this._gainNode.connect(audioCtx.destination); // Conecta ao destino
-
-        // Aplica tempo e pitch
-        // Nota: SoundTouch.js lida com pitch/tempo de forma diferente.
-        // Aqui, simulamos a alteração de velocidade via playbackRate do AudioBufferSourceNode
-        // e o pitch será manipulado pelo PitchShifter real.
-        this._playbackSource.playbackRate.value = this.tempo;
-
-        // Configura o loop
-        this._playbackSource.loop = this.loop;
-        if (this.loop) {
-            this._playbackSource.loopStart = this.loopStart;
-            this._playbackSource.loopEnd = this.loopEnd;
-        }
-
-        this._playbackSource.start(0, offset);
-        this.timePlayed = offset;
-
-        // Inicia a atualização de progresso
-        this._startProgressUpdate();
-
-        this._playbackSource.onended = () => {
-            if (!this.loop) { // Se não estiver em loop, parar e limpar
-                this.disconnect();
-                this.timePlayed = 0;
-                if (this._onPlayCallback) {
-                    this._onPlayCallback({ timePlayed: this._audioBuffer.duration });
-                }
-            }
-        };
-    }
-
-    // Desconecta o shifter (pausa a reprodução)
-    disconnect() {
-        if (this._playbackSource) {
-            this._playbackSource.stop();
-            this._playbackSource.disconnect();
-            this._playbackSource = null;
-        }
-        if (this._gainNode) {
-            this._gainNode.disconnect();
-            this._gainNode = null;
-        }
-        this._stopProgressUpdate();
-    }
-
-    // Conecta a um destino (para compatibilidade com a API Web Audio)
-    connect(destinationNode) {
-        if (this._gainNode) {
-            this._gainNode.connect(destinationNode);
-        }
-    }
-
-    _startProgressUpdate() {
-        if (this._progressInterval) {
-            clearInterval(this._progressInterval);
-        }
-        const startTime = audioCtx.currentTime;
-        const startOffset = this.timePlayed;
-        this._progressInterval = setInterval(() => {
-            if (!this._playbackSource || audioCtx.state === 'suspended' || audioCtx.state === 'closed') {
-                this._stopProgressUpdate();
-                return;
-            }
-            // Calcula o tempo de reprodução ajustado pela velocidade
-            this.timePlayed = startOffset + (audioCtx.currentTime - startTime) * this.tempo;
-
-            if (this._onPlayCallback) {
-                this._onPlayCallback({ timePlayed: this.timePlayed });
-            }
-        }, 50); // Atualiza a cada 50ms
-    }
-
-    _stopProgressUpdate() {
-        if (this._progressInterval) {
-            clearInterval(this._progressInterval);
-            this._progressInterval = null;
-        }
-    }
-}
-
-
-// A classe PitchShifter que usa o SoundTouch
-class PitchShifter extends SoundTouch {
-    constructor(audioContext, audioBuffer, bufferSize) {
-        super(audioContext.sampleRate, audioBuffer.numberOfChannels); // Passa sampleRate e numChannels para SoundTouch base
-        this.audioContext = audioContext;
-        this.audioBuffer = audioBuffer;
-        this.bufferSize = bufferSize;
-
-        this.setAudioBuffer(audioBuffer); // Define o buffer para a classe base
-        
-        // SoundTouchJS original usa ScriptProcessorNode, que está depreciado.
-        // Para uma implementação mais moderna e compatível, precisaríamos de AudioWorklet.
-        // Para este exemplo, vamos simular a funcionalidade de PitchShifter
-        // usando o AudioBufferSourceNode e manipulando o playbackRate e um filtro de pitch.
-        // A complexidade do algoritmo SoundTouch real está na sua implementação C++.
-        // Aqui, o 'pitch' e 'tempo' do SoundTouch são aplicados ao sourceNode.
-        // Esta é uma simplificação para resolver o ReferenceError e permitir a execução.
-        // A qualidade do pitch-shifting e time-stretching será a do AudioBufferSourceNode.
-        // Para a qualidade real do SoundTouch, seria necessário portar o algoritmo C++ para JS
-        // ou usar uma implementação mais completa que use AudioWorklet.
-    }
-
-    // Métodos `tempo` e `pitch` já são definidos na classe base `SoundTouch`
-    // e serão usados para controlar o AudioBufferSourceNode.
-}
-
-// --- FIM DO CÓDIGO INCORPORADO DO PITCHSHIFTER ---
-
-
 // --- Variáveis Globais e Referências de Elementos ---
-let audioFiles = {}; // Guarda { cellNumber: { fileURL: string, audioBuffer: AudioBuffer, fileName: string, shifter: PitchShifter, lastPlaybackTime: number } }
+let audioFiles = {}; // Guarda { cellNumber: { fileURL: string, toneBuffer: Tone.Buffer, fileName: string, player: Tone.Player, pitchShift: Tone.PitchShift, lastPlaybackTime: number } }
 let currentCell = null; // Guarda o número da célula ativa
 
 let loopPoints = { start: null, end: null };
@@ -232,9 +35,6 @@ let activeLoopHandle = null; // 'start' or 'end'
 
 let progressUpdateInterval = null; // Para controlar o setInterval
 
-// Criar um AudioContext global para SoundTouch.js
-let audioCtx;
-
 // --- Funções Auxiliares ---
 function formatTime(seconds) {
     if (isNaN(seconds) || seconds < 0) return '0:00';
@@ -258,8 +58,7 @@ function createCells() {
     }
 }
 
-// --- Lógica de Limpeza de Células (MOVIDA PARA CIMA) ---
-function clearAllCells() { // <-- ESTA FUNÇÃO FOI MOVIDA PARA CIMA
+function clearAllCells() {
     stopCurrentAudio(); // Parar e limpar qualquer reprodução atual
 
     for (let i = 1; i <= totalCells; i++) {
@@ -267,13 +66,14 @@ function clearAllCells() { // <-- ESTA FUNÇÃO FOI MOVIDA PARA CIMA
             if (audioFiles[i].fileURL) {
                 URL.revokeObjectURL(audioFiles[i].fileURL); // Libera o URL do ficheiro
             }
-            if (audioFiles[i].shifter) {
-                audioFiles[i].shifter.disconnect(); // Desconecta o shifter
-                // SoundTouch.js não tem um método dispose() explícito para o PitchShifter,
-                // mas desconectar e remover referências ajuda o garbage collector.
+            if (audioFiles[i].player) {
+                audioFiles[i].player.dispose(); // Dispor do player
             }
-            if (audioFiles[i].audioBuffer) {
-                // Não há um método dispose() para AudioBuffer, será coletado pelo GC
+            if (audioFiles[i].pitchShift) {
+                audioFiles[i].pitchShift.dispose(); // Dispor do nó PitchShift
+            }
+            if (audioFiles[i].toneBuffer) {
+                audioFiles[i].toneBuffer.dispose(); // Libera o buffer de áudio
             }
         }
         delete audioFiles[i]; 
@@ -288,23 +88,23 @@ function clearAllCells() { // <-- ESTA FUNÇÃO FOI MOVIDA PARA CIMA
     clearLoop(); // Assegura que o loop é limpo também
 }
 
-
-// --- Inicialização (Continuação) ---
+// --- Inicialização ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Inicializa o AudioContext com a primeira interação do utilizador.
+    // Adiciona event listeners para iniciar o Tone.js com a primeira interação do utilizador.
     // Isso é crucial para as políticas de autoplay dos navegadores.
-    const initializeAudioContext = () => {
-        if (!audioCtx || audioCtx.state === 'closed') {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('AudioContext resumed/initialized from user gesture.');
+    const initializeToneContext = () => {
+        if (Tone.context.state !== 'running') {
+            Tone.start().then(() => {
+                console.log('Tone.js context resumed/initialized from user gesture.');
+            }).catch(e => console.error("Failed to start Tone.js context:", e));
         }
         // Remove os listeners após a inicialização
-        document.documentElement.removeEventListener('mousedown', initializeAudioContext);
-        document.documentElement.removeEventListener('keydown', initializeAudioContext);
+        document.documentElement.removeEventListener('mousedown', initializeToneContext);
+        document.documentElement.removeEventListener('keydown', initializeToneContext);
     };
 
-    document.documentElement.addEventListener('mousedown', initializeAudioContext, { once: true });
-    document.documentElement.addEventListener('keydown', initializeAudioContext, { once: true });
+    document.documentElement.addEventListener('mousedown', initializeToneContext, { once: true });
+    document.documentElement.addEventListener('keydown', initializeToneContext, { once: true });
 
     createCells();
     updateLoopDisplay();
@@ -314,17 +114,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// --- Lógica de Carregamento e Reprodução de Áudio (SoundTouch.js) ---
+// --- Lógica de Carregamento e Reprodução de Áudio (Tone.js) ---
 
 globalUploadBtn.addEventListener('click', () => {
     globalFileInput.click();
 });
 
 globalFileInput.addEventListener('change', async (event) => {
-    // Garante que o AudioContext é inicializado antes de tentar decodificar áudio
-    if (!audioCtx || audioCtx.state === 'closed') {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        console.log('AudioContext inicializado ao carregar ficheiro.');
+    // Garante que o Tone.context é inicializado antes de tentar decodificar áudio
+    if (Tone.context.state !== 'running') {
+        await Tone.start().then(() => {
+            console.log('Tone.js context started on file load.');
+        }).catch(e => console.error("Failed to start Tone.js context on file load:", e));
     }
 
     const files = event.target.files;
@@ -334,7 +135,7 @@ globalFileInput.addEventListener('change', async (event) => {
     }
 
     globalUploadStatus.textContent = `A carregar ${files.length} ficheiro(s)...`;
-    clearAllCells(); // <-- AGORA A FUNÇÃO ESTÁ DEFINIDA ANTES DE SER CHAMADA
+    clearAllCells(); 
 
     let filesLoaded = 0;
     let cellIndex = 1;
@@ -348,57 +149,39 @@ globalFileInput.addEventListener('change', async (event) => {
         }
 
         try {
-            // Ler o ficheiro como ArrayBuffer
-            const arrayBuffer = await file.arrayBuffer();
-            // Decodificar o ArrayBuffer para AudioBuffer usando o AudioContext
-            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            const fileURL = URL.createObjectURL(file);
+            const toneBuffer = await Tone.Buffer.fromUrl(fileURL);
             
             const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('.');
 
-            // Criar uma nova instância do PitchShifter (agora definida localmente)
-            const shifter = new PitchShifter(audioCtx, audioBuffer, 1024); // 1024 é o bufferSize, pode ajustar
+            // Criar um nó PitchShift e um Player para reprodução limpa
+            // Aumentar o overlap para tentar reduzir artefactos
+            const pitchShift = new Tone.PitchShift({
+                overlap: 0.75 // Ajuste para tentar um bom equilíbrio
+            }).toDestination();
+            const player = new Tone.Player(toneBuffer).connect(pitchShift);
             
-            // Configurar o evento 'play' para atualizar o progresso
-            shifter.on('play', (detail) => {
-                if (currentCell && audioFiles[currentCell] && audioFiles[currentCell].shifter === shifter) {
-                    const duration = audioFiles[currentCell].audioBuffer.duration;
-                    let currentTime = detail.timePlayed;
-
-                    let progress;
-                    if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
-                        const loopDuration = loopPoints.end - loopPoints.start;
-                        const currentOffsetInLoop = (currentTime - loopPoints.start) % loopDuration;
-                        currentTime = loopPoints.start + currentOffsetInLoop;
-                        progress = ((currentTime - loopPoints.start) / loopDuration) * 100;
-                    } else {
-                        progress = (currentTime / duration) * 100;
+            player.loop = false; 
+            
+            // Adicionar um listener para o fim da reprodução quando não estiver em loop
+            player.onEnded = () => {
+                if (!isLooping && isPlaying && currentCell && audioFiles[currentCell] && audioFiles[currentCell].player === player) {
+                    console.log(`Playback ended for cell ${currentCell}.`);
+                    stopCurrentAudio();
+                    if (currentCell) {
+                        document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
                     }
-
-                    progress = Math.min(100, Math.max(0, progress));
-                    currentTime = Math.min(duration, Math.max(0, currentTime));
-
-                    progressFill.style.width = progress + '%';
-                    document.getElementById('currentTime').textContent = formatTime(currentTime);
-                    document.getElementById('totalTime').textContent = formatTime(duration);
-
-                    // Verifica se o áudio terminou (se não estiver em loop)
-                    if (!isLooping && currentTime >= duration - 0.1 && isPlaying) { // Margem de erro para o fim
-                        console.log(`Playback ended for cell ${currentCell}.`);
-                        stopCurrentAudio();
-                        if (currentCell) {
-                            document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
-                        }
-                        currentCell = null;
-                        clearLoop();
-                    }
+                    currentCell = null;
+                    clearLoop(); 
                 }
-            });
+            };
 
             audioFiles[cellIndex] = {
-                fileURL: URL.createObjectURL(file), // Guardar URL para revogar, se necessário
-                audioBuffer: audioBuffer,
+                fileURL: fileURL, 
+                toneBuffer: toneBuffer,
                 fileName: fileNameWithoutExtension || file.name,
-                shifter: shifter,
+                player: player,
+                pitchShift: pitchShift, // Armazenar a instância do PitchShift
                 lastPlaybackTime: 0 
             };
             
@@ -420,9 +203,9 @@ clearCellsBtn.addEventListener('click', clearAllCells);
 
 // Para a reprodução atual, limpa estados
 function stopCurrentAudio() {
-    if (currentCell !== null && audioFiles[currentCell] && audioFiles[currentCell].shifter) {
-        audioFiles[currentCell].shifter.disconnect(); // Desconecta para parar a reprodução
-        audioFiles[currentCell].lastPlaybackTime = audioFiles[currentCell].shifter.timePlayed; // Guarda o tempo para retomar
+    if (currentCell !== null && audioFiles[currentCell] && audioFiles[currentCell].player) {
+        audioFiles[currentCell].player.stop(); 
+        audioFiles[currentCell].lastPlaybackTime = 0; 
     }
     isPlaying = false;
     clearInterval(progressUpdateInterval);
@@ -431,16 +214,16 @@ function stopCurrentAudio() {
     document.getElementById('currentTime').textContent = '0:00'; 
 }
 
-// Função para iniciar a reprodução com SoundTouch.js
+// Função para iniciar a reprodução com Tone.js
 async function playAudio(cellNumber, startOffset = 0) {
-    if (!audioCtx) {
-        console.warn("AudioContext não inicializado. Clique na página para iniciar.");
+    if (Tone.context.state !== 'running') {
+        console.warn("Tone.js AudioContext não está a correr. Clique na página para iniciar.");
         return;
     }
 
     const audioData = audioFiles[cellNumber];
 
-    if (!audioData || !audioData.shifter || !audioData.audioBuffer) {
+    if (!audioData || !audioData.player || !audioData.toneBuffer.loaded) {
         console.warn(`Nenhum áudio carregado ou pronto na célula ${cellNumber}.`);
         return;
     }
@@ -465,36 +248,71 @@ async function playAudio(cellNumber, startOffset = 0) {
         audioData._lastPlayedCell = cellNumber; // Marca esta célula como a última a ser reproduzida
     }
 
-    const shifter = audioData.shifter;
-    const duration = audioData.audioBuffer.duration;
+    const player = audioData.player;
+    const pitchShift = audioData.pitchShift;
 
     // Aplicar velocidade e pitch
-    shifter.tempo = parseFloat(speedSlider.value); // SoundTouch.js usa 'tempo' como multiplicador de velocidade
-    // SoundTouch.js 'pitch' é um multiplicador. Converter semitons para multiplicador.
-    // 2^(semitons / 12)
-    shifter.pitch = Math.pow(2, parseInt(pitchSlider.value) / 1200); // 1200 cents = 12 semitons = 1 oitava
+    player.playbackRate = parseFloat(speedSlider.value);
+    
+    // Calcular a correção de pitch necessária devido à mudança de velocidade do Player
+    // Tone.Player.playbackRate altera o pitch. Precisamos compensar isso.
+    // A mudança de pitch é log2(playbackRate) oitavas. 1 oitava = 12 semitons.
+    const speedPitchCorrection = -(Math.log2(player.playbackRate) * 12);
+    
+    // Aplicar o pitch definido pelo utilizador (em semitons) MAIS a correção de velocidade
+    const userPitchInSemis = parseInt(pitchSlider.value) / 100;
+    pitchShift.pitch = userPitchInSemis + speedPitchCorrection;
 
-    document.getElementById('totalTime').textContent = formatTime(duration);
+    document.getElementById('totalTime').textContent = formatTime(player.buffer.duration);
 
-    // Configurar o loop no shifter
+    // Configurar o loop no player (Tone.js lida com isso)
     if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
-        shifter.loop = true;
-        shifter.loopStart = loopPoints.start;
-        shifter.loopEnd = loopPoints.end;
+        player.loop = true;
+        player.loopStart = loopPoints.start;
+        player.loopEnd = loopPoints.end;
         if (startOffset < loopPoints.start || startOffset >= loopPoints.end) {
             startOffset = loopPoints.start; // Começa no início do loop se o offset estiver fora
         }
     } else {
-        shifter.loop = false;
+        player.loop = false;
     }
 
-    // Conectar e iniciar o shifter
-    shifter.connect(audioCtx.destination);
-    shifter.play(startOffset); // Inicia a reprodução a partir do offset
+    // Iniciar o player
+    player.start(0, startOffset); 
     isPlaying = true;
 
-    // O progresso é atualizado no evento 'play' do shifter, não mais por setInterval aqui.
-    // O setInterval pode ser usado para coisas que não dependem do 'play' event, se necessário.
+    // Inicia ou reinicia o intervalo de atualização da barra de progresso
+    if (progressUpdateInterval) {
+        clearInterval(progressUpdateInterval);
+        progressUpdateInterval = null;
+    }
+    progressUpdateInterval = setInterval(() => {
+        if (!isPlaying || !player || !audioData.toneBuffer.loaded) {
+            clearInterval(progressUpdateInterval);
+            progressUpdateInterval = null;
+            return;
+        }
+
+        let currentTime = player.toSeconds(player.immediate()); 
+        const duration = player.buffer.duration;
+
+        let progress;
+        if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
+            const loopDuration = loopPoints.end - loopPoints.start;
+            const currentOffsetInLoop = (currentTime - loopPoints.start) % loopDuration;
+            currentTime = loopPoints.start + currentOffsetInLoop; 
+            progress = ((currentTime - loopPoints.start) / loopDuration) * 100;
+        } else {
+            progress = (currentTime / duration) * 100;
+        }
+
+        progress = Math.min(100, Math.max(0, progress)); 
+        currentTime = Math.min(duration, Math.max(0, currentTime)); 
+
+        progressFill.style.width = progress + '%';
+        document.getElementById('currentTime').textContent = formatTime(currentTime);
+        document.getElementById('totalTime').textContent = formatTime(duration);
+    }, 100); 
 }
 
 
@@ -502,12 +320,19 @@ async function playAudio(cellNumber, startOffset = 0) {
 speedSlider.addEventListener('input', (e) => {
     const newSpeed = parseFloat(e.target.value);
     applySpeedToDisplay(newSpeed); 
-    if (isPlaying && currentCell !== null && audioFiles[currentCell].shifter) {
-        const shifter = audioFiles[currentCell].shifter;
-        shifter.tempo = newSpeed; // Aplica a nova velocidade
-        // O PitchShifter do SoundTouch.js já mantém o pitch ao alterar o tempo
-        // Apenas precisamos de garantir que o pitch do slider é aplicado corretamente
-        shifter.pitch = Math.pow(2, parseInt(pitchSlider.value) / 1200);
+    if (isPlaying && currentCell !== null && audioFiles[currentCell].player) {
+        const player = audioFiles[currentCell].player;
+        const pitchShift = audioFiles[currentCell].pitchShift; 
+
+        // Aplica a nova velocidade *diretamente* ao player ativo
+        player.playbackRate = newSpeed; 
+
+        // Calcular a correção de pitch necessária devido à mudança de velocidade do Player
+        const speedPitchCorrection = -(Math.log2(newSpeed) * 12);
+        
+        // Aplicar o pitch definido pelo utilizador (em semitons) MAIS a correção de velocidade
+        const userPitchInSemis = parseInt(pitchSlider.value) / 100;
+        pitchShift.pitch = userPitchInSemis + speedPitchCorrection;
     }
 });
 speedSlider.addEventListener('mouseup', function() { this.blur(); });
@@ -516,10 +341,15 @@ speedSlider.addEventListener('touchend', function() { this.blur(); });
 pitchSlider.addEventListener('input', (e) => {
     const newPitchCents = parseInt(e.target.value);
     applyPitchToDisplay(newPitchCents); 
-    if (isPlaying && currentCell !== null && audioFiles[currentCell].shifter) {
-        const shifter = audioFiles[currentCell].shifter;
-        // Converte cents para multiplicador de frequência (semitones/12)
-        shifter.pitch = Math.pow(2, newPitchCents / 1200);
+    if (isPlaying && currentCell !== null && audioFiles[currentCell].pitchShift) {
+        const player = audioFiles[currentCell].player;
+        const pitchShift = audioFiles[currentCell].pitchShift;
+
+        // Calcular a correção de pitch necessária devido à velocidade atual do Player
+        const speedPitchCorrection = -(Math.log2(player.playbackRate) * 12);
+
+        // Aplica o novo pitch *diretamente* ao nó PitchShift ativo, somando a correção de velocidade
+        pitchShift.pitch = (newPitchCents / 100) + speedPitchCorrection; // Converter cents para semitons e adicionar correção
     }
 });
 pitchSlider.addEventListener('mouseup', function() { this.blur(); });
@@ -542,7 +372,7 @@ document.addEventListener('keydown', function(e) {
         return;
     }
 
-    if (!currentCell || !audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) return; 
+    if (!currentCell || !audioFiles[currentCell] || !audioFiles[currentCell].toneBuffer.loaded) return; 
 
     switch(e.key.toLowerCase()) {
         case 'a':
@@ -563,35 +393,35 @@ document.addEventListener('keydown', function(e) {
 
 // Nova função para gerir play/pause
 function togglePlayPause() {
-    if (!currentCell || !audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) {
+    if (!currentCell || !audioFiles[currentCell] || !audioFiles[currentCell].toneBuffer.loaded) {
         console.warn("Nenhum áudio selecionado ou carregado para reproduzir/pausar.");
         return;
     }
 
     const audioData = audioFiles[currentCell];
-    const shifter = audioData.shifter;
+    const player = audioData.player;
 
     if (isPlaying) {
-        audioData.lastPlaybackTime = shifter.timePlayed; // Guarda o tempo para retomar
-        shifter.disconnect(); // Desconecta para pausar
+        audioData.lastPlaybackTime = player.toSeconds(player.immediate()); 
+        player.stop();
         isPlaying = false;
         clearInterval(progressUpdateInterval);
         progressUpdateInterval = null;
     } else {
         const resumeTime = audioData.lastPlaybackTime || 0;
         playAudio(currentCell, resumeTime);
-        audioData.lastPlaybackTime = 0; // Reset para a próxima vez que tocar do início
+        audioData.lastPlaybackTime = 0; 
     }
 }
 
 // --- Lógica de Loop ---
 function setLoopPoint(point) {
-    if (!isPlaying || !currentCell || !audioFiles[currentCell] || !audioFiles[currentCell].shifter) return;
+    if (!isPlaying || !currentCell || !audioFiles[currentCell] || !audioFiles[currentCell].player) return;
     
-    const shifter = audioFiles[currentCell].shifter;
-    let currentTime = shifter.timePlayed; 
+    const player = audioFiles[currentCell].player;
+    let currentTime = player.toSeconds(player.immediate()); 
     
-    const duration = audioFiles[currentCell].audioBuffer.duration;
+    const duration = player.buffer.duration;
     const adjustedTime = Math.min(Math.max(0, currentTime), duration);
     loopPoints[point] = adjustedTime;
     
@@ -628,19 +458,18 @@ function activateLoop() {
             document.getElementById('pointB').textContent = formatTime(loopPoints.end);
         }
         isLooping = true;
-        // Aplica o loop no shifter se estiver a tocar
-        if (isPlaying && currentCell && audioFiles[currentCell].shifter) {
-            const shifter = audioFiles[currentCell].shifter;
-            shifter.loop = true;
-            shifter.loopStart = loopPoints.start;
-            shifter.loopEnd = loopPoints.end;
+        // Aplica o loop no player se estiver a tocar
+        if (isPlaying && currentCell && audioFiles[currentCell].player) {
+            const player = audioFiles[currentCell].player;
+            player.loop = true;
+            player.loopStart = loopPoints.start;
+            player.loopEnd = loopPoints.end;
             
             // Se a posição atual estiver fora do novo loop, reposiciona.
-            const currentShifterTime = shifter.timePlayed;
-            if (currentShifterTime < loopPoints.start || currentShifterTime >= loopPoints.end) {
-                shifter.disconnect(); // Parar para reposicionar
-                shifter.play(loopPoints.start); // Iniciar no início do loop
-                shifter.connect(audioCtx.destination); // Reconectar
+            const currentPlayerTime = player.toSeconds(player.immediate());
+            if (currentPlayerTime < loopPoints.start || currentPlayerTime >= loopPoints.end) {
+                player.stop(); 
+                player.start(0, loopPoints.start); 
             }
         }
         updateLoopDisplay();
@@ -652,10 +481,10 @@ function clearLoop() {
     loopPoints.start = null;
     loopPoints.end = null;
     isLooping = false;
-    // Remove o loop do shifter se estiver a tocar
-    if (currentCell && audioFiles[currentCell] && audioFiles[currentCell].shifter) {
-        const shifter = audioFiles[currentCell].shifter;
-        shifter.loop = false;
+    // Remove o loop do player se estiver a tocar
+    if (currentCell && audioFiles[currentCell] && audioFiles[currentCell].player) {
+        const player = audioFiles[currentCell].player;
+        player.loop = false;
     }
     document.getElementById('pointA').textContent = '--';
     document.getElementById('pointB').textContent = '--';
@@ -680,7 +509,7 @@ function updateLoopDisplay() {
 }
 
 function updateLoopMarkers() {
-    if (!audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) {
+    if (!audioFiles[currentCell] || !audioFiles[currentCell].toneBuffer || !audioFiles[currentCell].toneBuffer.loaded) {
         loopMarkers.classList.remove('active');
         loopMarkers.style.display = 'none';
         loopHandleA.style.display = 'none';
@@ -688,7 +517,7 @@ function updateLoopMarkers() {
         return;
     }
     
-    const duration = audioFiles[currentCell].audioBuffer.duration;
+    const duration = audioFiles[currentCell].toneBuffer.duration;
     
     if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
         const startPercent = (loopPoints.start / duration) * 100;
@@ -728,7 +557,7 @@ function updateLoopMarkers() {
 
 // --- Lógica de Arraste dos Marcadores e Cliques na ProgressBar ---
 progressBar.addEventListener('mousedown', (e) => {
-    if (!audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) return;
+    if (!audioFiles[currentCell] || !audioFiles[currentCell].toneBuffer || !audioFiles[currentCell].toneBuffer.loaded) return;
 
     if (e.target === loopHandleA) {
         isDraggingLoopHandle = true;
@@ -740,16 +569,21 @@ progressBar.addEventListener('mousedown', (e) => {
         const rect = progressBar.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
         const percentage = clickX / rect.width;
-        const newTime = percentage * audioFiles[currentCell].audioBuffer.duration;
+        const newTime = percentage * audioFiles[currentCell].toneBuffer.duration;
         
-        if (currentCell) { 
+        if (isPlaying && currentCell && audioFiles[currentCell].player) {
+            const player = audioFiles[currentCell].player;
+            player.stop(); 
+            player.start(0, newTime); 
+            isPlaying = true; 
+        } else if (currentCell) { 
             playAudio(currentCell, newTime); 
         }
     }
 });
 
 document.addEventListener('mousemove', (e) => {
-    if (!isDraggingLoopHandle || !audioFiles[currentCell] || !audioFiles[currentCell].audioBuffer) return;
+    if (!isDraggingLoopHandle || !audioFiles[currentCell] || !audioFiles[currentCell].toneBuffer || !audioFiles[currentCell].toneBuffer.loaded) return;
 
     e.preventDefault(); 
 
@@ -758,7 +592,7 @@ document.addEventListener('mousemove', (e) => {
     newX = Math.max(0, Math.min(newX, rect.width)); 
 
     const percentage = newX / rect.width;
-    const newTime = percentage * audioFiles[currentCell].audioBuffer.duration;
+    const newTime = percentage * audioFiles[currentCell].toneBuffer.duration;
 
     if (activeLoopHandle === 'start') {
         loopPoints.start = newTime;

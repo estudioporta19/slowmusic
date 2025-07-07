@@ -264,7 +264,6 @@
     const pitchSlider = document.getElementById('pitchSlider');
     const pitchValue = document.getElementById('pitchValue');
     const playBtn = document.getElementById('playBtn');
-    const stopBtn = document.getElementById('stopBtn');
 
     // --- 1. CARREGAMENTO DO ÁUDIO ---
     audioFileEl.addEventListener('change', (e) => {
@@ -307,7 +306,6 @@
     function togglePlayback() {
         if (!audioBuffer) return;
         
-        // O utilizador tem de interagir com a página primeiro
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
@@ -322,33 +320,26 @@
     function startPlayback() {
         if (isPlaying || !audioBuffer) return;
         
-        // Criar um novo source node para cada reprodução
         sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = audioBuffer;
 
-        // Criar o nó do SoundTouch que faz o trabalho pesado
-        // A biblioteca já trata do processamento internamente
-        soundtouchNode = new soundtouch.WebAudioSoundtouchNode(audioContext, new soundtouch.SoundTouch());
+        // ✅ CORREÇÃO APLICADA AQUI
+        // As classes são globais, não dentro de um objeto "soundtouch".
+        soundtouchNode = new WebAudioSoundtouchNode(audioContext, new SoundTouch());
 
-        // Configurar velocidade e pitch com os valores atuais dos sliders
         updateSoundTouchSettings();
         
-        // Ligar o pipeline: Source -> SoundTouch Node -> Altifalantes
         sourceNode.connect(soundtouchNode.input);
         soundtouchNode.output.connect(audioContext.destination);
 
-        // Se a faixa terminar, fazer o mesmo que carregar no botão Stop
         sourceNode.onended = () => {
-            // onended é chamado em stop() e pause(), só queremos resetar se a música acabou
             if (seekPosition >= audioBuffer.duration - 0.1) {
                stopPlayback();
             }
         };
 
-        // Começar a tocar a partir da posição guardada
         sourceNode.start(0, seekPosition);
         
-        // Guardar o tempo atual para calcular a posição ao pausar
         playbackStartTime = audioContext.currentTime;
         isPlaying = true;
         updatePlayButton();
@@ -357,12 +348,11 @@
     function pausePlayback() {
         if (!isPlaying || !sourceNode) return;
         
-        // Calcular quanto tempo tocou desde o último play
         const elapsed = audioContext.currentTime - playbackStartTime;
-        // Atualizar a nossa posição na música
+        // A posição tem de ser ajustada pela velocidade atual
         seekPosition += elapsed * soundtouchNode.soundtouch.tempo;
 
-        sourceNode.stop(); // Para a reprodução
+        sourceNode.stop();
         sourceNode.disconnect();
         soundtouchNode.disconnect();
         
@@ -374,10 +364,12 @@
         if (sourceNode) {
             sourceNode.stop();
             sourceNode.disconnect();
-            soundtouchNode.disconnect();
+            if (soundtouchNode) {
+                soundtouchNode.disconnect();
+            }
         }
         isPlaying = false;
-        seekPosition = 0; // Reinicia a posição para o início
+        seekPosition = 0;
         updatePlayButton();
     }
     
@@ -391,6 +383,7 @@
         const speed = parseFloat(speedSlider.value);
         const semitones = parseInt(pitchSlider.value);
         
+        // O objeto "soundtouch" aqui refere-se à propriedade do "soundtouchNode"
         soundtouchNode.soundtouch.tempo = speed;
         soundtouchNode.soundtouch.pitch = Math.pow(2, semitones / 12);
     }
@@ -403,7 +396,8 @@
 
     pitchSlider.addEventListener('input', () => {
         const semitones = parseInt(pitchSlider.value);
-        pitchValue.textContent = `${semitones > 0 ? '+' : ''}${semitones} semitons`;
+        const label = semitones > 0 ? `+${semitones}` : semitones;
+        pitchValue.textContent = `${label} semitons`;
         updateSoundTouchSettings();
     });
 
@@ -425,6 +419,7 @@
         resetPitch();
         stopPlayback();
     }
+
 </script>
   
 </body>

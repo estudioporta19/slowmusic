@@ -1,7 +1,7 @@
 // js/app.js
 
 // --- Variáveis Globais e Referências de Elementos ---
-let audioFiles = {}; // Guarda { cellNumber: { fileURL: string, toneBuffer: Tone.Buffer, fileName: string, player: Tone.GrainPlayer, lastPlaybackTime: number } }
+let audioFiles = {}; // Guarda { cellNumber: { fileURL: string, toneBuffer: Tone.Buffer, fileName: string, player: Tone.Player, pitchShift: Tone.PitchShift, lastPlaybackTime: number } }
 let currentCell = null; // Guarda o número da célula ativa
 
 let loopPoints = { start: null, end: null };
@@ -97,6 +97,9 @@ function clearAllCells() {
                 // Muito importante: Dispose do player para libertar recursos de áudio
                 audioFiles[i].player.dispose(); 
             }
+            if (audioFiles[i].pitchShift) { // Dispor do nó PitchShift
+                audioFiles[i].pitchShift.dispose();
+            }
             if (audioFiles[i].toneBuffer) {
                 audioFiles[i].toneBuffer.dispose(); // Libera o buffer de áudio
             }
@@ -146,12 +149,13 @@ globalFileInput.addEventListener('change', async (event) => {
             
             const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('.');
 
-            // Criar um *novo* GrainPlayer sempre que um ficheiro é carregado para uma célula
-            // Garante que é uma instância limpa
-            const player = new Tone.GrainPlayer(toneBuffer).toDestination();
+            // Criar um nó PitchShift e um Player para reprodução limpa
+            const pitchShift = new Tone.PitchShift().toDestination();
+            const player = new Tone.Player(toneBuffer).connect(pitchShift);
+            
             player.loop = false; 
-            player.loopStart = 0; 
-            player.loopEnd = toneBuffer.duration; 
+            // LoopStart e loopEnd são controlados pela lógica de loop, não diretamente no player aqui
+            
             // Adicionar um listener para o fim da reprodução quando não estiver em loop
             player.onEnded = () => {
                 if (!isLooping && isPlaying && currentCell && audioFiles[currentCell] && audioFiles[currentCell].player === player) {
@@ -171,6 +175,7 @@ globalFileInput.addEventListener('change', async (event) => {
                 toneBuffer: toneBuffer,
                 fileName: fileNameWithoutExtension || file.name,
                 player: player,
+                pitchShift: pitchShift, // Armazenar a instância do PitchShift
                 lastPlaybackTime: 0 
             };
             
@@ -193,10 +198,6 @@ clearCellsBtn.addEventListener('click', clearAllCells);
 // Para a reprodução atual, limpa estados
 function stopCurrentAudio() {
     if (currentCell !== null && audioFiles[currentCell] && audioFiles[currentCell].player) {
-        // Usa Tone.Transport.stop() ou player.stop() de forma mais assertiva.
-        // Se o player está ligado ao Transport, parar o Transport é uma opção mais global.
-        // No nosso caso, o player não está explicitamente ligado ao Transport para esta reprodução simples,
-        // então player.stop() é o correto.
         audioFiles[currentCell].player.stop(); 
         audioFiles[currentCell].lastPlaybackTime = 0; 
     }
@@ -217,7 +218,6 @@ async function playAudio(cellNumber, startOffset = 0) {
     }
 
     // Parar qualquer áudio *anteriormente ativo* se estiver a mudar de célula ou a reiniciar.
-    // É crucial que esta parada seja efetiva antes de um novo start.
     if (currentCell !== cellNumber || isPlaying) {
         stopCurrentAudio(); 
     }
@@ -232,21 +232,21 @@ async function playAudio(cellNumber, startOffset = 0) {
     document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
 
     // Se a nova célula é diferente da última vez que uma faixa foi tocada, limpa o loop.
-    // Isso evita loops de faixas antigas em faixas novas.
     if (audioData._lastPlayedCell !== cellNumber) {
         clearLoop(); 
         audioData._lastPlayedCell = cellNumber; // Marca esta célula como a última a ser reproduzida
     }
 
     const player = audioData.player;
+    const pitchShift = audioData.pitchShift;
 
-    // Aplicar velocidade e pitch aos parâmetros do player
+    // Aplicar velocidade e pitch
     player.playbackRate = parseFloat(speedSlider.value);
-    player.detune = parseInt(pitchSlider.value); 
+    pitchShift.pitch = parseInt(pitchSlider.value) / 100; // PitchShift usa semitons, não cents
 
     document.getElementById('totalTime').textContent = formatTime(player.buffer.duration);
 
-    // Configurar o loop no player (Tone.js lida com isso)
+    // Configurar o loop no player
     if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
         player.loop = true;
         player.loopStart = loopPoints.start;
@@ -259,10 +259,6 @@ async function playAudio(cellNumber, startOffset = 0) {
     }
 
     // Iniciar o player
-    // Certifique-se de que o player está realmente parado antes de iniciar.
-    // Embora player.stop() seja chamado, um pequeno atraso pode acontecer.
-    // Tone.js é assíncrono. Uma pequena espera ou encadeamento pode ajudar
-    // mas o stopCurrentAudio() já deveria resolver.
     player.start(0, startOffset); 
     isPlaying = true;
 
@@ -297,12 +293,6 @@ async function playAudio(cellNumber, startOffset = 0) {
         progressFill.style.width = progress + '%';
         document.getElementById('currentTime').textContent = formatTime(currentTime);
         document.getElementById('totalTime').textContent = formatTime(duration);
-
-        // A verificação de fim de faixa é agora feita primariamente pelo player.onEnded
-        // Mas esta verificação ainda pode ser um fallback para robustez.
-        // No entanto, é melhor confiar no onEnded do Tone.js para paragens limpas.
-        // Removido o `stopCurrentAudio()` daqui para evitar duplicação com `onEnded`.
-        // A lógica de fim de faixa está agora predominantemente no `player.onEnded`.
     }, 100); 
 }
 
@@ -322,9 +312,9 @@ speedSlider.addEventListener('touchend', function() { this.blur(); });
 pitchSlider.addEventListener('input', (e) => {
     const newPitch = parseInt(e.target.value);
     applyPitchToDisplay(newPitch); 
-    if (isPlaying && currentCell !== null && audioFiles[currentCell].player) {
-        // Aplica o novo pitch *diretamente* ao player ativo
-        audioFiles[currentCell].player.detune = newPitch; 
+    if (isPlaying && currentCell !== null && audioFiles[currentCell].pitchShift) { // Aceder ao pitchShift
+        // Aplica o novo pitch *diretamente* ao nó PitchShift ativo
+        audioFiles[currentCell].pitchShift.pitch = newPitch / 100; // Converter cents para semitons
     }
 });
 pitchSlider.addEventListener('mouseup', function() { this.blur(); });
@@ -441,10 +431,8 @@ function activateLoop() {
             player.loopEnd = loopPoints.end;
             
             // Se a posição atual estiver fora do novo loop, reposiciona.
-            // NÂO chame stop/start para mudanças de loop se a posição estiver dentro.
             const currentPlayerTime = player.toSeconds(player.immediate());
             if (currentPlayerTime < loopPoints.start || currentPlayerTime >= loopPoints.end) {
-                // Paramos e iniciamos apenas para reposicionar dentro dos limites do loop
                 player.stop(); 
                 player.start(0, loopPoints.start); 
             }
@@ -462,8 +450,6 @@ function clearLoop() {
     if (currentCell && audioFiles[currentCell] && audioFiles[currentCell].player) {
         const player = audioFiles[currentCell].player;
         player.loop = false;
-        // Não precisamos reiniciar o player aqui. O áudio simplesmente continuará até ao fim.
-        // Se o áudio estiver a tocar e o loop for desativado, ele terminará normalmente.
     }
     document.getElementById('pointA').textContent = '--';
     document.getElementById('pointB').textContent = '--';
@@ -536,7 +522,6 @@ function updateLoopMarkers() {
 
 // --- Lógica de Arraste dos Marcadores e Cliques na ProgressBar ---
 progressBar.addEventListener('mousedown', (e) => {
-    // CORREÇÃO AQUI: 'currentFiles' foi alterado para 'currentCell'
     if (!audioFiles[currentCell] || !audioFiles[currentCell].toneBuffer || !audioFiles[currentCell].toneBuffer.loaded) return;
 
     if (e.target === loopHandleA) {

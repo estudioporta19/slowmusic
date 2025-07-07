@@ -217,10 +217,11 @@ function playAudio(cellNumber, startOffset = 0) {
     document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
 
     // Se mudou de faixa, limpar loop
-    if (audioData.lastCell !== currentCell) { // Adicionar um controlo para saber se a célula mudou
+    // Verificação simplificada, sempre limpa o loop se a célula mudar
+    if (audioData.lastCellId !== currentCell) { 
         clearLoop();
     }
-    audioData.lastCell = currentCell; // Marca a última célula para referência
+    audioData.lastCellId = currentCell; // Marca a última célula para referência
 
     // --- Configurar e Iniciar Web Audio API Playback ---
     currentSourceNode = audioContext.createBufferSource();
@@ -255,7 +256,6 @@ function playAudio(cellNumber, startOffset = 0) {
         } else {
             // Se estiver em loop, reiniciar a reprodução do ponto de loop
             if (loopPoints.start !== null && loopPoints.end !== null) {
-                // Parar o nó atual para reiniciar (sem desconectar)
                 // Usamos playAudio para recriar o nó de forma limpa e aplicar as configs
                 playAudio(currentCell, loopPoints.start);
             }
@@ -550,4 +550,21 @@ document.addEventListener('mouseup', () => {
     if (isDraggingLoopHandle) {
         isDraggingLoopHandle = false;
         activeLoopHandle = null;
-        activateLoop();
+        activateLoop(); 
+    }
+});
+
+// --- Delegação de Eventos para Células ---
+document.getElementById('cellGrid').addEventListener('click', function(event) {
+    const target = event.target;
+    const cellElement = target.closest('.cell'); 
+    if (cellElement) {
+        const cellNumber = parseInt(cellElement.dataset.cellNumber);
+        
+        if (currentCell === cellNumber) { // Se clicou na célula já ativa
+            togglePlayPause();
+        } else { // Se clicou numa nova célula
+            playAudio(cellNumber);
+        }
+    }
+});

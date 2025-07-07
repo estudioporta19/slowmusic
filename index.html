@@ -243,15 +243,17 @@
     </div>
 
 <script>
-    // Variáveis Globais
+    // --- Variáveis Globais ---
     let audioContext;
     let sourceNode;
-    let scriptProcessor;
-    let soundTouch;
+    let soundtouchNode; // Nó que faz o processamento
     let audioBuffer;
-    let isPlaying = false;
-    let seekPosition = 0; // Posição atual em segundos
 
+    let isPlaying = false;
+    let seekPosition = 0; // Onde estamos na música (em segundos)
+    let playbackStartTime = 0; // Quando a reprodução começou (tempo do AudioContext)
+    
+    // --- Elementos do DOM ---
     const audioFileEl = document.getElementById('audioFile');
     const fileInfoEl = document.getElementById('fileInfo');
     const fileNameEl = document.getElementById('fileName');
@@ -262,12 +264,13 @@
     const pitchSlider = document.getElementById('pitchSlider');
     const pitchValue = document.getElementById('pitchValue');
     const playBtn = document.getElementById('playBtn');
+    const stopBtn = document.getElementById('stopBtn');
 
-    // 1. MANIPULAR SELEÇÃO DE FICHEIRO
+    // --- 1. CARREGAMENTO DO ÁUDIO ---
     audioFileEl.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
-            stopPlayback(); // Para qualquer música anterior
+            stopPlayback();
             loadAudioFile(file);
         }
     });
@@ -300,10 +303,11 @@
         reader.readAsArrayBuffer(file);
     }
 
-    // 2. CONTROLOS DE REPRODUÇÃO
+    // --- 2. CONTROLOS DE REPRODUÇÃO ---
     function togglePlayback() {
         if (!audioBuffer) return;
         
+        // O utilizador tem de interagir com a página primeiro
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
@@ -317,46 +321,35 @@
 
     function startPlayback() {
         if (isPlaying || !audioBuffer) return;
-
-        // Criar os nós de áudio
+        
+        // Criar um novo source node para cada reprodução
         sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = audioBuffer;
 
-        const bufferSize = 4096;
-        scriptProcessor = audioContext.createScriptProcessor(bufferSize, 2, 2);
+        // Criar o nó do SoundTouch que faz o trabalho pesado
+        // A biblioteca já trata do processamento internamente
+        soundtouchNode = new soundtouch.WebAudioSoundtouchNode(audioContext, new soundtouch.SoundTouch());
 
-        // Inicializar SoundTouch com as configurações atuais dos sliders
-        soundTouch = new SoundTouch();
-        soundTouch.tempo = parseFloat(speedSlider.value);
-        const semitones = parseInt(pitchSlider.value);
-        soundTouch.pitch = Math.pow(2, semitones / 12);
-
-        // O nó do SoundTouch atua como um 'filtro'
-        const soundtouchNode = new soundtouch.WebAudioSoundtouchNode(audioContext, soundTouch, bufferSize);
+        // Configurar velocidade e pitch com os valores atuais dos sliders
+        updateSoundTouchSettings();
         
-        // Conectar o pipeline: Source -> SoundTouch -> ScriptProcessor -> Destination
+        // Ligar o pipeline: Source -> SoundTouch Node -> Altifalantes
         sourceNode.connect(soundtouchNode.input);
-        soundtouchNode.output.connect(scriptProcessor);
-        scriptProcessor.connect(audioContext.destination);
+        soundtouchNode.output.connect(audioContext.destination);
 
-        // Guardar a posição atual antes de começar a tocar
-        const startOffset = seekPosition;
-        sourceNode.start(0, startOffset);
-        
-        // Atualizar a posição de reprodução
-        sourceNode.context.onstatechange = () => {
-            if (sourceNode.context.state !== 'running') {
-                seekPosition += sourceNode.context.currentTime;
-            }
-        };
-
-        // Lidar com o fim da faixa
+        // Se a faixa terminar, fazer o mesmo que carregar no botão Stop
         sourceNode.onended = () => {
-            if (isPlaying) { // Se terminou naturalmente
-                stopPlayback();
+            // onended é chamado em stop() e pause(), só queremos resetar se a música acabou
+            if (seekPosition >= audioBuffer.duration - 0.1) {
+               stopPlayback();
             }
         };
 
+        // Começar a tocar a partir da posição guardada
+        sourceNode.start(0, seekPosition);
+        
+        // Guardar o tempo atual para calcular a posição ao pausar
+        playbackStartTime = audioContext.currentTime;
         isPlaying = true;
         updatePlayButton();
     }
@@ -364,15 +357,15 @@
     function pausePlayback() {
         if (!isPlaying || !sourceNode) return;
         
-        // Guardar a posição em que pausou
-        seekPosition = audioContext.currentTime;
-        
-        sourceNode.stop();
+        // Calcular quanto tempo tocou desde o último play
+        const elapsed = audioContext.currentTime - playbackStartTime;
+        // Atualizar a nossa posição na música
+        seekPosition += elapsed * soundtouchNode.soundtouch.tempo;
+
+        sourceNode.stop(); // Para a reprodução
         sourceNode.disconnect();
-        scriptProcessor.disconnect();
+        soundtouchNode.disconnect();
         
-        sourceNode = null;
-        scriptProcessor = null;
         isPlaying = false;
         updatePlayButton();
     }
@@ -381,12 +374,10 @@
         if (sourceNode) {
             sourceNode.stop();
             sourceNode.disconnect();
-            scriptProcessor.disconnect();
-            sourceNode = null;
-            scriptProcessor = null;
+            soundtouchNode.disconnect();
         }
         isPlaying = false;
-        seekPosition = 0; // Reiniciar posição
+        seekPosition = 0; // Reinicia a posição para o início
         updatePlayButton();
     }
     
@@ -394,38 +385,39 @@
         playBtn.textContent = isPlaying ? '⏸️ Pausar' : '▶️ Reproduzir';
     }
 
-    // 3. SLIDERS DE VELOCIDADE E PITCH
-    speedSlider.addEventListener('input', (e) => {
-        const speed = parseFloat(e.target.value);
+    // --- 3. SLIDERS E ATUALIZAÇÃO DE EFEITOS ---
+    function updateSoundTouchSettings() {
+        if (!soundtouchNode) return;
+        const speed = parseFloat(speedSlider.value);
+        const semitones = parseInt(pitchSlider.value);
+        
+        soundtouchNode.soundtouch.tempo = speed;
+        soundtouchNode.soundtouch.pitch = Math.pow(2, semitones / 12);
+    }
+    
+    speedSlider.addEventListener('input', () => {
+        const speed = parseFloat(speedSlider.value);
         speedValue.textContent = `${speed.toFixed(1)}x`;
-        if (soundTouch) {
-            soundTouch.tempo = speed;
-        }
+        updateSoundTouchSettings();
     });
 
-    pitchSlider.addEventListener('input', (e) => {
-        const semitones = parseInt(e.target.value);
-        pitchValue.textContent = `${semitones > 0 ? '+' : ''}${semitones} meios tons`;
-        if (soundTouch) {
-            soundTouch.pitch = Math.pow(2, semitones / 12);
-        }
+    pitchSlider.addEventListener('input', () => {
+        const semitones = parseInt(pitchSlider.value);
+        pitchValue.textContent = `${semitones > 0 ? '+' : ''}${semitones} semitons`;
+        updateSoundTouchSettings();
     });
 
-    // 4. FUNÇÕES DE RESET
+    // --- 4. FUNÇÕES DE RESET ---
     function resetSpeed() {
         speedSlider.value = 1;
         speedValue.textContent = '1.0x';
-        if (soundTouch) {
-            soundTouch.tempo = 1.0;
-        }
+        updateSoundTouchSettings();
     }
 
     function resetPitch() {
         pitchSlider.value = 0;
-        pitchValue.textContent = '0 meios tons';
-        if (soundTouch) {
-            soundTouch.pitch = 1.0;
-        }
+        pitchValue.textContent = '0 semitons';
+        updateSoundTouchSettings();
     }
     
     function resetControls() {
@@ -433,7 +425,6 @@
         resetPitch();
         stopPlayback();
     }
-
 </script>
   
 </body>

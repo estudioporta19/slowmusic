@@ -1129,8 +1129,6 @@ function animatePlaybackIndicator() {
     function renderSavedLoops() {
         savedLoopsListEl.innerHTML = ''; 
 
-        // Filtra loops para mostrar apenas os que correspondem a ficheiros atualmente carregados,
-        // ou adiciona uma indicação se o ficheiro não estiver carregado.
         const relevantLoops = savedLoops.filter(loop => 
             audioFiles.some(file => file.name === loop.fileName)
         );
@@ -1144,8 +1142,8 @@ function animatePlaybackIndicator() {
             const li = document.createElement('li');
             li.style.cssText = `
                 display: flex;
-                flex-direction: column; /* Altera para coluna para melhor layout */
-                align-items: flex-start; /* Alinha o texto à esquerda */
+                flex-direction: column; 
+                align-items: flex-start; 
                 padding: 10px 0;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             `;
@@ -1155,7 +1153,7 @@ function animatePlaybackIndicator() {
 
             const loopNameAndFile = document.createElement('span');
             loopNameAndFile.innerHTML = `<strong>${loop.name}</strong> <small>(${loop.fileName})</small>`;
-            loopNameAndFile.style.marginBottom = '5px'; // Espaço entre nome e tempos
+            loopNameAndFile.style.marginBottom = '5px'; 
             li.appendChild(loopNameAndFile);
 
             const loopDetails = document.createElement('span');
@@ -1164,22 +1162,41 @@ function animatePlaybackIndicator() {
             loopDetails.style.color = 'rgba(255,255,255,0.8)';
             li.appendChild(loopDetails);
 
+            // --- NOVAS LINHAS AQUI: Exibe as informações de speed e pitch ---
+            if (loop.speed !== undefined || loop.pitch !== undefined) {
+                const speedPitchDetails = document.createElement('span');
+                let detailsText = '';
+                if (loop.speed !== undefined) {
+                    detailsText += `Velocidade: ${parseFloat(loop.speed).toFixed(1)}x`;
+                }
+                if (loop.pitch !== undefined) {
+                    if (detailsText) detailsText += ' | ';
+                    detailsText += `Tom: ${parseInt(loop.pitch) > 0 ? '+' : ''}${parseInt(loop.pitch)} semitons`;
+                }
+                speedPitchDetails.textContent = detailsText;
+                speedPitchDetails.style.fontSize = '0.8em';
+                speedPitchDetails.style.color = 'rgba(255,255,255,0.6)';
+                speedPitchDetails.style.marginTop = '3px';
+                li.appendChild(speedPitchDetails);
+            }
+            // --- FIM DAS NOVAS LINHAS ---
+
             const buttonsDiv = document.createElement('div');
-            buttonsDiv.style.marginTop = '8px'; // Espaço entre detalhes e botões
-            buttonsDiv.style.alignSelf = 'flex-end'; // Alinha os botões à direita
+            buttonsDiv.style.marginTop = '8px'; 
+            buttonsDiv.style.alignSelf = 'flex-end'; 
             
             const applyBtn = document.createElement('button');
             applyBtn.textContent = 'Aplicar';
             applyBtn.className = 'reset-btn'; 
             applyBtn.style.background = 'linear-gradient(45deg, #28a745, #218838)';
             applyBtn.style.marginRight = '5px';
-            applyBtn.onclick = () => applyLoop(savedLoops.indexOf(loop)); // Usa o índice original do 'savedLoops'
+            applyBtn.onclick = () => applyLoop(savedLoops.indexOf(loop)); 
             
             const removeBtn = document.createElement('button');
             removeBtn.textContent = 'X';
             removeBtn.className = 'reset-btn'; 
             removeBtn.style.background = 'linear-gradient(45deg, #dc3545, #c82333)';
-            removeBtn.onclick = () => removeLoop(savedLoops.indexOf(loop)); // Usa o índice original do 'savedLoops'
+            removeBtn.onclick = () => removeLoop(savedLoops.indexOf(loop)); 
 
             buttonsDiv.appendChild(applyBtn);
             buttonsDiv.appendChild(removeBtn);

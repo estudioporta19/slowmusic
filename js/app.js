@@ -229,7 +229,7 @@ async function playAudio(cellNumber, startOffset = 0) {
 
     // Atualizar célula ativa
     currentCell = cellNumber;
-    document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
+    document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.add('active');
 
     // Se a nova célula é diferente da última vez que uma faixa foi tocada, limpa o loop.
     if (audioData._lastPlayedCell !== cellNumber) {
@@ -242,7 +242,15 @@ async function playAudio(cellNumber, startOffset = 0) {
 
     // Aplicar velocidade e pitch
     player.playbackRate = parseFloat(speedSlider.value);
-    pitchShift.pitch = parseInt(pitchSlider.value) / 100; // PitchShift usa semitons, não cents
+    
+    // Calcular a correção de pitch necessária devido à mudança de velocidade do Player
+    // Tone.Player.playbackRate altera o pitch. Precisamos compensar isso.
+    // A mudança de pitch é log2(playbackRate) oitavas. 1 oitava = 12 semitons.
+    const speedPitchCorrection = -(Math.log2(player.playbackRate) * 12);
+    
+    // Aplicar o pitch definido pelo utilizador (em semitons) MAIS a correção de velocidade
+    const userPitchInSemis = parseInt(pitchSlider.value) / 100;
+    pitchShift.pitch = userPitchInSemis + speedPitchCorrection;
 
     document.getElementById('totalTime').textContent = formatTime(player.buffer.duration);
 
@@ -302,8 +310,19 @@ speedSlider.addEventListener('input', (e) => {
     const newSpeed = parseFloat(e.target.value);
     applySpeedToDisplay(newSpeed); 
     if (isPlaying && currentCell !== null && audioFiles[currentCell].player) {
+        const player = audioFiles[currentCell].player;
+        const pitchShift = audioFiles[currentCell].pitchShift; // Aceder ao nó PitchShift
+
         // Aplica a nova velocidade *diretamente* ao player ativo
-        audioFiles[currentCell].player.playbackRate = newSpeed; 
+        player.playbackRate = newSpeed; 
+
+        // Calcular a correção de pitch necessária devido à mudança de velocidade do Player
+        // A mudança de pitch é log2(newSpeed) oitavas. 1 oitava = 12 semitons.
+        const speedPitchCorrection = -(Math.log2(newSpeed) * 12);
+        
+        // Aplicar o pitch definido pelo utilizador (em semitons) MAIS a correção de velocidade
+        const userPitchInSemis = parseInt(pitchSlider.value) / 100;
+        pitchShift.pitch = userPitchInSemis + speedPitchCorrection;
     }
 });
 speedSlider.addEventListener('mouseup', function() { this.blur(); });
@@ -313,8 +332,14 @@ pitchSlider.addEventListener('input', (e) => {
     const newPitch = parseInt(e.target.value);
     applyPitchToDisplay(newPitch); 
     if (isPlaying && currentCell !== null && audioFiles[currentCell].pitchShift) { // Aceder ao pitchShift
-        // Aplica o novo pitch *diretamente* ao nó PitchShift ativo
-        audioFiles[currentCell].pitchShift.pitch = newPitch / 100; // Converter cents para semitons
+        const player = audioFiles[currentCell].player;
+        const pitchShift = audioFiles[currentCell].pitchShift;
+
+        // Calcular a correção de pitch necessária devido à velocidade atual do Player
+        const speedPitchCorrection = -(Math.log2(player.playbackRate) * 12);
+
+        // Aplica o novo pitch *diretamente* ao nó PitchShift ativo, somando a correção de velocidade
+        pitchShift.pitch = (newPitch / 100) + speedPitchCorrection; // Converter cents para semitons e adicionar correção
     }
 });
 pitchSlider.addEventListener('mouseup', function() { this.blur(); });

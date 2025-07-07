@@ -1151,6 +1151,35 @@
     }
 
     document.addEventListener('DOMContentLoaded', loadSavedLoops);
+document.addEventListener('keydown', (e) => {
+            // Ignora eventos de teclado se o utilizador estiver a escrever num input (ex: nome do loop)
+            // ou se o ficheiro de áudio ainda não tiver sido carregado
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || !audioBuffer) {
+                return;
+            }
+
+            // Previne o comportamento padrão da tecla (ex: barra de espaço rolar a página)
+            e.preventDefault(); 
+
+            switch (e.code) {
+                case 'Space': // Tecla de Espaço
+                    togglePlayback();
+                    break;
+                case 'KeyA': // Tecla 'A'
+                    // Verifica se Shift não está pressionado (para não conflitar com Shift+clique no waveform)
+                    if (!e.shiftKey) { 
+                        setLoopA();
+                    }
+                    break;
+                case 'KeyB': // Tecla 'B'
+                    // Verifica se Shift não está pressionado (para não conflitar com Shift+clique no waveform)
+                    if (!e.shiftKey) { 
+                        setLoopB();
+                    }
+                    break;
+                // Pode adicionar mais atalhos aqui, se desejar
+            }
+        });
 </script>
     
 </body>

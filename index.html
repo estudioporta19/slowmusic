@@ -242,211 +242,199 @@
         </div>
     </div>
 
-    <script>
-        let audioContext;
-        let sourceNode;
-        let soundTouch;
-        let audioBuffer;
-        let isPlaying = false;
-        let startTime = 0;
-        let pauseTime = 0;
-        
-        // Inicializar contexto de áudio
-        function initAudioContext() {
+<script>
+    // Variáveis Globais
+    let audioContext;
+    let sourceNode;
+    let scriptProcessor;
+    let soundTouch;
+    let audioBuffer;
+    let isPlaying = false;
+    let seekPosition = 0; // Posição atual em segundos
+
+    const audioFileEl = document.getElementById('audioFile');
+    const fileInfoEl = document.getElementById('fileInfo');
+    const fileNameEl = document.getElementById('fileName');
+    const loadingStatusEl = document.getElementById('loadingStatus');
+    const controlsEl = document.getElementById('controls');
+    const speedSlider = document.getElementById('speedSlider');
+    const speedValue = document.getElementById('speedValue');
+    const pitchSlider = document.getElementById('pitchSlider');
+    const pitchValue = document.getElementById('pitchValue');
+    const playBtn = document.getElementById('playBtn');
+
+    // 1. MANIPULAR SELEÇÃO DE FICHEIRO
+    audioFileEl.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            stopPlayback(); // Para qualquer música anterior
+            loadAudioFile(file);
+        }
+    });
+
+    function loadAudioFile(file) {
+        fileNameEl.textContent = `Ficheiro: ${file.name}`;
+        fileInfoEl.style.display = 'block';
+        loadingStatusEl.style.display = 'block';
+        loadingStatusEl.textContent = 'A carregar e descodificar...';
+        controlsEl.style.display = 'none';
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
+            audioContext.decodeAudioData(e.target.result)
+                .then(buffer => {
+                    audioBuffer = buffer;
+                    loadingStatusEl.textContent = 'Pronto a tocar!';
+                    setTimeout(() => { loadingStatusEl.style.display = 'none'; }, 2000);
+                    controlsEl.style.display = 'block';
+                    resetControls();
+                })
+                .catch(error => {
+                    console.error('Erro ao descodificar áudio:', error);
+                    loadingStatusEl.textContent = 'Erro ao carregar o ficheiro!';
+                });
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // 2. CONTROLOS DE REPRODUÇÃO
+    function togglePlayback() {
+        if (!audioBuffer) return;
+        
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
         }
-        
-        // Manipular seleção de ficheiro
-        document.getElementById('audioFile').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                loadAudioFile(file);
-            }
-        });
-        
-        // Carregar ficheiro de áudio
-        function loadAudioFile(file) {
-            const fileInfo = document.getElementById('fileInfo');
-            const fileName = document.getElementById('fileName');
-            const loadingStatus = document.getElementById('loadingStatus');
-            
-            fileName.textContent = `Ficheiro: ${file.name}`;
-            fileInfo.style.display = 'block';
-            loadingStatus.style.display = 'block';
-            loadingStatus.textContent = 'A carregar...';
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                initAudioContext();
-                audioContext.decodeAudioData(e.target.result)
-                    .then(buffer => {
-                        audioBuffer = buffer;
-                        loadingStatus.textContent = 'Carregamento concluído!';
-                        setTimeout(() => {
-                            loadingStatus.style.display = 'none';
-                        }, 1000);
-                        
-                        // Mostrar controlos
-                        document.getElementById('controls').style.display = 'block';
-                        
-                        // Inicializar SoundTouch
-                        initSoundTouch();
-                    })
-                    .catch(error => {
-                        console.error('Erro ao descodificar áudio:', error);
-                        loadingStatus.textContent = 'Erro ao carregar o ficheiro!';
-                        loadingStatus.style.color = '#ff6b6b';
-                    });
-            };
-            reader.readAsArrayBuffer(file);
+
+        if (isPlaying) {
+            pausePlayback();
+        } else {
+            startPlayback();
         }
+    }
+
+    function startPlayback() {
+        if (isPlaying || !audioBuffer) return;
+
+        // Criar os nós de áudio
+        sourceNode = audioContext.createBufferSource();
+        sourceNode.buffer = audioBuffer;
+
+        const bufferSize = 4096;
+        scriptProcessor = audioContext.createScriptProcessor(bufferSize, 2, 2);
+
+        // Inicializar SoundTouch com as configurações atuais dos sliders
+        soundTouch = new SoundTouch();
+        soundTouch.tempo = parseFloat(speedSlider.value);
+        const semitones = parseInt(pitchSlider.value);
+        soundTouch.pitch = Math.pow(2, semitones / 12);
+
+        // O nó do SoundTouch atua como um 'filtro'
+        const soundtouchNode = new soundtouch.WebAudioSoundtouchNode(audioContext, soundTouch, bufferSize);
         
-        // Inicializar SoundTouch
-        function initSoundTouch() {
-            soundTouch = new SoundTouch();
+        // Conectar o pipeline: Source -> SoundTouch -> ScriptProcessor -> Destination
+        sourceNode.connect(soundtouchNode.input);
+        soundtouchNode.output.connect(scriptProcessor);
+        scriptProcessor.connect(audioContext.destination);
+
+        // Guardar a posição atual antes de começar a tocar
+        const startOffset = seekPosition;
+        sourceNode.start(0, startOffset);
+        
+        // Atualizar a posição de reprodução
+        sourceNode.context.onstatechange = () => {
+            if (sourceNode.context.state !== 'running') {
+                seekPosition += sourceNode.context.currentTime;
+            }
+        };
+
+        // Lidar com o fim da faixa
+        sourceNode.onended = () => {
+            if (isPlaying) { // Se terminou naturalmente
+                stopPlayback();
+            }
+        };
+
+        isPlaying = true;
+        updatePlayButton();
+    }
+
+    function pausePlayback() {
+        if (!isPlaying || !sourceNode) return;
+        
+        // Guardar a posição em que pausou
+        seekPosition = audioContext.currentTime;
+        
+        sourceNode.stop();
+        sourceNode.disconnect();
+        scriptProcessor.disconnect();
+        
+        sourceNode = null;
+        scriptProcessor = null;
+        isPlaying = false;
+        updatePlayButton();
+    }
+    
+    function stopPlayback() {
+        if (sourceNode) {
+            sourceNode.stop();
+            sourceNode.disconnect();
+            scriptProcessor.disconnect();
+            sourceNode = null;
+            scriptProcessor = null;
+        }
+        isPlaying = false;
+        seekPosition = 0; // Reiniciar posição
+        updatePlayButton();
+    }
+    
+    function updatePlayButton() {
+        playBtn.textContent = isPlaying ? '⏸️ Pausar' : '▶️ Reproduzir';
+    }
+
+    // 3. SLIDERS DE VELOCIDADE E PITCH
+    speedSlider.addEventListener('input', (e) => {
+        const speed = parseFloat(e.target.value);
+        speedValue.textContent = `${speed.toFixed(1)}x`;
+        if (soundTouch) {
+            soundTouch.tempo = speed;
+        }
+    });
+
+    pitchSlider.addEventListener('input', (e) => {
+        const semitones = parseInt(e.target.value);
+        pitchValue.textContent = `${semitones > 0 ? '+' : ''}${semitones} meios tons`;
+        if (soundTouch) {
+            soundTouch.pitch = Math.pow(2, semitones / 12);
+        }
+    });
+
+    // 4. FUNÇÕES DE RESET
+    function resetSpeed() {
+        speedSlider.value = 1;
+        speedValue.textContent = '1.0x';
+        if (soundTouch) {
             soundTouch.tempo = 1.0;
+        }
+    }
+
+    function resetPitch() {
+        pitchSlider.value = 0;
+        pitchValue.textContent = '0 meios tons';
+        if (soundTouch) {
             soundTouch.pitch = 1.0;
         }
-        
-        // Controlo de velocidade
-        const speedSlider = document.getElementById('speedSlider');
-        const speedValue = document.getElementById('speedValue');
-        
-        speedSlider.addEventListener('input', function() {
-            const speed = parseFloat(this.value);
-            speedValue.textContent = `${speed.toFixed(1)}x`;
-            if (soundTouch) {
-                soundTouch.tempo = speed;
-            }
-        });
-        
-        // Controlo de pitch
-        const pitchSlider = document.getElementById('pitchSlider');
-        const pitchValue = document.getElementById('pitchValue');
-        
-        pitchSlider.addEventListener('input', function() {
-            const semitones = parseInt(this.value);
-            pitchValue.textContent = `${semitones > 0 ? '+' : ''}${semitones} meios tons`;
-            if (soundTouch) {
-                // Converter semitons para ratio (2^(semitones/12))
-                const pitchRatio = Math.pow(2, semitones / 12);
-                soundTouch.pitch = pitchRatio;
-            }
-        });
-        
-        // Funções de reset
-        function resetSpeed() {
-            speedSlider.value = 1;
-            speedValue.textContent = '1.0x';
-            if (soundTouch) {
-                soundTouch.tempo = 1.0;
-            }
-        }
-        
-        function resetPitch() {
-            pitchSlider.value = 0;
-            pitchValue.textContent = '0 meios tons';
-            if (soundTouch) {
-                soundTouch.pitch = 1.0;
-            }
-        }
-        
-        // Controlo de reprodução
-        function togglePlayback() {
-            if (!audioBuffer) return;
-            
-            if (isPlaying) {
-                pausePlayback();
-            } else {
-                startPlayback();
-            }
-        }
-        
-        function startPlayback() {
-            if (!audioBuffer) return;
-            
-            initAudioContext();
-            
-            // Parar reprodução anterior se existir
-            if (sourceNode) {
-                sourceNode.stop();
-            }
-            
-            // Criar novo source node
-            sourceNode = audioContext.createBufferSource();
-            sourceNode.buffer = audioBuffer;
-            
-            // Aplicar efeitos SoundTouch (simulado com mudança de playback rate)
-            const tempo = parseFloat(speedSlider.value);
-            const pitchSemitones = parseInt(pitchSlider.value);
-            const pitchRatio = Math.pow(2, pitchSemitones / 12);
-            
-            // Para uma implementação completa do SoundTouch, seria necessário
-            // processar o buffer através da biblioteca SoundTouch
-            // Por agora, vamos simular com playbackRate
-            sourceNode.playbackRate.value = tempo * pitchRatio;
-            
-            sourceNode.connect(audioContext.destination);
-            
-            sourceNode.onended = () => {
-                stopPlayback();
-            };
-            
-            sourceNode.start(0, pauseTime);
-            startTime = audioContext.currentTime - pauseTime;
-            isPlaying = true;
-            
-            updatePlayButton();
-        }
-        
-        function pausePlayback() {
-            if (sourceNode && isPlaying) {
-                pauseTime = audioContext.currentTime - startTime;
-                sourceNode.stop();
-                isPlaying = false;
-                updatePlayButton();
-            }
-        }
-        
-        function stopPlayback() {
-            if (sourceNode) {
-                sourceNode.stop();
-                sourceNode = null;
-            }
-            isPlaying = false;
-            pauseTime = 0;
-            startTime = 0;
-            updatePlayButton();
-        }
-        
-        function updatePlayButton() {
-            const playBtn = document.getElementById('playBtn');
-            if (isPlaying) {
-                playBtn.textContent = '⏸️ Pausar';
-            } else {
-                playBtn.textContent = '▶️ Reproduzir';
-            }
-        }
-        
-        // Lidar com mudanças nos controlos durante a reprodução
-        speedSlider.addEventListener('input', function() {
-            if (isPlaying) {
-                pausePlayback();
-                setTimeout(startPlayback, 50);
-            }
-        });
-        
-        pitchSlider.addEventListener('input', function() {
-            if (isPlaying) {
-                pausePlayback();
-                setTimeout(startPlayback, 50);
-            }
-        });
-    </script>
+    }
+    
+    function resetControls() {
+        resetSpeed();
+        resetPitch();
+        stopPlayback();
+    }
+
+</script>
+  
 </body>
 </html>

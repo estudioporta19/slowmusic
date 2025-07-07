@@ -204,7 +204,11 @@ async function playAudio(cellNumber, startOffset = 0) {
     }
 
     // --- IMPORTANTE: Parar e limpar *antes* de configurar uma nova reprodução ---
-    stopCurrentAudio(); 
+    // Apenas chame stopCurrentAudio() se a célula atual for diferente da que será tocada,
+    // ou se já estiver tocando e for uma nova reprodução (não um resume/toggle).
+    if (currentCell !== cellNumber || isPlaying) {
+        stopCurrentAudio(); 
+    }
 
     // Desativar célula ativa anterior, se houver
     if (currentCell && document.querySelector(`.cell[data-cell-number="${currentCell}"]`)) {
@@ -215,12 +219,10 @@ async function playAudio(cellNumber, startOffset = 0) {
     currentCell = cellNumber;
     document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
 
-    // Se mudou de faixa, limpar loop
-    // Isso previne que um loop de uma faixa anterior afete a nova faixa
-    if (audioData.lastCellId !== currentCell) { 
-        clearLoop(); // Certifica-se de que o loop é limpo ao mudar de faixa
-    }
-    audioData.lastCellId = currentCell; 
+    // Se mudou de faixa, limpar loop - esta lógica deve estar fora do playAudio
+    // para evitar que o clearLoop() chame playAudio() novamente
+    // e criemos um loop infinito de chamadas.
+    // O clearLoop já foi reescrito para não chamar playAudio.
 
     // --- Configurar e Iniciar Tone.GrainPlayer ---
     const player = audioData.player;
@@ -392,8 +394,7 @@ function togglePlayPause() {
         // Reproduzir: Inicia do último tempo de pausa ou do início
         const resumeTime = audioData.lastPlaybackTime || 0;
         playAudio(currentCell, resumeTime);
-        // O lastPlaybackTime é resetado dentro de stopCurrentAudio()
-        // ou quando uma nova faixa é iniciada.
+        audioData.lastPlaybackTime = 0; // Reseta após retomar a reprodução
     }
 }
 
@@ -448,15 +449,18 @@ function activateLoop() {
         isLooping = true;
         // Aplica o loop no player se estiver a tocar
         if (isPlaying && currentCell && audioFiles[currentCell].player) {
-            audioFiles[currentCell].player.loop = true;
-            audioFiles[currentCell].player.loopStart = loopPoints.start;
-            audioFiles[currentCell].player.loopEnd = loopPoints.end;
-            // Se já estiver a tocar e os pontos de loop forem definidos, 
-            // precisamos reiniciar o player para que ele "pegue" os novos limites de loop imediatamente.
-            // Para evitar o "eco", vamos parar e iniciar de novo, mantendo o tempo atual.
-            const currentPlayerTime = audioFiles[currentCell].player.toSeconds(audioFiles[currentCell].player.immediate());
-            stopCurrentAudio(); // Limpa completamente o player anterior
-            playAudio(currentCell, currentPlayerTime); // Inicia do tempo atual com os novos loops
+            const player = audioFiles[currentCell].player;
+            player.loop = true;
+            player.loopStart = loopPoints.start;
+            player.loopEnd = loopPoints.end;
+            
+            // NÃO reinicie o player aqui. Tone.js atualiza as propriedades de loop em tempo real.
+            // Apenas reajuste a posição se a posição atual estiver fora do novo loop.
+            const currentPlayerTime = player.toSeconds(player.immediate());
+            if (currentPlayerTime < loopPoints.start || currentPlayerTime >= loopPoints.end) {
+                player.stop(); // Paramos para reposicionar, não para evitar eco
+                player.start(0, loopPoints.start); // Inicia do início do novo loop
+            }
         }
         updateLoopDisplay();
         updateLoopMarkers();
@@ -469,12 +473,10 @@ function clearLoop() {
     isLooping = false;
     // Remove o loop do player se estiver a tocar
     if (currentCell && audioFiles[currentCell] && audioFiles[currentCell].player) {
-        audioFiles[currentCell].player.loop = false;
-        // Se o loop foi desativado enquanto tocava, precisamos reiniciar o player
-        // para que ele não tente loopar mais.
-        const currentPlayerTime = audioFiles[currentCell].player.toSeconds(audioFiles[currentCell].player.immediate());
-        stopCurrentAudio(); // Limpa o player anterior
-        playAudio(currentCell, currentPlayerTime); // Inicia do tempo atual sem loop
+        const player = audioFiles[currentCell].player;
+        player.loop = false;
+        // Não precisamos reiniciar o player aqui, apenas mudamos a propriedade loop.
+        // Se o áudio está a tocar e o loop é desativado, ele continuará até ao fim.
     }
     document.getElementById('pointA').textContent = '--';
     document.getElementById('pointB').textContent = '--';
@@ -563,7 +565,15 @@ progressBar.addEventListener('mousedown', (e) => {
         const percentage = clickX / rect.width;
         const newTime = percentage * audioFiles[currentCell].toneBuffer.duration;
         
-        playAudio(currentCell, newTime); // Inicia do novo tempo
+        // Se clicar na barra de progresso, queremos saltar para essa posição
+        if (isPlaying && currentCell && audioFiles[currentCell].player) {
+            const player = audioFiles[currentCell].player;
+            player.stop(); // Parar para reposicionar
+            player.start(0, newTime); // Iniciar na nova posição
+            isPlaying = true; // Confirmar que estamos a tocar
+        } else if (currentCell) { // Se não estava a tocar, mas há uma célula selecionada
+            playAudio(currentCell, newTime); // Iniciar a reprodução na nova posição
+        }
     }
 });
 

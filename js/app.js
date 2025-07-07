@@ -149,8 +149,10 @@ globalFileInput.addEventListener('change', async (event) => {
             
             const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('.');
 
-            // Criar um nó PitchShift e um Player para reprodução limpa
-            const pitchShift = new Tone.PitchShift().toDestination();
+            // Criar um nó PitchShift com overlap ajustado para tentar melhorar a qualidade
+            const pitchShift = new Tone.PitchShift({
+                overlap: 0.9 // Aumentado o overlap para tentar reduzir artefactos
+            }).toDestination();
             const player = new Tone.Player(toneBuffer).connect(pitchShift);
             
             player.loop = false; 

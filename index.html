@@ -1107,20 +1107,25 @@ function animatePlaybackIndicator() {
         loopBValueEl.textContent = formatTime(loopB);
         updateLoopIndicators(); 
 
-        // --- NOVAS LINHAS AQUI ---
         loopEnabled = true; // Ativa o modo de loop
         toggleLoopBtn.textContent = 'Loop ON ✅'; // Atualiza o texto do botão
         toggleLoopBtn.style.background = 'linear-gradient(45deg, #1abc9c, #16a085)'; // Atualiza o estilo do botão
+
+        // --- NOVAS LINHAS AQUI: Aplica os valores de speed e pitch guardados ---
+        speedSlider.value = loopToApply.speed !== undefined ? loopToApply.speed : 1.0; // Usa 1.0 como padrão se não existir
+        pitchSlider.value = loopToApply.pitch !== undefined ? loopToApply.pitch : 0;   // Usa 0 como padrão se não existir
+        speedValue.textContent = `${parseFloat(speedSlider.value).toFixed(1)}x`;
+        pitchValue.textContent = `${parseInt(pitchSlider.value) > 0 ? '+' : ''}${parseInt(pitchSlider.value)} semitons`;
+        updateSoundTouchSettings(); // Chama para aplicar as novas configurações ao AudioWorkletNode
         // --- FIM DAS NOVAS LINHAS ---
 
         alert(`Loop "${loopToApply.name}" para "${loopToApply.fileName}" aplicado e a reproduzir!`);
 
         // Inicia a reprodução a partir do ponto A do loop
         seekPosition = loopA; 
-        stopPlayback(); // Garante que qualquer reprodução anterior é parada e os nós são limpos
-        startPlayback(); // Inicia a reprodução com o loop ativado
-    } 
-
+        stopPlayback(); 
+        startPlayback(); 
+    }
     function renderSavedLoops() {
         savedLoopsListEl.innerHTML = ''; 
 

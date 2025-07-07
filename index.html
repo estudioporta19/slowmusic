@@ -255,7 +255,7 @@
             background: rgba(255, 255, 0, 0.2); /* Marcador de loop amarelo suave */
             border-radius: 5px;
             display: none; /* Inicia oculto */
-            pointer-events: none; /* Não deve interferir com o clique na barra */
+            pointer-events: none; /* Não deve interferir com o clique na barra (por padrão) */
         }
 
         .loop-markers::before,
@@ -294,16 +294,16 @@
             cursor: ew-resize; /* Cursor de redimensionamento horizontal */
             z-index: 10; /* Acima da barra de preenchimento e do marcador de loop */
             box-shadow: 0 0 8px rgba(241, 196, 15, 0.6);
+            /* Importante: para que o clique seja capturado pelo handle e não pela progressBar */
+            pointer-events: all;
         }
 
         .loop-handle-start {
             left: -8px; /* Metade da largura para centralizar no ponto de início */
-            /* Se for para ficar fora da área amarela do loop-markers, use left: 0; */
         }
 
         .loop-handle-end {
             right: -8px; /* Metade da largura para centralizar no ponto de fim */
-            /* Se for para ficar fora da área amarela do loop-markers, use right: 0; */
         }
         /* FIM DOS NOVOS ESTILOS */
 
@@ -521,7 +521,7 @@
                 }
             }
 
-            clearLoop();
+            clearLoop(); // Limpar loop ao trocar de ficheiro
 
             audioPlayer.src = newAudioSrc;
             audioPlayer.load();
@@ -739,13 +739,13 @@
                 activeLoopHandle = 'end';
             } else {
                 // Se o clique não foi nos handles, comporta-se como um clique normal na barra
+                // Agora, apenas muda o tempo de reprodução, sem limpar o loop!
                 const rect = progressBar.getBoundingClientRect();
                 const clickX = e.clientX - rect.left;
                 const percentage = clickX / rect.width;
                 const newTime = percentage * currentAudio.duration;
                 currentAudio.currentTime = newTime;
-                // Se não está a arrastar, e clica na barra, resetar os pontos do loop
-                clearLoop(); 
+                // Não chame clearLoop() aqui!
             }
         });
 
@@ -825,15 +825,11 @@
             }
             currentAudio = null;
             currentCell = null;
-            clearLoop();
+            clearLoop(); // O loop é limpo quando a música termina
             progressFill.style.width = '0%';
             document.getElementById('currentTime').textContent = '0:00';
             document.getElementById('totalTime').textContent = '0:00';
         });
-
-        // Clique na barra de progresso para navegar (mantido, mas com caveat para drag)
-        // A lógica de click na barra agora está no mousedown listener para a progressBar
-        // para decidir se é drag ou jump.
 
         function formatTime(seconds) {
             if (isNaN(seconds) || seconds < 0) return '0:00';

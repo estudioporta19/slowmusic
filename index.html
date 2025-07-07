@@ -1036,8 +1036,12 @@ function animatePlaybackIndicator() {
             return;
         }
         
-        // --- NOVO: Obtém o nome do ficheiro ativo ---
         const currentFileName = audioFiles[activeFileIndex].name;
+        
+        // --- NOVAS LINHAS AQUI: Captura os valores atuais de speed e pitch ---
+        const currentSpeed = parseFloat(speedSlider.value);
+        const currentPitch = parseInt(pitchSlider.value);
+        // --- FIM DAS NOVAS LINHAS ---
 
         // Verifica se já existe um loop com o mesmo nome PARA ESTE FICHEIRO
         if (savedLoops.some(loop => loop.name === name && loop.fileName === currentFileName)) {
@@ -1052,7 +1056,9 @@ function animatePlaybackIndicator() {
             name: name,
             loopA: loopA,
             loopB: loopB,
-            fileName: currentFileName // --- NOVO: Associa o nome do ficheiro ---
+            fileName: currentFileName,
+            speed: currentSpeed, // --- NOVO: Guarda a velocidade ---
+            pitch: currentPitch  // --- NOVO: Guarda o tom ---
         };
 
         savedLoops.push(newLoop);

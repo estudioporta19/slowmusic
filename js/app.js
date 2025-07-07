@@ -194,8 +194,12 @@ function stopCurrentAudio() {
     // Limpa o intervalo de atualização da barra de progresso
     clearInterval(progressUpdateInterval);
     progressUpdateInterval = null;
+    // Garante que o volume está no padrão se nada estiver a tocar
+    currentGainNode.gain.cancelAndHoldAtTime(audioContext.currentTime);
+    currentGainNode.gain.setValueAtTime(1, audioContext.currentTime); // Reset volume to 1
 }
 
+// Função para iniciar a reprodução com fade in
 function playAudio(cellNumber, startOffset = 0) {
     const audioData = audioFiles[cellNumber];
 
@@ -205,8 +209,8 @@ function playAudio(cellNumber, startOffset = 0) {
     }
 
     // Parar qualquer reprodução existente antes de iniciar uma nova
-    stopCurrentAudio();
-    
+    stopCurrentAudio(); // Esta função já zera currentSourceNode e isPlaying
+
     // Desativar célula ativa anterior, se houver
     if (currentCell && document.querySelector(`.cell[data-cell-number="${currentCell}"]`)) {
         document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
@@ -217,11 +221,10 @@ function playAudio(cellNumber, startOffset = 0) {
     document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
 
     // Se mudou de faixa, limpar loop
-    // Verificação simplificada, sempre limpa o loop se a célula mudar
     if (audioData.lastCellId !== currentCell) { 
         clearLoop();
     }
-    audioData.lastCellId = currentCell; // Marca a última célula para referência
+    audioData.lastCellId = currentCell; 
 
     // --- Configurar e Iniciar Web Audio API Playback ---
     currentSourceNode = audioContext.createBufferSource();
@@ -243,7 +246,7 @@ function playAudio(cellNumber, startOffset = 0) {
     // Lidar com o final da reprodução ou loop
     currentSourceNode.onended = () => {
         if (!isLooping) {
-            stopCurrentAudio(); // Limpar tudo
+            stopCurrentAudio(); 
             // Resetar UI para estado inicial
             if (currentCell) {
                 document.querySelector(`.cell[data-cell-number="${currentCell}"]`).classList.remove('active');
@@ -256,13 +259,17 @@ function playAudio(cellNumber, startOffset = 0) {
         } else {
             // Se estiver em loop, reiniciar a reprodução do ponto de loop
             if (loopPoints.start !== null && loopPoints.end !== null) {
-                // Usamos playAudio para recriar o nó de forma limpa e aplicar as configs
-                playAudio(currentCell, loopPoints.start);
+                // Reinicia a reprodução com fade
+                playAudioWithFade(currentCell, loopPoints.start);
             }
         }
     };
 
-    currentSourceNode.start(0, startOffset); // Iniciar no offset fornecido
+    // Iniciar a reprodução com um pequeno fade-in
+    currentGainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    currentSourceNode.start(0, startOffset); 
+    currentGainNode.gain.linearRampToValueAtTime(1, audioContext.currentTime + 0.05); // Fade in de 50ms
+    
     isPlaying = true;
 
     // Inicia ou reinicia o intervalo de atualização da barra de progresso
@@ -278,7 +285,6 @@ function playAudio(cellNumber, startOffset = 0) {
 
         let elapsedTime = (audioContext.currentTime - currentSourceNode._startTime) * currentSourceNode.playbackRate.value + currentSourceNode._seekOffset;
         
-        // Limita o tempo decorrido para não exceder a duração total (ou o ponto final do loop) para o display
         const displayDuration = isLooping && loopPoints.end !== null ? loopPoints.end : audioData.audioBuffer.duration;
         if (elapsedTime >= displayDuration) {
             elapsedTime = displayDuration; 
@@ -292,14 +298,37 @@ function playAudio(cellNumber, startOffset = 0) {
     }, 100);
 }
 
+// Função auxiliar para gerir a reprodução com fade (usada internamente pelos sliders e loops)
+function playAudioWithFade(cellNumber, startOffset) {
+    if (!currentSourceNode || !isPlaying) { // Se não estiver a tocar, apenas inicia normalmente
+        playAudio(cellNumber, startOffset);
+        return;
+    }
+
+    const fadeDuration = 0.05; // 50ms para fade out/in
+
+    // 1. Fade out
+    currentGainNode.gain.cancelAndHoldAtTime(audioContext.currentTime); // Cancela automações anteriores
+    currentGainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + fadeDuration);
+
+    setTimeout(() => {
+        // 2. Parar o áudio existente (já está em 0 volume)
+        stopCurrentAudio(); // Isso também define isPlaying = false e limpa o currentSourceNode
+
+        // 3. Iniciar o novo áudio com fade-in
+        playAudio(cellNumber, startOffset); 
+
+    }, fadeDuration * 1000); // Converte para milissegundos
+}
+
+
 // --- Controles de Velocidade e Pitch ---
 speedSlider.addEventListener('input', (e) => {
     const newSpeed = parseFloat(e.target.value);
     applySpeedToDisplay(newSpeed); // Atualiza apenas o display
     if (isPlaying && currentCell !== null) {
-        // Se estiver a tocar, reinicia a reprodução com as novas configurações
         const currentTime = (audioContext.currentTime - currentSourceNode._startTime) * currentSourceNode.playbackRate.value + currentSourceNode._seekOffset;
-        playAudio(currentCell, currentTime);
+        playAudioWithFade(currentCell, currentTime); // Usa a nova função com fade
     }
 });
 speedSlider.addEventListener('mouseup', function() { this.blur(); });
@@ -309,9 +338,8 @@ pitchSlider.addEventListener('input', (e) => {
     const newPitch = parseInt(e.target.value);
     applyPitchToDisplay(newPitch); // Atualiza apenas o display
     if (isPlaying && currentCell !== null) {
-        // Se estiver a tocar, reinicia a reprodução com as novas configurações
         const currentTime = (audioContext.currentTime - currentSourceNode._startTime) * currentSourceNode.playbackRate.value + currentSourceNode._seekOffset;
-        playAudio(currentCell, currentTime);
+        playAudioWithFade(currentCell, currentTime); // Usa a nova função com fade
     }
 });
 pitchSlider.addEventListener('mouseup', function() { this.blur(); });
@@ -362,15 +390,22 @@ function togglePlayPause() {
     }
 
     if (isPlaying) {
-        // Pausar: Guarda o tempo atual e para o áudio
+        // Pausar: Guarda o tempo atual e para o áudio com fade out
         const currentTime = (audioContext.currentTime - currentSourceNode._startTime) * currentSourceNode.playbackRate.value + currentSourceNode._seekOffset;
-        audioFiles[currentCell].lastPlaybackTime = Math.max(0, currentTime); // Garante que não seja negativo
+        audioFiles[currentCell].lastPlaybackTime = Math.max(0, currentTime); 
         
-        stopCurrentAudio();
+        const fadeDuration = 0.05; // 50ms para fade out
+        currentGainNode.gain.cancelAndHoldAtTime(audioContext.currentTime);
+        currentGainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + fadeDuration);
+
+        setTimeout(() => {
+            stopCurrentAudio();
+        }, fadeDuration * 1000);
+
     } else {
-        // Reproduzir: Inicia do último tempo de pausa ou do início
+        // Reproduzir: Inicia do último tempo de pausa ou do início com fade in
         const resumeTime = audioFiles[currentCell].lastPlaybackTime || 0;
-        playAudio(currentCell, resumeTime);
+        playAudio(currentCell, resumeTime); // playAudio já tem fade in
         audioFiles[currentCell].lastPlaybackTime = 0; // Limpa após retomar
     }
 }
@@ -513,7 +548,7 @@ progressBar.addEventListener('mousedown', (e) => {
         const percentage = clickX / rect.width;
         const newTime = percentage * audioFiles[currentCell].audioBuffer.duration;
         
-        playAudio(currentCell, newTime); // Inicia do novo tempo
+        playAudioWithFade(currentCell, newTime); // Usa a função com fade
     }
 });
 
@@ -564,7 +599,7 @@ document.getElementById('cellGrid').addEventListener('click', function(event) {
         if (currentCell === cellNumber) { // Se clicou na célula já ativa
             togglePlayPause();
         } else { // Se clicou numa nova célula
-            playAudio(cellNumber);
+            playAudio(cellNumber); // Nova faixa sempre começa sem fade out antes
         }
     }
 });

@@ -109,7 +109,7 @@ function clearAllCells() {
     globalUploadStatus.textContent = 'Células limpas.';
     document.getElementById('currentTime').textContent = '0:00';
     document.getElementById('totalTime').textContent = '0:00';
-    progressFill.style.width = '0%';
+    progressFill.style.width = '0%'; 
     clearLoop(); // Assegura que o loop é limpo também
 }
 
@@ -536,7 +536,8 @@ function updateLoopMarkers() {
 
 // --- Lógica de Arraste dos Marcadores e Cliques na ProgressBar ---
 progressBar.addEventListener('mousedown', (e) => {
-    if (!audioFiles[currentCell] || !audioFiles[currentFiles].toneBuffer || !audioFiles[currentCell].toneBuffer.loaded) return; // Corrigido aqui: currentFiles para currentCell
+    // CORREÇÃO AQUI: 'currentFiles' foi alterado para 'currentCell'
+    if (!audioFiles[currentCell] || !audioFiles[currentCell].toneBuffer || !audioFiles[currentCell].toneBuffer.loaded) return;
 
     if (e.target === loopHandleA) {
         isDraggingLoopHandle = true;

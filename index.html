@@ -270,7 +270,7 @@
     audioFileEl.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
-            stopPlayback();
+            stopPlayback(); // Para qualquer reprodução anterior e reseta seekPosition
             loadAudioFile(file);
         }
     });
@@ -286,10 +286,10 @@
         reader.onload = async (e) => {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                // AQUI É ONDE O AUDIO WORKLET É ADICIONADO AO CONTEXTO DE ÁUDIO
+                // AQUI É ONDE O AUDIO WORKLET É ADICIONADO AO CONTEXTO DE ÁUDIO PELA PRIMEIRA VEZ
                 try {
                     await audioContext.audioWorklet.addModule('./soundtouch-worklet.js');
-                    console.log('AudioWorklet "scheduled-soundtouch-worklet" carregado com sucesso.'); // Log atualizado
+                    console.log('AudioWorklet "scheduled-soundtouch-worklet" carregado com sucesso.');
                 } catch (error) {
                     console.error('Erro ao carregar AudioWorklet:', error);
                     loadingStatusEl.textContent = 'Erro fatal: Não foi possível carregar o processador de áudio!';
@@ -302,7 +302,7 @@
                     loadingStatusEl.textContent = 'Pronto a tocar!';
                     setTimeout(() => { loadingStatusEl.style.display = 'none'; }, 2000);
                     controlsEl.style.display = 'block';
-                    resetControls();
+                    resetControls(); // Reseta os sliders e a posição de reprodução
                 })
                 .catch(error => {
                     console.error('Erro ao descodificar áudio:', error);
@@ -330,9 +330,8 @@
     async function startPlayback() {    
         if (isPlaying || !audioBuffer) return;
         
-        // Se o contexto não estiver pronto ou o worklet não estiver carregado, isso será tratado em loadAudioFile
         if (!audioContext) {
-            console.error('AudioContext não inicializado.');
+            console.error('AudioContext não inicializado. Carregue um ficheiro de áudio primeiro.');
             return;
         }
 
@@ -340,96 +339,92 @@
             await audioContext.resume();
         }
 
+        // SEMPRE RECRIAR sourceNode e soundtouchWorkletNode para evitar DataCloneError
         sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = audioBuffer;
 
-        // Instanciar o AudioWorkletNode após o módulo ter sido adicionado
-        // CORREÇÃO: Usar o nome correto do processador
+        // Instanciar o AudioWorkletNode com o nome correto
         soundtouchWorkletNode = new AudioWorkletNode(audioContext, 'scheduled-soundtouch-worklet');
 
+        // Ligar os nós
         sourceNode.connect(soundtouchWorkletNode);
         soundtouchWorkletNode.connect(audioContext.destination);
 
-        // Comunicação com o AudioWorklet para passar os dados do buffer
-        // Note: Para um uso eficiente em AudioWorklets, o ideal seria passar o AudioBuffer por Transferable
-        // Mas para simplificar o exemplo, vamos simular o envio de dados que o worklet precisa
-        // No seu worklet, a inicialização espera 'bufferProps', 'leftChannel', 'rightChannel'
-        // Você precisaria de uma forma de enviar estes dados para o worklet.
-        // O código do seu worklet 'ScheduledSoundTouchWorklet' parece esperar os canais via mensagem de porta.
-        // Vamos enviar uma mensagem para inicializar o worklet com os dados do buffer.
-        // Esta parte é crucial e pode precisar de mais refinamento dependendo de como você quer que o worklet opere.
+        // Preparar os dados para o worklet, criando CÓPIAS para transferência
         const bufferProps = {
             sampleRate: audioBuffer.sampleRate,
             numberOfChannels: audioBuffer.numberOfChannels,
             length: audioBuffer.length,
             duration: audioBuffer.duration
         };
-        const leftChannelData = audioBuffer.getChannelData(0);
-        const rightChannelData = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : audioBuffer.getChannelData(0);
+        const leftChannelData = audioBuffer.getChannelData(0).slice(); // .slice() cria uma cópia
+        const rightChannelData = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1).slice() : audioBuffer.getChannelData(0).slice();
 
+        // Enviar os dados do buffer para o worklet, transferindo as cópias
         soundtouchWorkletNode.port.postMessage({
             message: 'INITIALIZE_PROCESSOR',
             detail: [bufferProps, leftChannelData, rightChannelData]
-        }, [leftChannelData.buffer, rightChannelData.buffer]); // Transferir os buffers para o worklet
+        }, [leftChannelData.buffer, rightChannelData.buffer]); // Transferir os buffers
 
+        // Definir os AudioParams para o worklet
+        soundtouchWorkletNode.parameters.get('offsetSamples').value = Math.round(seekPosition * audioBuffer.sampleRate);
+        soundtouchWorkletNode.parameters.get('playbackDurationSamples').value = audioBuffer.length; // Duração total em samples
+
+        // Ouve a mensagem de "pronto" do worklet ANTES de começar a reprodução do sourceNode
         soundtouchWorkletNode.port.onmessage = (event) => {
             if (event.data.message === 'PROCESSOR_READY') {
                 console.log('Worklet processador inicializado e pronto.');
-                // Só depois do processador estar pronto é que se deve começar a reprodução
-                // No entanto, o seu worklet usa parameters para pitch/tempo, o que é síncrono.
-                // A reprodução já pode começar aqui se os parâmetros já foram definidos.
-                sourceNode.start(0, seekPosition);
+                updateSoundTouchSettings(); // Aplica as configurações iniciais dos sliders
+                sourceNode.start(0); // Começa o sourceNode do início do seu buffer
+                                     // O worklet gerenciará o 'offsetSamples' interno
                 playbackStartTime = audioContext.currentTime;
                 isPlaying = true;
                 updatePlayButton();
             } else if (event.data.message === 'PROCESSOR_END') {
                 console.log('Reprodução terminada pelo processador.');
-                stopPlayback();
+                stopPlayback(); // O worklet indica o fim, então paramos tudo.
             }
         };
 
-
-        updateSoundTouchSettings();
-        
+        // Este onended do sourceNode pode ser menos crítico se o worklet gerir o fim,
+        // mas é um bom fallback.
         sourceNode.onended = () => {
-            // Este onended é para o SourceNode, não para o áudio processado pelo worklet.
-            // A lógica de fim de áudio deve vir do worklet.
             console.log('SourceNode terminou. Verificando o estado do worklet.');
-            if (!isPlaying) { // Se parou por comando do utilizador
-                return;
+            if (isPlaying) { // Se ainda estiver a tocar (o worklet não enviou PROCESSOR_END)
+                 stopPlayback(); // Força a paragem se o sourceNode acabar.
             }
-            // A lógica de "seekPosition >= audioBuffer.duration - 0.1" já não é ideal aqui
-            // porque o tempo do worklet pode ser diferente devido a mudanças de tempo/pitch.
-            // O worklet envia 'PROCESSOR_END' quando termina.
         };
     }
 
     function pausePlayback() {
         if (!isPlaying || !sourceNode) return;
         
-        // Aqui, a lógica de seekPosition precisa ser mais robusta com o worklet.
-        // Idealmente, o worklet reportaria a posição atual de reprodução.
-        // Por simplicidade, vamos parar e re-inicializar o worklet no play
-        stopPlayback(); // stopPlayback já redefine seekPosition a 0
-        // Para uma verdadeira pausa, você precisaria de uma mensagem 'pause' para o worklet
-        // e ele deveria manter seu estado interno (seekPosition)
-        // Por enquanto, esta simula uma 'stop' e 'start' do início ou da última seekPosition
+        // Para uma verdadeira pausa, precisaria de uma lógica mais avançada
+        // para obter a posição atual do worklet e depois retomar.
+        // Por agora, vamos simular uma "paragem e reinício" para simplificar.
+        // Capturar a posição atual antes de parar
+        const currentTempo = soundtouchWorkletNode ? soundtouchWorkletNode.parameters.get('tempo').value : 1.0;
+        const elapsed = audioContext.currentTime - playbackStartTime;
+        seekPosition += elapsed * currentTempo; // Aproximação da posição com base no tempo
+
+        stopPlayback(); // Irá parar e redefinir nodes, mas mantém seekPosition
+        isPlaying = false; // Define como pausado
+        updatePlayButton();
     }
     
     function stopPlayback() {
         if (sourceNode) {
             sourceNode.stop();
             sourceNode.disconnect();
-            sourceNode = null; // Limpar o node
+            sourceNode = null; // Important: Anular o node para permitir recriação
         }
         if (soundtouchWorkletNode) {    
-            // Envia uma mensagem para o worklet para ele resetar o seu estado interno
-            soundtouchWorkletNode.port.postMessage({ message: 'STOP' });
+            soundtouchWorkletNode.port.postMessage({ message: 'STOP' }); // Informa o worklet para parar
             soundtouchWorkletNode.disconnect();
-            soundtouchWorkletNode = null; // Limpar o node
+            soundtouchWorkletNode = null; // Important: Anular o node para permitir recriação
         }
         isPlaying = false;
-        seekPosition = 0;    
+        seekPosition = 0; // Redefine a posição para o início
         updatePlayButton();
     }
     

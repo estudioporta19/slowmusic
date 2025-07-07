@@ -1,0 +1,300 @@
+/* style.css */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #1a1a1a; /* Fundo preto mais suave */
+    min-height: 100vh;
+    padding: 20px;
+    color: white; /* Letras brancas */
+}
+
+.container {
+    max-width: 1300px; /* Aumentado para acomodar 5 colunas */
+    margin: 0 auto;
+    background: rgba(30, 30, 30, 0.9); /* Fundo do container mais escuro e opaco */
+    backdrop-filter: blur(5px); /* Efeito de blur mais subtil */
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); /* Sombra mais intensa */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Borda suave */
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.8em;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6); /* Sombra de texto mais escura */
+    color: #e0e0e0; /* Título ligeiramente acinzentado para contraste */
+}
+
+.global-upload-section {
+    text-align: center;
+    margin-bottom: 25px;
+    padding: 15px;
+    background: rgba(40, 40, 40, 0.8);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.global-upload-section button,
+.global-upload-section input {
+    margin: 5px;
+}
+
+.upload-btn {
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+}
+
+.upload-btn:hover {
+    background: linear-gradient(45deg, #c0392b, #a03025);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.cell {
+    background: rgba(40, 40, 40, 0.8);
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    min-height: 80px;
+    text-align: center;
+    word-break: break-word;
+}
+
+.cell:hover {
+    background: rgba(60, 60, 60, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.cell.active {
+    background: rgba(70, 70, 70, 0.95);
+    border-color: #e74c3c;
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.5);
+}
+
+.file-name {
+    font-size: 0.8em;
+    margin: 0;
+    color: #ccc;
+}
+
+.controls {
+    background: rgba(40, 40, 40, 0.8);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.control-group {
+    margin-bottom: 15px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #e0e0e0;
+}
+
+.slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #e74c3c;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+}
+
+.slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #e74c3c;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+}
+
+.keyboard-shortcuts {
+    background: rgba(40, 40, 40, 0.8);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.keyboard-shortcuts h3 {
+    color: #e0e0e0;
+    margin-bottom: 15px;
+}
+
+.shortcut-info {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.shortcut-info span {
+    margin-right: 15px;
+    margin-bottom: 8px;
+}
+
+.key {
+    background: rgba(60, 60, 60, 0.8);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-family: monospace;
+    font-weight: bold;
+    color: #e0e0e0;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.loop-indicator {
+    background: rgba(40, 40, 40, 0.8);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.loop-active {
+    background: rgba(231, 76, 60, 0.2);
+    border: 2px solid #e74c3c;
+}
+
+.loop-point-highlight {
+    color: #f1c40f;
+    font-weight: bold;
+    transition: color 0.3s ease-in-out, font-weight 0.3s ease-in-out;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    margin: 10px 0;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e74c3c, #c0392b);
+    border-radius: 5px;
+    transition: width 0.1s ease;
+}
+
+.loop-markers {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: rgba(255, 255, 0, 0.2);
+    border-radius: 5px;
+    display: none;
+    pointer-events: none;
+}
+
+.loop-markers::before,
+.loop-markers::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    bottom: -5px;
+    width: 2px;
+    background-color: #f1c40f;
+    z-index: 1;
+}
+
+.loop-markers::before {
+    left: 0;
+}
+
+.loop-markers::after {
+    right: 0;
+}
+
+.loop-markers.active {
+    display: block;
+}
+
+.loop-handle {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    background-color: #f1c40f;
+    border-radius: 50%;
+    border: 2px solid #e0b300;
+    cursor: ew-resize;
+    z-index: 10;
+    box-shadow: 0 0 8px rgba(241, 196, 15, 0.6);
+    pointer-events: all; /* Permite que o clique seja capturado pelo handle */
+}
+
+.loop-handle-start {
+    left: -8px;
+}
+
+.loop-handle-end {
+    right: -8px;
+}
+
+.time-display {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9em;
+    margin-top: 5px;
+    color: #ccc;
+}

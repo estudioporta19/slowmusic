@@ -197,17 +197,122 @@ class PitchShifter extends SoundTouch {
 // --- FIM DO CÓDIGO INCORPORADO DO PITCHSHIFTER ---
 
 
-// --- Variáveis Globais e Referências de Elementos (Continuação) ---
-// ... (restante das variáveis globais, sem alterações) ...
+// --- Variáveis Globais e Referências de Elementos ---
+let audioFiles = {}; // Guarda { cellNumber: { fileURL: string, audioBuffer: AudioBuffer, fileName: string, shifter: PitchShifter, lastPlaybackTime: number } }
+let currentCell = null; // Guarda o número da célula ativa
+
+let loopPoints = { start: null, end: null };
+let isLooping = false;
+
+// Flag para saber se estamos a tocar
+let isPlaying = false; 
+
+// Referências de elementos HTML
+const progressBar = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
+const loopMarkers = document.getElementById('loopMarkers');
+const loopHandleA = document.getElementById('loopHandleA');
+const loopHandleB = document.getElementById('loopHandleB');
+
+const globalFileInput = document.getElementById('globalFileInput');
+const globalUploadBtn = document.getElementById('globalUploadBtn');
+const globalUploadStatus = document.getElementById('globalUploadStatus');
+const clearCellsBtn = document.getElementById('clearCellsBtn');
+
+const speedSlider = document.getElementById('speedSlider');
+const speedValue = document.getElementById('speedValue');
+
+const pitchSlider = document.getElementById('pitchSlider');
+const pitchValue = document.getElementById('pitchValue');
+
+const totalCells = 20;
+
+let isDraggingLoopHandle = false;
+let activeLoopHandle = null; // 'start' or 'end'
+
+let progressUpdateInterval = null; // Para controlar o setInterval
+
+// Criar um AudioContext global para SoundTouch.js
+let audioCtx;
+
+// --- Funções Auxiliares ---
+function formatTime(seconds) {
+    if (isNaN(seconds) || seconds < 0) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// --- Gestão de Células ---
+function createCells() {
+    const grid = document.getElementById('cellGrid');
+    grid.innerHTML = '';
+    for (let i = 1; i <= totalCells; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.setAttribute('data-cell-number', i);
+        cell.innerHTML = `
+            <div class="file-name" id="fileName${i}">Vazia</div>
+        `;
+        grid.appendChild(cell);
+    }
+}
+
+// --- Lógica de Limpeza de Células (MOVIDA PARA CIMA) ---
+function clearAllCells() { // <-- ESTA FUNÇÃO FOI MOVIDA PARA CIMA
+    stopCurrentAudio(); // Parar e limpar qualquer reprodução atual
+
+    for (let i = 1; i <= totalCells; i++) {
+        if (audioFiles[i]) {
+            if (audioFiles[i].fileURL) {
+                URL.revokeObjectURL(audioFiles[i].fileURL); // Libera o URL do ficheiro
+            }
+            if (audioFiles[i].shifter) {
+                audioFiles[i].shifter.disconnect(); // Desconecta o shifter
+                // SoundTouch.js não tem um método dispose() explícito para o PitchShifter,
+                // mas desconectar e remover referências ajuda o garbage collector.
+            }
+            if (audioFiles[i].audioBuffer) {
+                // Não há um método dispose() para AudioBuffer, será coletado pelo GC
+            }
+        }
+        delete audioFiles[i]; 
+        document.getElementById(`fileName${i}`).textContent = 'Vazia';
+        const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
+        if (cell) cell.classList.remove('active');
+    }
+    globalUploadStatus.textContent = 'Células limpas.';
+    document.getElementById('currentTime').textContent = '0:00';
+    document.getElementById('totalTime').textContent = '0:00';
+    progressFill.style.width = '0%'; 
+    clearLoop(); // Assegura que o loop é limpo também
+}
+
 
 // --- Inicialização (Continuação) ---
-// ... (restante da inicialização, sem alterações) ...
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicializa o AudioContext com a primeira interação do utilizador.
+    // Isso é crucial para as políticas de autoplay dos navegadores.
+    const initializeAudioContext = () => {
+        if (!audioCtx || audioCtx.state === 'closed') {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('AudioContext resumed/initialized from user gesture.');
+        }
+        // Remove os listeners após a inicialização
+        document.documentElement.removeEventListener('mousedown', initializeAudioContext);
+        document.documentElement.removeEventListener('keydown', initializeAudioContext);
+    };
 
-// --- Funções Auxiliares (Continuação) ---
-// ... (restante das funções auxiliares, sem alterações) ...
+    document.documentElement.addEventListener('mousedown', initializeAudioContext, { once: true });
+    document.documentElement.addEventListener('keydown', initializeAudioContext, { once: true });
 
-// --- Gestão de Células (Continuação) ---
-// ... (restante da gestão de células, sem alterações) ...
+    createCells();
+    updateLoopDisplay();
+    applySpeedToDisplay(parseFloat(speedSlider.value));
+    applyPitchToDisplay(parseInt(pitchSlider.value));
+    updateLoopMarkers();
+});
+
 
 // --- Lógica de Carregamento e Reprodução de Áudio (SoundTouch.js) ---
 
@@ -229,7 +334,7 @@ globalFileInput.addEventListener('change', async (event) => {
     }
 
     globalUploadStatus.textContent = `A carregar ${files.length} ficheiro(s)...`;
-    clearAllCells(); // Limpa as células antes de carregar novos ficheiros
+    clearAllCells(); // <-- AGORA A FUNÇÃO ESTÁ DEFINIDA ANTES DE SER CHAMADA
 
     let filesLoaded = 0;
     let cellIndex = 1;
@@ -243,9 +348,6 @@ globalFileInput.addEventListener('change', async (event) => {
         }
 
         try {
-            // Não precisamos mais desta verificação `if (typeof SoundTouch === 'undefined' ...)`
-            // porque PitchShifter agora está definido localmente.
-
             // Ler o ficheiro como ArrayBuffer
             const arrayBuffer = await file.arrayBuffer();
             // Decodificar o ArrayBuffer para AudioBuffer usando o AudioContext

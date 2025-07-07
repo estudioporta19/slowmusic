@@ -255,7 +255,7 @@
             background: rgba(255, 255, 0, 0.2); /* Marcador de loop amarelo suave */
             border-radius: 5px;
             display: none; /* Inicia oculto */
-            pointer-events: none;
+            pointer-events: none; /* Não deve interferir com o clique na barra */
         }
 
         .loop-markers::before,
@@ -280,6 +280,32 @@
         .loop-markers.active {
             display: block; /* Ativa a visibilidade */
         }
+
+        /* NOVOS ESTILOS PARA OS DRAGGABLE MARKERS */
+        .loop-handle {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px; /* Largura do handle */
+            height: 16px; /* Altura do handle */
+            background-color: #f1c40f; /* Cor amarela */
+            border-radius: 50%;
+            border: 2px solid #e0b300; /* Borda mais escura */
+            cursor: ew-resize; /* Cursor de redimensionamento horizontal */
+            z-index: 10; /* Acima da barra de preenchimento e do marcador de loop */
+            box-shadow: 0 0 8px rgba(241, 196, 15, 0.6);
+        }
+
+        .loop-handle-start {
+            left: -8px; /* Metade da largura para centralizar no ponto de início */
+            /* Se for para ficar fora da área amarela do loop-markers, use left: 0; */
+        }
+
+        .loop-handle-end {
+            right: -8px; /* Metade da largura para centralizar no ponto de fim */
+            /* Se for para ficar fora da área amarela do loop-markers, use right: 0; */
+        }
+        /* FIM DOS NOVOS ESTILOS */
 
         .time-display {
             display: flex;
@@ -319,7 +345,10 @@
 
             <div class="progress-bar" id="progressBar">
                 <div class="progress-fill" id="progressFill"></div>
-                <div class="loop-markers" id="loopMarkers"></div>
+                <div class="loop-markers" id="loopMarkers">
+                    <div class="loop-handle loop-handle-start" id="loopHandleA"></div>
+                    <div class="loop-handle loop-handle-end" id="loopHandleB"></div>
+                </div>
             </div>
             
             <div class="time-display">
@@ -361,15 +390,22 @@
         const progressBar = document.getElementById('progressBar');
         const progressFill = document.getElementById('progressFill');
         const loopMarkers = document.getElementById('loopMarkers');
+        // NOVOS ELEMENTOS PARA DRAG
+        const loopHandleA = document.getElementById('loopHandleA');
+        const loopHandleB = document.getElementById('loopHandleB');
+
         const globalFileInput = document.getElementById('globalFileInput');
         const globalUploadBtn = document.getElementById('globalUploadBtn');
         const globalUploadStatus = document.getElementById('globalUploadStatus');
-        const clearCellsBtn = document.getElementById('clearCellsBtn'); // Adicionado
+        const clearCellsBtn = document.getElementById('clearCellsBtn');
         const speedSlider = document.getElementById('speedSlider');
         const speedValue = document.getElementById('speedValue');
         const speedPreset05 = document.getElementById('speedPreset05');
         const speedPreset10 = document.getElementById('speedPreset10');
-        const totalCells = 20; // Definir o número total de células
+        const totalCells = 20;
+
+        let isDraggingLoopHandle = false;
+        let activeLoopHandle = null; // 'start' or 'end'
 
         // Criar as células dinamicamente
         function createCells() {
@@ -378,8 +414,7 @@
             for (let i = 1; i <= totalCells; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-                cell.setAttribute('data-cell-number', i); // Atributo para identificar a célula
-                // Células sem número e sem botão de reprodução explícito
+                cell.setAttribute('data-cell-number', i);
                 cell.innerHTML = `
                     <div class="file-name" id="fileName${i}">Vazia</div>
                 `;
@@ -402,90 +437,82 @@
 
             globalUploadStatus.textContent = `A carregar ${files.length} ficheiro(s)...`;
             
-            // Limpar ficheiros anteriores e desativar células
-            // Reutiliza a lógica de limpeza para garantir um estado limpo antes de carregar novos
-            clearAllCells(); // Chama a nova função de limpeza
+            clearAllCells();
 
             let filesLoaded = 0;
             let cellIndex = 1;
 
-            // Distribuir ficheiros pelas células
             for (let i = 0; i < files.length && cellIndex <= totalCells; i++) {
                 const file = files[i];
 
                 if (!file.type.startsWith('audio/')) {
                     console.warn(`Ficheiro "${file.name}" não é um ficheiro de áudio. Ignorando.`);
-                    continue; // Pular para o próximo ficheiro
+                    continue;
                 }
 
                 const fileURL = URL.createObjectURL(file);
                 audioFiles[cellIndex] = fileURL;
                 
-                // Exibe apenas o nome do ficheiro, sem extensão
                 const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('.');
-                document.getElementById(`fileName${cellIndex}`).textContent = fileNameWithoutExtension || file.name; // Fallback para o nome completo
+                document.getElementById(`fileName${cellIndex}`).textContent = fileNameWithoutExtension || file.name;
                 
                 filesLoaded++;
                 cellIndex++;
             }
             globalUploadStatus.textContent = `${filesLoaded} ficheiro(s) carregado(s) com sucesso.`;
             if (filesLoaded === 0 && files.length > 0) {
-                 globalUploadStatus.textContent = 'Nenhum ficheiro de áudio válido carregado.';
+                globalUploadStatus.textContent = 'Nenhum ficheiro de áudio válido carregado.';
             }
-            event.target.value = ''; // Limpar o input para permitir carregar os mesmos ficheiros novamente
+            event.target.value = '';
         });
 
-        // Função para limpar todas as células - Nova função
+        // Função para limpar todas as células
         function clearAllCells() {
-            // Parar qualquer áudio a tocar
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio.currentTime = 0;
                 currentAudio = null;
                 currentCell = null;
-                clearLoop(); // Isso já limpa o loop, status e marcadores
+                clearLoop();
                 progressFill.style.width = '0%';
                 document.getElementById('currentTime').textContent = '0:00';
                 document.getElementById('totalTime').textContent = '0:00';
             }
 
-            // Limpar ficheiros de cada célula
             for (let i = 1; i <= totalCells; i++) {
                 if (audioFiles[i]) {
-                    URL.revokeObjectURL(audioFiles[i]); // Libera a memória do URL do objeto
+                    URL.revokeObjectURL(audioFiles[i]);
                 }
-                delete audioFiles[i]; // Remove a entrada do objeto audioFiles
-                document.getElementById(`fileName${i}`).textContent = 'Vazia'; // Volta o texto para "Vazia"
+                delete audioFiles[i];
+                document.getElementById(`fileName${i}`).textContent = 'Vazia';
                 const cell = document.querySelector(`.cell[data-cell-number="${i}"]`);
-                if (cell) cell.classList.remove('active'); // Remove a classe 'active'
+                if (cell) cell.classList.remove('active');
             }
             globalUploadStatus.textContent = 'Células limpas.';
         }
 
-        // Event listener para o botão de limpar células - Novo
+        // Event listener para o botão de limpar células
         clearCellsBtn.addEventListener('click', clearAllCells);
 
 
-        // Funções de reprodução de áudio - Agora ativada pelo clique na célula
+        // Funções de reprodução de áudio
         function playAudio(cellNumber) {
             const newAudioSrc = audioFiles[cellNumber];
 
-            if (!newAudioSrc) { // Se não há ficheiro na célula
+            if (!newAudioSrc) {
                 console.warn(`Nenhum ficheiro de áudio na célula ${cellNumber}.`);
                 return;
             }
 
-            // Se o áudio atual é o mesmo, alternar play/pause
             if (currentAudio && currentAudio.src === newAudioSrc) {
                 if (currentAudio.paused) {
-                    currentAudio.play();
+                    currentAudio.play().catch(error => { console.error("Erro ao reproduzir:", error); });
                 } else {
                     currentAudio.pause();
                 }
                 return;
             }
 
-            // Parar áudio anterior e desmarcar célula
             if (currentAudio) {
                 currentAudio.pause();
                 currentAudio.currentTime = 0;
@@ -494,17 +521,16 @@
                 }
             }
 
-            clearLoop(); // Limpar loop ao trocar de ficheiro
+            clearLoop();
 
             audioPlayer.src = newAudioSrc;
             audioPlayer.load();
-            audioPlayer.play();
+            audioPlayer.play().catch(error => { console.error("Erro ao iniciar reprodução:", error); });
             currentAudio = audioPlayer;
             currentCell = cellNumber;
             
             document.querySelector(`.cell[data-cell-number="${cellNumber}"]`).classList.add('active');
             
-            // Aplicar velocidade atual
             const speed = speedSlider.value;
             audioPlayer.playbackRate = parseFloat(speed);
         }
@@ -512,7 +538,7 @@
         // Função para aplicar a velocidade
         function applySpeed(speed) {
             speedSlider.value = speed;
-            speedValue.textContent = speed.toFixed(2) + 'x'; // Exibe com duas casas decimais
+            speedValue.textContent = speed.toFixed(2) + 'x';
             if (currentAudio) {
                 currentAudio.playbackRate = speed;
             }
@@ -521,35 +547,32 @@
         // Event listeners para os botões de preset
         speedPreset05.addEventListener('click', () => {
             applySpeed(0.5);
-            speedSlider.blur(); // Remover foco após clicar no preset
+            speedSlider.blur();
         });
 
         speedPreset10.addEventListener('click', () => {
             applySpeed(1.0);
-            speedSlider.blur(); // Remover foco após clicar no preset
+            speedSlider.blur();
         });
 
         // Controle de velocidade
         speedSlider.addEventListener('input', function(e) {
             const speed = parseFloat(e.target.value);
-            speedValue.textContent = speed.toFixed(2) + 'x'; // Exibe com duas casas decimais
+            speedValue.textContent = speed.toFixed(2) + 'x';
             if (currentAudio) {
                 currentAudio.playbackRate = speed;
             }
         });
 
-        // Remover foco do slider após a interação para permitir atalhos de teclado
         speedSlider.addEventListener('mouseup', function() {
-            this.blur(); // 'this' refere-se ao próprio speedSlider
+            this.blur();
         });
-        // Também para touch devices (para melhor compatibilidade em telemóveis/tablets)
         speedSlider.addEventListener('touchend', function() {
             this.blur();
         });
 
         // Atalhos do teclado
         document.addEventListener('keydown', function(e) {
-            // Evita que os atalhos funcionem se um input estiver focado (como um input de texto futuro)
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
                 return;
             }
@@ -566,11 +589,11 @@
                 case 'x':
                     clearLoop();
                     break;
-                case ' ': // Espaço para play/pause
-                    e.preventDefault(); // Prevenir rolagem da página
+                case ' ':
+                    e.preventDefault();
                     if (currentAudio) {
                         if (currentAudio.paused) {
-                            currentAudio.play();
+                            currentAudio.play().catch(error => { console.error("Erro ao reproduzir:", error); });
                         } else {
                             currentAudio.pause();
                         }
@@ -580,45 +603,43 @@
         });
 
         function setLoopPoint(point) {
-            if (!currentAudio) return;
+            if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) return;
             
             const currentTime = currentAudio.currentTime;
-            loopPoints[point] = currentTime;
+            
+            // Ajustar o ponto para não ir além da duração total
+            const adjustedTime = Math.min(Math.max(0, currentTime), currentAudio.duration);
+            loopPoints[point] = adjustedTime;
             
             const pointAElement = document.getElementById('pointA');
             const pointBElement = document.getElementById('pointB');
 
             if (point === 'start') {
-                pointAElement.textContent = formatTime(currentTime);
-                // Adicionar classe de destaque
+                pointAElement.textContent = formatTime(adjustedTime);
                 pointAElement.classList.add('loop-point-highlight');
-                // Remover classe de destaque após um breve período
                 setTimeout(() => {
                     pointAElement.classList.remove('loop-point-highlight');
-                }, 800); // 800ms = 0.8 segundos para o destaque
+                }, 800);
             } else {
-                pointBElement.textContent = formatTime(currentTime);
-                // Adicionar classe de destaque ao Ponto B também (opcional, mas faz sentido para consistência)
+                pointBElement.textContent = formatTime(adjustedTime);
                 pointBElement.classList.add('loop-point-highlight');
                 setTimeout(() => {
                     pointBElement.classList.remove('loop-point-highlight');
                 }, 800);
                 
-                // Quando define o ponto B, ativa o loop
                 if (loopPoints.start !== null) {
                     activateLoop();
                 }
             }
             
             updateLoopDisplay();
-            updateLoopMarkers(); // Chamar aqui para atualizar o visual do marcador imediatamente
+            updateLoopMarkers();
         }
 
         function activateLoop() {
             if (loopPoints.start !== null && loopPoints.end !== null) {
-                // Garantir que o start é antes do end
                 if (loopPoints.start > loopPoints.end) {
-                    [loopPoints.start, loopPoints.end] = [loopPoints.end, loopPoints.start]; // Trocar os valores
+                    [loopPoints.start, loopPoints.end] = [loopPoints.end, loopPoints.start];
                     document.getElementById('pointA').textContent = formatTime(loopPoints.start);
                     document.getElementById('pointB').textContent = formatTime(loopPoints.end);
                 }
@@ -635,7 +656,7 @@
             document.getElementById('pointA').textContent = '--';
             document.getElementById('pointB').textContent = '--';
             updateLoopDisplay();
-            updateLoopMarkers(); // Chamar aqui para esconder o marcador completamente
+            updateLoopMarkers();
         }
 
         function updateLoopDisplay() {
@@ -657,13 +678,14 @@
         function updateLoopMarkers() {
             if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) {
                 loopMarkers.classList.remove('active');
-                loopMarkers.style.display = 'none'; // Certifica-se que está oculto
+                loopMarkers.style.display = 'none';
+                loopHandleA.style.display = 'none';
+                loopHandleB.style.display = 'none';
                 return;
             }
             
             const duration = currentAudio.duration;
             
-            // Se ambos os pontos estão definidos (loop ativo)
             if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
                 const startPercent = (loopPoints.start / duration) * 100;
                 const endPercent = (loopPoints.end / duration) * 100;
@@ -671,32 +693,110 @@
                 loopMarkers.style.left = startPercent + '%';
                 loopMarkers.style.width = (endPercent - startPercent) + '%';
                 loopMarkers.classList.add('active');
-                loopMarkers.style.display = 'block'; // Certifica-se que é visível
-            } 
-            // Se apenas o ponto A está definido (feedback visual para o Ponto A)
-            else if (loopPoints.start !== null) {
+                loopMarkers.style.display = 'block';
+                loopMarkers.style.background = 'rgba(255, 255, 0, 0.2)'; // Fundo normal para loop completo
+
+                // Posicionar handles A e B
+                loopHandleA.style.left = (loopPoints.start / duration) * 100 + '%';
+                loopHandleB.style.left = (loopPoints.end / duration) * 100 + '%';
+                loopHandleA.style.display = 'block';
+                loopHandleB.style.display = 'block';
+
+            } else if (loopPoints.start !== null) {
+                // Apenas ponto A definido
                 const startPercent = (loopPoints.start / duration) * 100;
                 
                 loopMarkers.style.left = startPercent + '%';
-                loopMarkers.style.width = '2px'; // Uma linha fina para o Ponto A
-                loopMarkers.classList.add('active'); // Mantém a classe 'active' para que as linhas funcionem
-                loopMarkers.style.display = 'block'; // Certifica-se que é visível
+                loopMarkers.style.width = '2px';
+                loopMarkers.classList.add('active');
+                loopMarkers.style.display = 'block';
                 loopMarkers.style.background = 'transparent'; // Fundo transparente quando é apenas o ponto A
-            }
-            // Se nenhum ponto está definido
-            else {
+                
+                // Posicionar apenas handle A, esconder B
+                loopHandleA.style.left = startPercent + '%';
+                loopHandleA.style.display = 'block';
+                loopHandleB.style.display = 'none';
+
+            } else {
+                // Nenhum ponto definido
                 loopMarkers.classList.remove('active');
-                loopMarkers.style.display = 'none'; // Esconde completamente
-            }
-             // Restaura o fundo para a cor normal quando for um loop completo
-            if (isLooping && loopPoints.start !== null && loopPoints.end !== null) {
-                loopMarkers.style.background = 'rgba(255, 255, 0, 0.2)';
+                loopMarkers.style.display = 'none';
+                loopHandleA.style.display = 'none';
+                loopHandleB.style.display = 'none';
             }
         }
 
+        // Lógica de arraste dos marcadores
+        progressBar.addEventListener('mousedown', (e) => {
+            if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) return;
+
+            // Verificar se o clique foi num dos handles
+            if (e.target === loopHandleA) {
+                isDraggingLoopHandle = true;
+                activeLoopHandle = 'start';
+            } else if (e.target === loopHandleB) {
+                isDraggingLoopHandle = true;
+                activeLoopHandle = 'end';
+            } else {
+                // Se o clique não foi nos handles, comporta-se como um clique normal na barra
+                const rect = progressBar.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const percentage = clickX / rect.width;
+                const newTime = percentage * currentAudio.duration;
+                currentAudio.currentTime = newTime;
+                // Se não está a arrastar, e clica na barra, resetar os pontos do loop
+                clearLoop(); 
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDraggingLoopHandle || !currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) return;
+
+            e.preventDefault(); // Prevenir seleção de texto ou outros comportamentos padrão
+
+            const rect = progressBar.getBoundingClientRect();
+            let newX = e.clientX - rect.left;
+
+            // Clamp newX to be within the bounds of the progress bar
+            newX = Math.max(0, Math.min(newX, rect.width));
+
+            const percentage = newX / rect.width;
+            const newTime = percentage * currentAudio.duration;
+
+            if (activeLoopHandle === 'start') {
+                loopPoints.start = newTime;
+                // Se o ponto B existe, garantir que A não ultrapasse B
+                if (loopPoints.end !== null && loopPoints.start > loopPoints.end) {
+                    loopPoints.start = loopPoints.end; // Acompanha B
+                }
+                document.getElementById('pointA').textContent = formatTime(loopPoints.start);
+            } else if (activeLoopHandle === 'end') {
+                loopPoints.end = newTime;
+                // Se o ponto A existe, garantir que B não seja menor que A
+                if (loopPoints.start !== null && loopPoints.end < loopPoints.start) {
+                    loopPoints.end = loopPoints.start; // Acompanha A
+                }
+                document.getElementById('pointB').textContent = formatTime(loopPoints.end);
+            }
+
+            // Ativar/atualizar loop imediatamente durante o arraste para feedback visual
+            activateLoop(); // Esta função já cuida da ordem dos pontos
+            updateLoopMarkers(); // Atualiza a posição visual dos marcadores
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDraggingLoopHandle) {
+                isDraggingLoopHandle = false;
+                activeLoopHandle = null;
+                // Assegurar que o loop é ativado corretamente após o arraste
+                activateLoop();
+            }
+        });
+
+
         // Atualizar barra de progresso
         audioPlayer.addEventListener('timeupdate', function() {
-            if (audioPlayer.duration && !isNaN(audioPlayer.duration)) {
+            if (audioPlayer.duration && !isNaN(audioPlayer.duration) && !isDraggingLoopHandle) { // Não atualiza se estiver arrastando um handle
                 const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
                 progressFill.style.width = progress + '%';
                 
@@ -714,7 +814,7 @@
 
         // Carregar metadata do áudio
         audioPlayer.addEventListener('loadedmetadata', function() {
-            updateLoopMarkers(); // Chamar aqui para garantir que o marcador seja desenhado se já houver pontos definidos
+            updateLoopMarkers();
             document.getElementById('totalTime').textContent = formatTime(audioPlayer.duration);
         });
 
@@ -725,23 +825,15 @@
             }
             currentAudio = null;
             currentCell = null;
-            clearLoop(); // Isso já chama updateLoopMarkers para esconder tudo
+            clearLoop();
             progressFill.style.width = '0%';
             document.getElementById('currentTime').textContent = '0:00';
             document.getElementById('totalTime').textContent = '0:00';
         });
 
-        // Clique na barra de progresso para navegar
-        progressBar.addEventListener('click', function(e) {
-            if (!currentAudio || !currentAudio.duration || isNaN(currentAudio.duration)) return;
-            
-            const rect = progressBar.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const percentage = clickX / rect.width;
-            const newTime = percentage * currentAudio.duration;
-            
-            currentAudio.currentTime = newTime;
-        });
+        // Clique na barra de progresso para navegar (mantido, mas com caveat para drag)
+        // A lógica de click na barra agora está no mousedown listener para a progressBar
+        // para decidir se é drag ou jump.
 
         function formatTime(seconds) {
             if (isNaN(seconds) || seconds < 0) return '0:00';
@@ -753,7 +845,6 @@
         // Delegação de eventos para as células (agora elas são clicáveis)
         document.getElementById('cellGrid').addEventListener('click', function(event) {
             const target = event.target;
-            // Encontrar a célula clicada, mesmo se o clique for no texto dentro dela
             const cellElement = target.closest('.cell'); 
             if (cellElement) {
                 const cellNumber = parseInt(cellElement.dataset.cellNumber);
@@ -764,7 +855,8 @@
         // Inicializar
         createCells();
         updateLoopDisplay();
-        applySpeed(parseFloat(speedSlider.value)); // Garante que o valor inicial do slider é exibido corretamente
+        applySpeed(parseFloat(speedSlider.value));
+        updateLoopMarkers(); // Chama no início para garantir que os handles estejam ocultos se não houver áudio.
     </script>
 </body>
 </html>

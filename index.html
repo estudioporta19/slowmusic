@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoundTouch.js Audio Manipulator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/soundtouch-js/0.1.30/soundtouch.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/web-audio-api/0.2.2/web-audio-api.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -199,11 +197,25 @@
             font-style: italic;
             color: #ccc;
         }
+        
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            color: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎵 SoundTouch Audio Manipulator</h1>
+        
+        <div class="warning">
+            ⚠️ <strong>Nota:</strong> Esta implementação usa algoritmos simplificados para demonstração. Para resultados profissionais, use a biblioteca SoundTouch.js completa num ambiente de desenvolvimento.
+        </div>
         
         <div class="file-input-container">
             <input type="file" id="audioFile" class="file-input" accept="audio/*">
@@ -246,7 +258,6 @@
     <script>
         let audioContext;
         let sourceNode;
-        let soundTouchNode;
         let audioBuffer;
         let isPlaying = false;
         let startTime = 0;
@@ -296,8 +307,8 @@
                         // Mostrar controlos
                         document.getElementById('controls').style.display = 'block';
                         
-                        // Inicializar SoundTouch
-                        initSoundTouch();
+                        // Limpar buffer processado
+                        processedBuffer = null;
                     })
                     .catch(error => {
                         console.error('Erro ao descodificar áudio:', error);
@@ -308,11 +319,117 @@
             reader.readAsArrayBuffer(file);
         }
         
-        // Inicializar SoundTouch
-        function initSoundTouch() {
-            soundTouch = new SoundTouch();
-            soundTouch.tempo = 1.0;
-            soundTouch.pitch = 1.0;
+        // Algoritmo PSOLA simplificado para mudança de pitch
+        function changePitch(inputData, pitchRatio) {
+            const outputData = new Float32Array(inputData.length);
+            const hopSize = 512;
+            const frameSize = 2048;
+            
+            for (let i = 0; i < inputData.length - frameSize; i += hopSize) {
+                const frame = inputData.slice(i, i + frameSize);
+                
+                // Aplicar janela de Hann
+                for (let j = 0; j < frameSize; j++) {
+                    const window = 0.5 * (1 - Math.cos(2 * Math.PI * j / (frameSize - 1)));
+                    frame[j] *= window;
+                }
+                
+                // Resample para mudança de pitch
+                const outputFrame = new Float32Array(frameSize);
+                for (let j = 0; j < frameSize; j++) {
+                    const sourceIndex = j / pitchRatio;
+                    const index = Math.floor(sourceIndex);
+                    const fraction = sourceIndex - index;
+                    
+                    if (index < frameSize - 1) {
+                        outputFrame[j] = frame[index] * (1 - fraction) + frame[index + 1] * fraction;
+                    } else if (index < frameSize) {
+                        outputFrame[j] = frame[index];
+                    }
+                }
+                
+                // Overlap-add
+                for (let j = 0; j < frameSize && i + j < outputData.length; j++) {
+                    outputData[i + j] += outputFrame[j];
+                }
+            }
+            
+            return outputData;
+        }
+        
+        // Algoritmo WSOLA simplificado para mudança de tempo
+        function changeSpeed(inputData, speedRatio) {
+            const outputLength = Math.floor(inputData.length / speedRatio);
+            const outputData = new Float32Array(outputLength);
+            const hopSize = 512;
+            const frameSize = 2048;
+            
+            let inputPos = 0;
+            let outputPos = 0;
+            
+            while (outputPos < outputLength - frameSize && inputPos < inputData.length - frameSize) {
+                const frame = inputData.slice(inputPos, inputPos + frameSize);
+                
+                // Aplicar janela de Hann
+                for (let j = 0; j < frameSize; j++) {
+                    const window = 0.5 * (1 - Math.cos(2 * Math.PI * j / (frameSize - 1)));
+                    frame[j] *= window;
+                }
+                
+                // Overlap-add
+                for (let j = 0; j < frameSize && outputPos + j < outputLength; j++) {
+                    outputData[outputPos + j] += frame[j];
+                }
+                
+                inputPos += hopSize * speedRatio;
+                outputPos += hopSize;
+            }
+            
+            return outputData;
+        }
+        
+        // Processar áudio com pitch e speed independentes
+        function processAudio(inputBuffer) {
+            const tempo = parseFloat(document.getElementById('speedSlider').value);
+            const pitchSemitones = parseInt(document.getElementById('pitchSlider').value);
+            const pitchRatio = Math.pow(2, pitchSemitones / 12);
+            
+            const channels = inputBuffer.numberOfChannels;
+            const sampleRate = inputBuffer.sampleRate;
+            
+            // Primeiro aplicar mudança de pitch, depois de velocidade
+            const processedChannels = [];
+            
+            for (let channel = 0; channel < channels; channel++) {
+                let channelData = inputBuffer.getChannelData(channel);
+                
+                // Aplicar mudança de pitch se necessário
+                if (pitchRatio !== 1.0) {
+                    channelData = changePitch(channelData, pitchRatio);
+                }
+                
+                // Aplicar mudança de velocidade se necessário
+                if (tempo !== 1.0) {
+                    channelData = changeSpeed(channelData, tempo);
+                }
+                
+                processedChannels.push(channelData);
+            }
+            
+            // Criar buffer de saída
+            const outputLength = processedChannels[0].length;
+            const outputBuffer = audioContext.createBuffer(channels, outputLength, sampleRate);
+            
+            for (let channel = 0; channel < channels; channel++) {
+                const outputData = outputBuffer.getChannelData(channel);
+                const processedData = processedChannels[channel];
+                
+                for (let i = 0; i < outputLength; i++) {
+                    outputData[i] = processedData[i] || 0;
+                }
+            }
+            
+            return outputBuffer;
         }
         
         // Controlo de velocidade
@@ -322,7 +439,7 @@
         speedSlider.addEventListener('input', function() {
             const speed = parseFloat(this.value);
             speedValue.textContent = `${speed.toFixed(1)}x`;
-            processedBuffer = null; // Invalidar buffer processado
+            processedBuffer = null;
         });
         
         // Controlo de pitch
@@ -332,7 +449,7 @@
         pitchSlider.addEventListener('input', function() {
             const semitones = parseInt(this.value);
             pitchValue.textContent = `${semitones > 0 ? '+' : ''}${semitones} meios tons`;
-            processedBuffer = null; // Invalidar buffer processado
+            processedBuffer = null;
         });
         
         // Funções de reset
@@ -378,7 +495,7 @@
                 // Processar áudio de forma assíncrona
                 setTimeout(() => {
                     try {
-                        processedBuffer = processSoundTouch(audioBuffer);
+                        processedBuffer = processAudio(audioBuffer);
                         loadingStatus.style.display = 'none';
                         actuallyStartPlayback();
                     } catch (error) {
@@ -403,71 +520,18 @@
                 stopPlayback();
             };
             
-            sourceNode.start(0, pauseTime);
-            startTime = audioContext.currentTime - pauseTime;
+            const adjustedPauseTime = pauseTime * (processedBuffer.length / audioBuffer.length);
+            sourceNode.start(0, adjustedPauseTime);
+            startTime = audioContext.currentTime - adjustedPauseTime;
             isPlaying = true;
             
             updatePlayButton();
         }
         
-        // Processar áudio com SoundTouch
-        function processSoundTouch(inputBuffer) {
-            const tempo = parseFloat(speedSlider.value);
-            const pitchSemitones = parseInt(pitchSlider.value);
-            const pitchRatio = Math.pow(2, pitchSemitones / 12);
-            
-            // Configurar SoundTouch
-            soundTouch.tempo = tempo;
-            soundTouch.pitch = pitchRatio;
-            soundTouch.rate = 1.0;
-            
-            const channels = inputBuffer.numberOfChannels;
-            const sampleRate = inputBuffer.sampleRate;
-            
-            // Converter AudioBuffer para formato SoundTouch
-            const inputSamples = [];
-            for (let channel = 0; channel < channels; channel++) {
-                inputSamples.push(inputBuffer.getChannelData(channel));
-            }
-            
-            // Processar com SoundTouch
-            const outputSamples = [];
-            for (let channel = 0; channel < channels; channel++) {
-                outputSamples.push([]);
-            }
-            
-            // Simular processamento SoundTouch
-            // (A biblioteca real faria este processamento internamente)
-            const outputLength = Math.floor(inputSamples[0].length / tempo);
-            const outputBuffer = audioContext.createBuffer(channels, outputLength, sampleRate);
-            
-            for (let channel = 0; channel < channels; channel++) {
-                const inputData = inputSamples[channel];
-                const outputData = outputBuffer.getChannelData(channel);
-                
-                // Aplicar mudança de pitch usando interpolação
-                for (let i = 0; i < outputLength; i++) {
-                    const sourceIndex = (i * tempo) * pitchRatio;
-                    const index = Math.floor(sourceIndex);
-                    const fraction = sourceIndex - index;
-                    
-                    if (index < inputData.length - 1) {
-                        // Interpolação linear
-                        outputData[i] = inputData[index] * (1 - fraction) + inputData[index + 1] * fraction;
-                    } else if (index < inputData.length) {
-                        outputData[i] = inputData[index];
-                    } else {
-                        outputData[i] = 0;
-                    }
-                }
-            }
-            
-            return outputBuffer;
-        }
-        
         function pausePlayback() {
             if (sourceNode && isPlaying) {
-                pauseTime = audioContext.currentTime - startTime;
+                const elapsed = audioContext.currentTime - startTime;
+                pauseTime = elapsed * (audioBuffer.length / processedBuffer.length);
                 sourceNode.stop();
                 isPlaying = false;
                 updatePlayButton();

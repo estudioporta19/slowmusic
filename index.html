@@ -297,22 +297,22 @@
 
 <script>
     // --- Variáveis Globais ---
-    let audioContext = null;
+    let audioContext = null;    
     let sourceNode;
     let soundtouchWorkletNode; // AudioWorkletNode
     let audioBuffer;
 
     let isPlaying = false;
-    let seekPosition = 0; // Posição atual de reprodução em segundos (no áudio original)
-    let playbackStartTime = 0; // Tempo do AudioContext quando a reprodução começou ou foi retomada
-
-    // --- Variáveis Globais para Loop e Waveform ---
+    let seekPosition = 0;    
+    let playbackStartTime = 0;    
+    
+    // --- Novas Variáveis Globais para Loop e Waveform ---
     let loopA = 0; // Ponto A em segundos
     let loopB = 0; // Ponto B em segundos
     let loopEnabled = false;
 
     let animationFrameId; // Para o loop de animação da waveform
-
+    
     // --- NOVAS VARIÁVEIS GLOBAIS PARA LOOPS GUARDADOS ---
     let savedLoops = []; // Array para armazenar os objetos de loop { name, loopA, loopB }
     const LOOP_STORAGE_KEY = 'soundtouch_saved_loops'; // Chave para o LocalStorage
@@ -338,11 +338,6 @@
     const loopIndicatorB = document.getElementById('loopIndicatorB');
     const playbackIndicator = document.getElementById('playbackIndicator');
     const toggleLoopBtn = document.getElementById('toggleLoopBtn');
-    const setALoopBtn = document.getElementById('setALoopBtn'); // Certifique-se de que este existe no HTML
-    const setBLoopBtn = document.getElementById('setBLoopBtn'); // Certifique-se de que este existe no HTML
-    const resetALoopBtn = document.getElementById('resetALoopBtn'); // Certifique-se de que este existe no HTML
-    const resetBLoopBtn = document.getElementById('resetBLoopBtn'); // Certifique-se de que este existe no HTML
-
 
     // --- NOVOS ELEMENTOS DO DOM PARA LOOPS GUARDADOS ---
     const loopNameInput = document.getElementById('loopNameInput');
@@ -381,6 +376,7 @@
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 console.log('AudioContext inicializado. Estado:', audioContext.state);
+                // AQUI É ONDE O AUDIO WORKLET É ADICIONADO AO CONTEXTO DE ÁUDIO PELA PRIMEIRA VEZ
                 try {
                     await audioContext.audioWorklet.addModule('./soundtouch-worklet.js');
                     console.log('AudioWorklet "scheduled-soundtouch-worklet" carregado com sucesso.');
@@ -403,7 +399,7 @@
                     loopBValueEl.textContent = formatTime(loopB);
                     // --- FIM NOVO ---
 
-                    loadingStatusEl.textContent = 'Pronto para tocar!';
+                    loadingStatusEl.textContent = 'Pronto a tocar!';
                     setTimeout(() => { loadingStatusEl.style.display = 'none'; }, 2000);
                     controlsEl.style.display = 'block';
                     resetControls(); // Reseta os sliders e a posição de reprodução, mas loopB já está definido
@@ -417,12 +413,12 @@
     }
 
     // --- 2. CONTROLOS DE REPRODUÇÃO ---
-    async function togglePlayback() {
+    async function togglePlayback() {    
         if (!audioBuffer) {
             alert('Por favor, carregue um ficheiro de áudio primeiro.');
             return;
         }
-
+        
         if (audioContext && audioContext.state === 'suspended') {
             console.log('Tentando retomar AudioContext...');
             try {
@@ -438,13 +434,13 @@
         if (isPlaying) {
             pausePlayback();
         } else {
-            await startPlayback();
+            await startPlayback();    
         }
     }
 
-    async function startPlayback() {
+    async function startPlayback() {    
         if (isPlaying || !audioBuffer) return;
-
+        
         if (!audioContext) {
             console.error('AudioContext não inicializado. Carregue um ficheiro de áudio primeiro.');
             return;
@@ -454,22 +450,12 @@
             await audioContext.resume();
         }
 
-        // SEMPRE RECRIAR sourceNode e soundtouchWorkletNode
-        if (sourceNode) {
-            sourceNode.disconnect();
-            sourceNode = null;
-        }
-        if (soundtouchWorkletNode) {
-            // Se estivermos a parar e reiniciar rapidamente, precisamos de uma forma de resetar o worklet
-            soundtouchWorkletNode.port.postMessage({ message: 'STOP' });
-            soundtouchWorkletNode.disconnect();
-            soundtouchWorkletNode = null;
-        }
-
-
+        // SEMPRE RECRIAR sourceNode e soundtouchWorkletNode para evitar DataCloneError
+        // Isso é crucial para reiniciar o playback e aplicar novas configurações de loop
         sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = audioBuffer;
 
+        // Instanciar o AudioWorkletNode com o nome correto
         soundtouchWorkletNode = new AudioWorkletNode(audioContext, 'scheduled-soundtouch-worklet');
         console.log('AudioWorkletNode criado.');
 
@@ -478,6 +464,7 @@
         console.log('sourceNode e soundtouchWorkletNode conectados ao destino.');
 
         // Preparar os dados para o worklet, criando CÓPIAS para transferência
+        // Isso é necessário porque os buffers são transferíveis e não podem ser usados novamente no thread principal
         const bufferProps = {
             sampleRate: audioBuffer.sampleRate,
             numberOfChannels: audioBuffer.numberOfChannels,
@@ -493,62 +480,63 @@
             detail: [bufferProps, leftChannelData, rightChannelData]
         }, [leftChannelData.buffer, rightChannelData.buffer]); // Transferir os buffers para o Worklet
 
-        // --- Lógica de LOOP e POSIÇÃO DE REPRODUÇÃO PARA O WORKLET ---
-        let startSampleInOriginalAudio;
-        let playbackDurationSamples; // Duração total a ser processada pelo worklet antes de sinalizar o fim
+        // --- INÍCIO DA LÓGICA DE LOOP E POSIÇÃO DE REPRODUÇÃO PARA O WORKLET ---
+        let startSample;
+        let durationSamples;
 
         if (loopEnabled) {
-            startSampleInOriginalAudio = Math.round(loopA * audioBuffer.sampleRate);
-            playbackDurationSamples = Math.round((loopB - loopA) * audioBuffer.sampleRate);
-            if (playbackDurationSamples <= 0) {
-                playbackDurationSamples = Math.round(0.01 * audioBuffer.sampleRate); // Mínimo de 10ms
-                console.warn('Duração do loop muito curta, ajustada para 10ms.');
+            // Se o loop estiver ativo, define o início e a duração do segmento de loop
+            startSample = Math.round(loopA * audioBuffer.sampleRate);
+            durationSamples = Math.round((loopB - loopA) * audioBuffer.sampleRate);
+            // Garante uma duração mínima para evitar problemas com segmentos muito curtos
+            if (durationSamples <= 0) {
+                durationSamples = Math.round(0.1 * audioBuffer.sampleRate); // 0.1 segundos como mínimo
             }
-            // Quando em loop, a seekPosition é sempre o loopA, pois o worklet gerencia a repetição
-            seekPosition = loopA;
         } else {
-            // Se não houver loop, o playback começa da seekPosition atual e vai até o final
-            startSampleInOriginalAudio = Math.round(seekPosition * audioBuffer.sampleRate);
-            playbackDurationSamples = audioBuffer.length - startSampleInOriginalAudio;
-            if (playbackDurationSamples < 0) playbackDurationSamples = 0; // Evitar durações negativas
+            // Se o loop não estiver ativo, começa da posição atual de busca e vai até o final do áudio
+            startSample = Math.round(seekPosition * audioBuffer.sampleRate);
+            durationSamples = audioBuffer.length - startSample;
         }
 
         // Define os parâmetros do AudioWorklet para controlar o ponto de início e fim da reprodução
-        soundtouchWorkletNode.parameters.get('offsetSamples').value = startSampleInOriginalAudio;
-        soundtouchWorkletNode.parameters.get('playbackDurationSamples').value = playbackDurationSamples;
+        // Estes são os parâmetros que o worklet usará para ler do buffer interno
+        soundtouchWorkletNode.parameters.get('offsetSamples').value = startSample;
+        soundtouchWorkletNode.parameters.get('playbackDurationSamples').value = durationSamples;
+
+        // O `sourceNode` sempre iniciará do `seekPosition` que é o "ponto de partida" no buffer original.
+        // O Worklet usará `offsetSamples` para saber de onde **realmente** começar a processar no contexto do loop.
+        // Se o loop está ativo, o `sourceNode` na verdade pode começar do `loopA` para o processamento do worklet iniciar corretamente
+        const actualSourceNodeStartOffset = loopEnabled ? loopA : seekPosition;
+        // --- FIM DA LÓGICA DE LOOP E POSIÇÃO DE REPRODUÇÃO PARA O WORKLET ---
+
 
         // Ouve a mensagem de "pronto" do worklet ANTES de começar a reprodução do sourceNode
         soundtouchWorkletNode.port.onmessage = (event) => {
-            // CORREÇÃO AQUI: event.data.message é a forma correta de aceder
-            const messageType = event.data.message;
-            const messageDetail = event.data.detail; // Se houver detalhes adicionais
-
-            if (messageType === 'PROCESSOR_READY') {
+            if (event.data.message === 'PROCESSOR_READY') {
                 console.log('Worklet processador inicializado e pronto.');
+                // Aplica as configurações atuais de pitch/tempo/rate
                 updateSoundTouchSettings();
-
-                // O sourceNode sempre começa em 0, e o worklet gerencia o offset de leitura
-                sourceNode.start(0);
-                playbackStartTime = audioContext.currentTime; // Tempo real do AudioContext quando começamos
+                
+                // Inicia a reprodução do sourceNode a partir do offset
+                sourceNode.start(0, actualSourceNodeStartOffset);    
+                playbackStartTime = audioContext.currentTime;
                 isPlaying = true;
                 updatePlayButton();
-                animatePlaybackIndicator();
+                // Inicia o loop de animação para o indicador de reprodução na UI
+                animatePlaybackIndicator();    
 
-            } else if (messageType === 'PROCESSOR_END') {
+            } else if (event.data.data.message === 'PROCESSOR_END') { // Alterado para event.data.data.message para compatibilidade
                 console.log('Reprodução terminada pelo processador (Worklet).');
-                if (loopEnabled && audioContext && audioBuffer) { // Verifica audioBuffer para garantir que está carregado
-                    // Quando o worklet sinaliza o fim de um segmento (no loopB), reiniciamos do loopA
-                    // E recriamos tudo para garantir um loop suave e reset dos estados internos do worklet.
-                    stopPlayback();
-                    startPlayback(); // Isso vai reiniciar o playback de loopA
+                // Lógica de loop: se o worklet sinalizou o fim e o loop está ativo
+                if (loopEnabled && audioContext && soundtouchWorkletNode) {
+                    // Reinicia a `seekPosition` para o ponto A do loop para o próximo ciclo
+                    seekPosition = loopA;    
+                    console.log(`Looped to A: ${formatTime(loopA)}`);
+                    stopPlayback(); // Para o playback atual (desconecta nós)
+                    startPlayback(); // Inicia um novo playback a partir de loopA
                 } else {
-                    // Se não há loop, ou se o buffer não está carregado, paramos completamente.
-                    stopPlayback();
-                    // Garante que a seekPosition é resetada para o início quando termina
-                    seekPosition = 0;
+                    stopPlayback(); // Se não há loop, simplesmente para o playback
                 }
-            } else {
-                console.warn('Mensagem inesperada do worklet:', event.data);
             }
         };
 
@@ -558,79 +546,77 @@
             console.log('SourceNode terminou.');
             // Se o sourceNode terminar e não estivermos em modo de loop (pois o worklet gerencia o loop)
             // Ou se o worklet falhou em sinalizar o fim do loop por algum motivo
-            if (isPlaying && !loopEnabled) {
-                stopPlayback(); // Finaliza a reprodução
+            if (isPlaying && !loopEnabled) {    
+                 stopPlayback(); // Finaliza a reprodução
             }
         };
     }
 
     function pausePlayback() {
-        if (!isPlaying || !sourceNode || !audioBuffer) return;
-
-        cancelAnimationFrame(animationFrameId);
-
+        if (!isPlaying || !sourceNode) return;
+        
+        cancelAnimationFrame(animationFrameId); // Para a animação do indicador
+        
+        // Calcula a posição atual de reprodução considerando as alterações de tempo do SoundTouch.
+        // Isso garante que `seekPosition` seja preciso ao pausar.
+        // A `seekPosition` deve ser o tempo no *áudio original* para onde paramos.
+        // O worklet internamente lida com a leitura do seu próprio buffer.
+        
         let currentPlaybackTimeInOriginalAudio;
-        if (soundtouchWorkletNode && audioContext && playbackStartTime) {
-            // Calcula o tempo que passou desde o início do playback (ou resume) no contexto do tempo real do áudio
-            const elapsedAudioTime = audioContext.currentTime - playbackStartTime;
-
-            // Calcula o tempo 'processado' pelo soundtouch, considerando a taxa de tempo (tempo)
-            const tempoFactor = soundtouchWorkletNode.parameters.get('tempo').value;
-            const processedTimeSinceStart = elapsedAudioTime * tempoFactor;
-
-            // A seekPosition atual é o ponto inicial de onde começamos a ler + o tempo já processado.
-            // Se o loop estiver ativo, começamos do loopA, caso contrário, da seekPosition anterior.
-            const initialPlaybackOffset = loopEnabled ? loopA : seekPosition;
-            currentPlaybackTimeInOriginalAudio = initialPlaybackOffset + processedTimeSinceStart;
+        if (soundtouchWorkletNode && audioBuffer) {
+            // tempo reproduzido no worklet = (tempo atual do contexto - tempo que começou a reprodução) * tempo do soundtouch
+            const elapsedProcessedTime = (audioContext.currentTime - playbackStartTime) * soundtouchWorkletNode.parameters.get('tempo').value;
+            // a posição no áudio original é o ponto de partida (loopA ou seekPosition anterior) + tempo processado
+            const startOffsetForProcessing = loopEnabled ? loopA : seekPosition;
+            currentPlaybackTimeInOriginalAudio = startOffsetForProcessing + elapsedProcessedTime;
         } else {
-            // Fallback (menos preciso, mas evita erros se o worklet não estiver pronto)
+            // Fallback se o worklet não estiver disponível ou não pronto
             currentPlaybackTimeInOriginalAudio = seekPosition + (audioContext.currentTime - playbackStartTime);
         }
 
-        seekPosition = currentPlaybackTimeInOriginalAudio;
-        seekPosition = Math.min(Math.max(0, seekPosition), audioBuffer.duration); // Limita a posição
+        seekPosition = currentPlaybackTimeInOriginalAudio; // Atualiza a posição de busca global
+        seekPosition = Math.min(Math.max(0, seekPosition), audioBuffer.duration); // Garante que a posição está dentro dos limites
 
-        stopPlayback(); // Para a reprodução atual e desconecta os nós
+        stopPlayback(); // Para a reprodução
         isPlaying = false;
         updatePlayButton();
-        // O indicador de playback será escondido pelo stopPlayback
     }
-
+    
     function stopPlayback() {
         if (sourceNode) {
             sourceNode.stop();
             sourceNode.disconnect();
-            sourceNode = null;
+            sourceNode = null; // Important: Anular o node para permitir recriação
         }
-        if (soundtouchWorkletNode) {
-            soundtouchWorkletNode.port.postMessage({ message: 'STOP' }); // Informa o worklet para parar e resetar
+        if (soundtouchWorkletNode) {    
+            soundtouchWorkletNode.port.postMessage({ message: 'STOP' }); // Informa o worklet para parar
             soundtouchWorkletNode.disconnect();
-            soundtouchWorkletNode = null;
+            soundtouchWorkletNode = null; // Important: Anular o node para permitir recriação
         }
-        cancelAnimationFrame(animationFrameId);
-        playbackIndicator.style.display = 'none';
+        cancelAnimationFrame(animationFrameId); // Para a animação do indicador
+        playbackIndicator.style.display = 'none'; // Garante que desaparece
         isPlaying = false;
         seekPosition = 0; // Resetar a posição de busca para o início da faixa
         updatePlayButton();
         updateLoopIndicators(); // Para resetar a posição visual dos indicadores
     }
-
+    
     function updatePlayButton() {
         playBtn.textContent = isPlaying ? '⏸️ Pausar' : '▶️ Reproduzir';
     }
 
     // --- 3. SLIDERS E ATUALIZAÇÃO DE EFEITOS ---
     function updateSoundTouchSettings() {
-        if (!soundtouchWorkletNode) return;
+        if (!soundtouchWorkletNode) return;    
 
         const speed = parseFloat(speedSlider.value);
         const semitones = parseInt(pitchSlider.value);
-
-        // Define os parâmetros do AudioWorklet. Estes são AudioParam e são definidos diretamente.
+        
+        // Os parâmetros do AudioWorklet são AudioParam e são definidos diretamente
         soundtouchWorkletNode.parameters.get('tempo').value = speed;
-        soundtouchWorkletNode.parameters.get('pitchSemitones').value = semitones;
+        soundtouchWorkletNode.parameters.get('pitchSemitones').value = semitones;    
     }
-
+    
     speedSlider.addEventListener('input', () => {
         const speed = parseFloat(speedSlider.value);
         speedValue.textContent = `${speed.toFixed(1)}x`;
@@ -662,7 +648,7 @@
         resetPitch();
         stopPlayback(); // Isso também reseta seekPosition para 0
 
-        // Resetar loops
+        // --- NOVO: Resetar loops também ---
         if (audioBuffer) { // Só reseta B para a duração se houver um buffer carregado
             resetLoopB();
         } else { // Caso contrário, reseta para 0
@@ -691,19 +677,22 @@
         waveformCtx.lineWidth = 1;
         waveformCtx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
         waveformCtx.beginPath();
-        // Para uma melhor representação da forma de onda, podemos desenhar os picos e vales
+        waveformCtx.moveTo(0, centerY);
+
         for (let x = 0; x < waveformCanvas.width; x++) {
-            let minVal = 1.0;
-            let maxVal = -1.0;
-            const startSample = x * samplesPerPixel;
-            const endSample = Math.min(startSample + samplesPerPixel, channelData.length);
-            for (let i = startSample; i < endSample; i++) {
-                const sample = channelData[i];
-                if (sample < minVal) minVal = sample;
-                if (sample > maxVal) maxVal = sample;
+            let sum = 0;
+            let min = 0;
+            let max = 0;
+            for (let i = 0; i < samplesPerPixel; i++) {
+                const sample = channelData[x * samplesPerPixel + i];
+                sum += sample;
+                min = Math.min(min, sample);
+                max = Math.max(max, sample);
             }
-            waveformCtx.lineTo(x, centerY + maxVal * amplitude);
-            waveformCtx.lineTo(x, centerY + minVal * amplitude);
+            // Desenha a linha vertical para cada "pixel"
+            waveformCtx.lineTo(x, centerY + (max * amplitude));
+            waveformCtx.lineTo(x, centerY + (min * amplitude));
+            waveformCtx.moveTo(x, centerY + (max * amplitude)); // Garante que a linha começa do topo ou de baixo para o próximo ponto
         }
         waveformCtx.stroke();
 
@@ -715,25 +704,26 @@
         if (!audioBuffer) return;
 
         const totalDuration = audioBuffer.duration;
-
+        
         // Ponto A
         const percentA = (loopA / totalDuration) * 100;
         loopIndicatorA.style.left = `${percentA}%`;
-        loopIndicatorA.style.display = 'block';
+        loopIndicatorA.style.display = 'block'; // Garante que é visível
 
         // Ponto B
         const percentB = (loopB / totalDuration) * 100;
         loopIndicatorB.style.left = `${percentB}%`;
-        loopIndicatorB.style.display = 'block';
+        loopIndicatorB.style.display = 'block'; // Garante que é visível
 
         // Indicador de reprodução (só atualiza durante a reprodução)
-        if (isPlaying && audioContext && playbackStartTime) {
+        if (isPlaying && audioContext) {
+            // A posição real do playback no áudio original
             const currentTempo = soundtouchWorkletNode ? soundtouchWorkletNode.parameters.get('tempo').value : 1.0;
             const elapsed = audioContext.currentTime - playbackStartTime;
             const currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
-
+            
             const percentPlayback = (currentPlaybackTime / totalDuration) * 100;
-
+            
             // Garante que o indicador não vá além de B se o loop estiver ativo
             if (loopEnabled) {
                 const loopBPercent = (loopB / totalDuration) * 100;
@@ -754,20 +744,17 @@
         const rect = waveformCanvas.getBoundingClientRect();
         const clickX = e.clientX - rect.left; // Posição X do clique dentro do canvas
         const percent = clickX / waveformCanvas.width;
-        let clickedTime = percent * audioBuffer.duration;
-
-        // Arredondar para milissegundos
-        clickedTime = parseFloat(clickedTime.toFixed(3));
+        const clickedTime = percent * audioBuffer.duration;
 
         // Se shift for pressionado, define B, caso contrário, define A
         if (e.shiftKey) {
-            // Garante que B é depois de A, com um mínimo de 0.01s de diferença
-            loopB = Math.max(loopA + 0.01, clickedTime);
+            // Garante que B é depois de A, com um mínimo de 0.1s de diferença
+            loopB = Math.max(loopA + 0.1, clickedTime);    
             loopB = Math.min(loopB, audioBuffer.duration); // Não excede a duração total
             loopBValueEl.textContent = formatTime(loopB);
         } else {
-            // Garante que A é antes de B, com um mínimo de 0.01s de diferença
-            loopA = Math.min(loopB - 0.01, clickedTime);
+            // Garante que A é antes de B, com um mínimo de 0.1s de diferença
+            loopA = Math.min(loopB - 0.1, clickedTime);    
             loopA = Math.max(0, loopA); // Não fica abaixo de 0
             loopAValueEl.textContent = formatTime(loopA);
         }
@@ -776,39 +763,37 @@
 
     // Funções para os botões "Definir A" e "Definir B"
     function setLoopA() {
-        if (!audioBuffer || !audioContext) return;
-
+        if (!audioBuffer || !audioContext) return; // Precisa de um buffer e contexto
+        
         let currentPlaybackTime = 0;
-        if (isPlaying && soundtouchWorkletNode && playbackStartTime) {
+        if (isPlaying && soundtouchWorkletNode) {
             const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
             const elapsed = audioContext.currentTime - playbackStartTime;
             currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
-        } else if (audioBuffer) {
+        } else if (audioBuffer) { // Se não estiver a tocar, mas houver um buffer, usa seekPosition
             currentPlaybackTime = seekPosition;
         }
 
-        loopA = Math.min(loopB - 0.01, currentPlaybackTime); // Mínimo de 10ms de diferença
-        loopA = Math.max(0, loopA);
-        loopA = parseFloat(loopA.toFixed(3)); // Arredondar para milissegundos
+        loopA = Math.min(loopB - 0.1, currentPlaybackTime);
+        loopA = Math.max(0, loopA); // Garante que não fica abaixo de 0
         loopAValueEl.textContent = formatTime(loopA);
         updateLoopIndicators();
     }
 
     function setLoopB() {
-        if (!audioBuffer || !audioContext) return;
+        if (!audioBuffer || !audioContext) return; // Precisa de um buffer e contexto
 
         let currentPlaybackTime = 0;
-        if (isPlaying && soundtouchWorkletNode && playbackStartTime) {
+        if (isPlaying && soundtouchWorkletNode) {
             const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
             const elapsed = audioContext.currentTime - playbackStartTime;
             currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
-        } else if (audioBuffer) {
+        } else if (audioBuffer) { // Se não estiver a tocar, mas houver um buffer, usa seekPosition
             currentPlaybackTime = seekPosition;
         }
 
-        loopB = Math.max(loopA + 0.01, currentPlaybackTime); // Mínimo de 10ms de diferença
-        loopB = Math.min(loopB, audioBuffer.duration);
-        loopB = parseFloat(loopB.toFixed(3)); // Arredondar para milissegundos
+        loopB = Math.max(loopA + 0.1, currentPlaybackTime);
+        loopB = Math.min(loopB, audioBuffer.duration); // Garante que não excede a duração total
         loopBValueEl.textContent = formatTime(loopB);
         updateLoopIndicators();
     }
@@ -833,59 +818,35 @@
         toggleLoopBtn.style.background = loopEnabled ? 'linear-gradient(45deg, #1abc9c, #16a085)' : 'linear-gradient(45deg, #6c757d, #5a6268)';
         console.log('Loop:', loopEnabled);
 
-        // Se o loop for ativado ou desativado durante a reprodução, reinicie para aplicar a mudança
-        if (isPlaying) {
+        // Se o loop for ativado e a reprodução já estiver ocorrendo, reinicie para aplicar o loop imediatamente
+        if (loopEnabled && isPlaying) {
+            seekPosition = loopA; // Posiciona o início da reprodução no ponto A
             stopPlayback(); // Para o playback atual
-            // Se o loop foi ativado, posiciona o início da reprodução no ponto A
-            if (loopEnabled) {
-                seekPosition = loopA;
-            }
-            // Se o loop foi desativado, `seekPosition` já deve estar no local correto da pausa
             startPlayback(); // Inicia um novo playback com as novas configurações de loop
-        } else {
-            // Se não estiver a tocar, ajusta a seekPosition para o início do loop se ativado
-            if (loopEnabled) {
-                seekPosition = loopA;
-            } else {
-                // Se desativar o loop, e não estiver a tocar, a seekPosition permanece onde estava ou 0
-                // dependendo de onde o stopPlayback a deixou.
-            }
         }
-        updateLoopIndicators();
+        // Se o loop for desativado e estiver a tocar, reinicie para parar o loop
+        else if (!loopEnabled && isPlaying) {
+            stopPlayback(); // Para o playback atual
+            // Não reinicia automaticamente, o usuário pode clicar em play novamente
+        }
     }
 
     // --- Função para animar o indicador de reprodução ---
     function animatePlaybackIndicator() {
         if (!isPlaying || !audioBuffer || !audioContext || !soundtouchWorkletNode) {
             cancelAnimationFrame(animationFrameId);
-            playbackIndicator.style.display = 'none';
+            playbackIndicator.style.display = 'none'; // Esconde no final
             return;
         }
 
         const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
         const elapsed = audioContext.currentTime - playbackStartTime;
-        const currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
+        const currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo); // Calcula a posição real no áudio
 
         const totalDuration = audioBuffer.duration;
         const percentPlayback = (currentPlaybackTime / totalDuration) * 100;
-
-        // Garante que o indicador não ultrapasse os limites visuais ou do loop
-        if (loopEnabled) {
-            const loopBTime = loopB;
-            const loopBPercent = (loopBTime / totalDuration) * 100;
-            playbackIndicator.style.left = `${Math.min(percentPlayback, loopBPercent)}%`;
-
-            // Se o playback atual ultrapassar o loopB (considerando um pequeno delta para evitar jitter)
-            // e o worklet ainda não sinalizou o fim (o que ele faria primeiro),
-            // podemos forçar uma reinicialização aqui como fallback para a UI.
-            if (currentPlaybackTime >= loopBTime - 0.05 && isPlaying) { // 0.05s de tolerância
-                // Idealmente, o worklet sinaliza PROCESSOR_END, que recicla o playback.
-                // Esta é uma camada de segurança visual.
-            }
-        } else {
-            playbackIndicator.style.left = `${percentPlayback}%`;
-        }
-
+        
+        playbackIndicator.style.left = `${percentPlayback}%`;
         playbackIndicator.style.display = 'block';
 
         animationFrameId = requestAnimationFrame(animatePlaybackIndicator);
@@ -985,9 +946,6 @@
             // Se não estiver a tocar, move a seekPosition para A, para que o próximo play comece lá
             seekPosition = loopA;
         }
-        loopEnabled = true; // Ativa o loop ao aplicar um loop guardado
-        toggleLoopBtn.textContent = 'Loop ON ✅';
-        toggleLoopBtn.style.background = 'linear-gradient(45deg, #1abc9c, #16a085)';
     }
 
     // Renderiza a lista de loops guardados na UI
@@ -1041,29 +999,9 @@
         });
     }
 
-    // --- EVENT LISTENERS GERAIS ---
-    playBtn.addEventListener('click', togglePlayback);
-    toggleLoopBtn.addEventListener('click', toggleLoop);
-    saveLoopBtn.addEventListener('click', saveCurrentLoop);
-
-    // Certifique-se de que os botões de set/reset do loop existem no seu HTML
-    if (setALoopBtn) setALoopBtn.addEventListener('click', setLoopA);
-    if (setBLoopBtn) setBLoopBtn.addEventListener('click', setLoopB);
-    if (resetALoopBtn) resetALoopBtn.addEventListener('click', resetLoopA);
-    if (resetBLoopBtn) resetBLoopBtn.addEventListener('click', resetLoopB);
-
-
     // --- CHAMADA INICIAL: CARREGAR LOOPS QUANDO A PÁGINA CARREGA ---
-    document.addEventListener('DOMContentLoaded', () => {
-        loadSavedLoops();
-        // Inicializa o AudioContext em um estado suspenso para ser retomado na primeira interação
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioContext.state === 'running') { // Se já estiver a correr por algum motivo (raro)
-                audioContext.suspend();
-            }
-        }
-    });
+    // Adicione esta linha no final do seu script, mas antes do fechamento da tag 
+    document.addEventListener('DOMContentLoaded', loadSavedLoops);
 
 </script>
     

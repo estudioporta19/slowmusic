@@ -990,7 +990,7 @@ addSectionBtn.addEventListener('click', addSection);
 
 // Global Play/Stop
 playPauseBtn.addEventListener('click', toggleMetronome);
-stopBtn.addEventListener('click', stopMetronome);
+//stopBtn.addEventListener('click', stopMetronome);
 
 // Keyboard Spacebar for Play/Pause
 document.addEventListener('keydown', (e) => {

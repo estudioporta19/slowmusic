@@ -4,66 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instruções de Uso</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #2c3e50; /* Fundo escuro */
+            font-family: 'Roboto', sans-serif; /* Usando Roboto para consistência */
+            background-color: #2c3e50; /* Fundo escuro principal */
             color: #ecf0f1; /* Texto claro */
             margin: 0;
             padding: 20px;
             line-height: 1.6;
             display: flex;
-            justify-content: center; /* Centraliza horizontalmente */
-            align-items: flex-start; /* Alinha ao topo verticalmente */
-            min-height: 100vh; /* Ocupa a altura total da viewport */
-            box-sizing: border-box; /* Inclui padding e bordas no tamanho total */
-        }
-        .container {
-            max-width: 900px; /* Ligeiramente mais largo para a tabela */
-            width: 100%;
-            margin: 20px;
-            background-color: #34495e;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            flex-direction: column; /* Alterado para coluna para o botão Voltar ficar acima do container */
+            align-items: center; /* Centraliza horizontalmente */
+            min-height: 100vh;
             box-sizing: border-box;
         }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            margin: 20px 0; /* Ajustado margem */
+            background-color: #34495e; /* Fundo do container */
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Sombra mais proeminente */
+            box-sizing: border-box;
+            color: #ecf0f1; /* Garante texto claro dentro do container */
+        }
         h1 {
-            color: #1abc9c;
+            color: #1abc9c; /* Verde água para títulos */
             text-align: center;
-            margin-bottom: 30px; /* Mais espaço após o título */
+            margin-bottom: 30px;
+            font-weight: 700; /* Roboto Bold */
+            font-size: 2.5em; /* Tamanho maior para o título principal */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Sombra no texto do título */
         }
 
         /* Estilos da Tabela */
+        .table-container {
+            overflow-x: auto; /* Permite scroll horizontal em tabelas largas */
+            -webkit-overflow-scrolling: touch;
+            border-radius: 8px; /* Arredonda os cantos do container da tabela */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra suave para a tabela */
+        }
         table {
             width: 100%;
-            border-collapse: collapse; /* Remove espaços entre as bordas das células */
+            border-collapse: collapse;
             margin-top: 20px;
             margin-bottom: 30px;
-            background-color: rgba(0, 0, 0, 0.2); /* Fundo escuro para a tabela */
+            background-color: #465a6f; /* Fundo da tabela ligeiramente diferente */
             border-radius: 8px; /* Cantos arredondados na tabela */
-            overflow: hidden; /* Garante que os cantos arredondados sejam visíveis */
+            overflow: hidden; /* Importante para que o border-radius funcione com o collapse */
+            min-width: 600px; /* Garante que a tabela não encolha demasiado */
         }
         th, td {
             padding: 15px;
             text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Linhas divisórias suaves */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15); /* Linhas divisórias suaves e visíveis */
         }
         th {
-            background-color: #1abc9c; /* Cor do cabeçalho */
+            background: linear-gradient(45deg, #1abc9c, #16a085); /* Gradiente verde para o cabeçalho */
             color: #ffffff;
-            font-weight: bold;
+            font-weight: 700; /* Roboto Bold */
             text-transform: uppercase;
-            font-size: 0.9em;
+            font-size: 1em; /* Tamanho ligeiramente maior */
+            letter-spacing: 0.5px; /* Espaçamento entre letras */
         }
-        tr:nth-child(even) { /* Fundo mais escuro para linhas pares */
-            background-color: rgba(0, 0, 0, 0.1);
+        tr:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.1); /* Fundo mais escuro para linhas pares */
         }
         tr:hover {
-            background-color: rgba(26, 188, 156, 0.1); /* Efeito hover suave */
+            background-color: rgba(26, 188, 156, 0.2); /* Efeito hover mais pronunciado */
         }
         td {
             font-size: 0.95em;
+            vertical-align: top; /* Alinha o conteúdo da célula ao topo */
         }
         
         /* Estilos para as "teclas" de atalho e botões inline */
@@ -71,117 +87,141 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 40px;
-            height: 30px;
-            padding: 0 8px;
-            margin: 0 4px;
-            border-radius: 6px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.95em;
-            font-weight: bold;
+            min-width: 45px; /* Ligeiramente maior para melhor toque/visual */
+            height: 35px; /* Altura consistente */
+            padding: 0 10px;
+            margin: 0 5px;
+            border-radius: 8px; /* Cantos mais arredondados */
+            font-family: 'Roboto', sans-serif; /* Usando Roboto */
+            font-size: 0.9em; /* Tamanho da fonte ligeiramente ajustado */
+            font-weight: 700; /* Negrito */
             text-transform: uppercase;
-            box-shadow: 0 2px 0 rgba(0,0,0,0.3), 0 3px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2); /* Sombra mais complexa */
             border: none;
-            cursor: default;
+            cursor: default; /* Não são clicáveis aqui, então cursor padrão */
             vertical-align: middle;
             flex-shrink: 0;
-            white-space: nowrap; /* Impede a quebra de linha em teclas curtas */
+            white-space: nowrap;
+            transition: all 0.2s ease; /* Transição para efeitos */
         }
         .key-shortcut {
-            background-color: #55606d;
+            background: linear-gradient(45deg, #55606d, #495460); /* Gradiente para as teclas */
             color: #ecf0f1;
         }
         .inline-action-btn {
-            background: linear-gradient(45deg, #007bff, #0056b3);
+            background: linear-gradient(45deg, #3498db, #2980b9); /* Gradiente azul para botões inline */
             color: white;
-            cursor: default; /* Não são clicáveis aqui */
         }
         .key-shortcut.space-bar {
-            min-width: 100px;
+            min-width: 120px; /* Aumentado para a barra de espaço */
         }
 
-        /* Novas regras para o botão "Voltar" no topo */
+        /* Botão "Voltar" no topo */
         .back-button-top {
-            display: block; /* Ocupa a própria linha */
-            width: fit-content; /* Largura ajustada ao conteúdo */
-            margin-left: auto; /* Empurra para a direita */
-            margin-bottom: 20px; /* Espaço entre o botão e o título */
-            padding: 10px 20px;
-            background-color: #3498db;
+            display: inline-block; /* Permitir que o texto e o ícone fiquem na mesma linha */
+            padding: 12px 25px; /* Padding ajustado */
+            background: linear-gradient(45deg, #3498db, #2980b9); /* Gradiente azul */
             color: white;
             text-decoration: none;
             border-radius: 8px;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            font-size: 1em;
+            transition: all 0.3s ease;
+            font-size: 1.1em; /* Fonte ligeiramente maior */
             font-weight: bold;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
             border: none;
+            cursor: pointer;
+            text-align: center;
+            margin-bottom: 30px; /* Mais espaço abaixo do botão */
+            align-self: flex-start; /* Alinha à esquerda dentro do flex container do body */
         }
         .back-button-top:hover {
-            background-color: #2980b9;
+            background: linear-gradient(45deg, #2980b9, #3498db);
             transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
         }
-        /* Remover o estilo para o botão antigo no final, se existisse */
-        .back-button { /* Mantenha esta regra se precisar dela para outros botões no futuro, mas ela não será usada para o botão de "Voltar" */
-            display: none; /* Esconde a versão antiga do botão se ela ainda existir no HTML */
+        .back-button-top:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
-
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
-            .container {
+            body {
                 padding: 15px;
-                margin: 10px;
+            }
+            .container {
+                padding: 20px;
+                margin: 15px 0;
             }
             h1 {
-                font-size: 1.8em;
-                margin-bottom: 20px;
+                font-size: 2em;
+                margin-bottom: 25px;
             }
             table {
-                font-size: 0.9em; /* Reduz o tamanho da fonte da tabela */
+                font-size: 0.85em; /* Reduz ainda mais o tamanho da fonte da tabela */
+                min-width: 500px; /* Ajusta o min-width para telas médias */
             }
             th, td {
-                padding: 10px; /* Reduz o padding das células */
+                padding: 12px;
             }
             .key-shortcut, .inline-action-btn {
-                min-width: 35px;
-                height: 28px;
-                font-size: 0.85em;
-                margin: 0 2px; /* Reduz a margem entre os atalhos */
+                min-width: 40px;
+                height: 32px;
+                font-size: 0.8em;
+                padding: 0 8px;
+                margin: 0 3px;
             }
             .key-shortcut.space-bar {
-                min-width: 80px;
+                min-width: 100px;
             }
-            .back-button-top { /* Ajustes para o botão no topo em ecrãs pequenos */
-                padding: 8px 15px;
-                font-size: 0.9em;
-                margin-bottom: 15px;
+            .back-button-top {
+                padding: 10px 20px;
+                font-size: 1em;
+                margin-bottom: 20px;
             }
         }
 
         @media (max-width: 480px) {
-            /* Força a tabela a ter um scroll horizontal em ecrãs muito pequenos */
-            .table-container {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch; /* Melhor scroll em iOS */
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 15px;
+                margin: 10px 0;
+            }
+            h1 {
+                font-size: 1.6em;
+                margin-bottom: 20px;
             }
             table {
-                min-width: 400px; /* Garante uma largura mínima para evitar quebras estranhas */
+                min-width: 400px; /* Garante largura mínima para scroll */
             }
             th, td {
-                padding: 8px; /* Mais redução no padding */
+                padding: 10px;
             }
             .key-shortcut, .inline-action-btn {
-                font-size: 0.75em; /* Fonte ainda menor para atalhos */
-                min-width: 30px;
+                font-size: 0.7em;
+                min-width: 35px;
+                height: 30px;
+                padding: 0 6px;
+                margin: 0 2px;
+            }
+            .key-shortcut.space-bar {
+                min-width: 80px;
+            }
+            .back-button-top {
+                padding: 8px 15px;
+                font-size: 0.9em;
+                margin-bottom: 15px;
+                align-self: center; /* Centraliza o botão Voltar em telas muito pequenas */
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="index.html" class="back-button-top">Voltar à Aplicação</a>
+    <a href="index.html" class="back-button-top">Voltar à Aplicação</a>
 
+    <div class="container">
         <h1>Guia Rápido</h1>
 
         <div class="table-container">
@@ -287,7 +327,6 @@
                 </tbody>
             </table>
         </div>
-        
-        </div>
+    </div>
 </body>
 </html>

@@ -1,69 +1,95 @@
 body {
     font-family: 'Roboto', sans-serif;
-    background: linear-gradient(135deg, #2c3e50, #34495e); /* Dark background */
-    color: #ecf0f1; /* Light text */
+    /* Adapted from first CSS: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; /* Light text */
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* Alinha ao topo em vez de centro para evitar excesso de espaço em alturas grandes */
+    justify-content: flex-start;
     min-height: 100vh;
     margin: 0;
-    padding: 15px; /* Reduzir padding do body */
+    padding: 20px; /* Adapted from first CSS */
     box-sizing: border-box;
     font-size: 16px;
 }
 
 h1 {
-    color: #ecf0f1;
-    margin-bottom: 15px; /* Reduzir margem */
+    color: #fff; /* Adapted from first CSS for consistency with gradient text */
+    margin-bottom: 20px; /* Adapted from first CSS */
     text-align: center;
-    font-size: 2.2em; /* Ligeiramente menor */
+    font-size: 2.5em; /* Adapted from first CSS */
+    background: linear-gradient(45deg, #fff, #f0f0f0); /* Adapted from first CSS */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 h2 {
-    color: #ecf0f1;
-    margin-bottom: 15px; /* Reduzir margem */
+    color: #fff; /* Adapted from first CSS */
+    margin-bottom: 15px;
     text-align: center;
-    font-size: 1.8em; /* Ligeiramente menor */
+    font-size: 1.8em;
 }
 
 h3 {
-    color: #ecf0f1;
-    margin-bottom: 10px; /* Reduzir margem */
+    color: #fff; /* Adapted from first CSS */
+    margin-bottom: 15px; /* Adapted from first CSS */
     text-align: center;
-    font-size: 1.4em; /* Ligeiramente menor */
+    font-size: 1.2em; /* Adapted from first CSS */
 }
 
 .container {
-    background-color: #3b506b; /* Lighter background for main container */
-    border-radius: 12px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-    padding: 25px; /* Reduzir padding do container */
-    max-width: 800px; /* Reduzir largura máxima */
+    background: rgba(255, 255, 255, 0.1); /* Adapted from first CSS */
+    backdrop-filter: blur(10px); /* Adapted from first CSS */
+    border-radius: 20px; /* Adapted from first CSS */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); /* Adapted from first CSS */
+    padding: 30px; /* Adapted from first CSS */
+    max-width: 800px;
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Reduzir gap entre módulos */
+    gap: 15px;
     box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Adapted from first CSS */
 }
 
 /* Global BPM Control */
 .global-bpm-control {
-    background-color: #4a607a;
-    padding: 12px; /* Reduzir padding */
-    border-radius: 10px;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.1); /* Adapted from container style in first CSS */
+    padding: 20px; /* Adapted from first CSS .control-group */
+    border-radius: 15px; /* Adapted from first CSS .control-group */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Adapted from first CSS .file-list-container */
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px; /* Reduzir gap */
+    gap: 10px; /* Adjusted gap */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Adapted from first CSS .control-group */
 }
 .global-bpm-control label {
-    font-size: 1.1em; /* Ligeiramente menor */
+    font-size: 1.1em;
     font-weight: bold;
+    color: white; /* Ensure text is white */
 }
 .global-bpm-control input[type="range"] {
-    width: 90%; /* Ajustar largura do slider */
+    width: 90%;
+    /* Adapted from first CSS: input[type="range"] styles */
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    outline: none;
+    -webkit-appearance: none;
+}
+.global-bpm-control input[type="range"]::-webkit-slider-thumb {
+    /* Adapted from first CSS: input[type="range"]::-webkit-slider-thumb */
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(45deg, #FF6B6B, #FF8E8E); /* Red thumb from first CSS */
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
 }
 
 
@@ -71,51 +97,61 @@ h3 {
 .mode-selector {
     display: flex;
     justify-content: center;
-    gap: 8px; /* Reduzir gap */
-    margin-bottom: 15px; /* Reduzir margem */
+    gap: 10px; /* Adjusted gap */
+    margin-bottom: 20px; /* Adjusted margin */
     flex-wrap: wrap;
 }
 
 .mode-selector button {
-    background: linear-gradient(45deg, #34495e, #2c3e50); /* Darker button for modes */
-    color: #ecf0f1;
-    padding: 10px 20px; /* Reduzir padding */
-    border-radius: 8px; /* Ligeiramente menor border-radius */
+    /* Adapted from first CSS: .action-btn */
+    padding: 10px 18px;
+    font-size: 0.95em;
     font-weight: bold;
-    font-size: 1em; /* Ligeiramente menor */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: linear-gradient(45deg, #3498db, #2980b9); /* Standard blue button from first CSS */
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
 }
 
 .mode-selector button.selected {
-    background: linear-gradient(45deg, #1abc9c, #16a085); /* Green when selected */
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3); /* Ligeiramente menor shadow */
-    transform: translateY(-1px);
+    /* Adapted from first CSS: .play-btn (green) for selected state */
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    transform: translateY(-2px); /* Maintain a slight lift for selected */
 }
 
 .mode-selector button:hover:not(.selected) {
-    background: linear-gradient(45deg, #4a607a, #3b506b);
+    /* Adapted from first CSS: .action-btn:hover */
+    background: linear-gradient(45deg, #2980b9, #3498db);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
 }
 
 .mode-selector button:disabled {
-    background: #5a6268;
+    opacity: 0.6; /* Adapted from first CSS */
     cursor: not-allowed;
-    opacity: 0.7;
-    box-shadow: none;
     transform: none;
+    box-shadow: none;
+    background: #6c757d; /* A neutral disabled color, adapted from first CSS's grey button */
 }
 
 
 /* Module Grouping & Visibility */
 .module-group {
-    background-color: #4a607a; /* Background for module sections */
-    padding: 18px; /* Reduzir padding */
-    border-radius: 10px;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    display: none; /* Hidden by default */
+    background: rgba(255, 255, 255, 0.1); /* Adapted from first CSS container style */
+    padding: 20px; /* Adapted from first CSS .control-group */
+    border-radius: 15px; /* Adapted from first CSS .control-group */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Adapted from first CSS .file-list-container */
+    display: none;
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Adapted from first CSS .control-group */
 }
 
 .module-group.active-module {
-    display: block; /* Show active module */
+    display: block;
 }
 
 .hidden-module {
@@ -125,41 +161,42 @@ h3 {
 
 .controls-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Min width ligeiramente menor */
-    gap: 12px; /* Reduzir gap */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px; /* Adjusted gap */
     width: 100%;
 }
 
 .control-group {
-    background-color: #5c7490; /* Even lighter background for individual control groups */
-    padding: 12px; /* Reduzir padding */
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1); /* Adapted from first CSS .control-group */
+    padding: 20px; /* Adapted from first CSS .control-group */
+    border-radius: 15px; /* Adapted from first CSS .control-group */
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px; /* Reduzir gap */
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    gap: 10px; /* Adjusted gap */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Adapted from first CSS .file-list-container */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Adapted from first CSS .control-group */
 }
 
 label {
-    font-size: 0.95em; /* Ligeiramente menor */
-    color: #ecf0f1;
-    margin-bottom: 3px; /* Reduzir margem */
+    font-size: 0.95em;
+    color: white; /* Ensure text is white */
+    margin-bottom: 5px; /* Adjusted margin */
     text-align: center;
-    display: block; /* Ensures label takes full width */
+    display: block;
 }
 
 small {
-    font-size: 0.75em; /* Ligeiramente menor */
-    color: rgba(255,255,255,0.6);
+    font-size: 0.75em;
+    color: rgba(255,255,255,0.7); /* Adapted for better contrast on the new background */
     text-align: center;
 }
 
 input[type="range"] {
     width: 100%;
     -webkit-appearance: none;
-    height: 7px; /* Ligeiramente mais fino */
-    background: #7f8c8d; /* Grey for slider track */
+    height: 8px; /* Adapted from first CSS */
+    background: rgba(255, 255, 255, 0.2); /* Adapted from first CSS */
     border-radius: 5px;
     outline: none;
     transition: opacity .2s;
@@ -168,251 +205,270 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px; /* Ligeiramente menor */
-    height: 18px; /* Ligeiramente menor */
-    background: #1abc9c; /* Green thumb */
+    width: 20px; /* Adapted from first CSS */
+    height: 20px; /* Adapted from first CSS */
+    background: linear-gradient(45deg, #FF6B6B, #FF8E8E); /* Red thumb from first CSS */
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4); /* Adapted from first CSS */
 }
 
 input[type="text"], input[type="number"], select {
-    width: calc(100% - 16px); /* Ajustar para novo padding */
-    padding: 7px 8px; /* Reduzir padding */
-    border-radius: 5px;
-    border: 1px solid #7f8c8d;
-    background-color: #ecf0f1;
-    color: #2c3e50;
-    font-size: 0.95em; /* Ligeiramente menor */
-    box-sizing: border-box; /* Include padding in width */
+    width: calc(100% - 20px); /* Adjusted for new padding */
+    padding: 10px; /* Adapted for better usability */
+    border-radius: 10px; /* Adjusted for consistency */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Adapted for new theme */
+    background-color: rgba(255, 255, 255, 0.15); /* Adapted for translucent background */
+    color: white; /* Ensure text is white */
+    font-size: 0.95em;
+    box-sizing: border-box;
 }
 
 select {
-    -webkit-appearance: none; /* Remove default arrow on select */
+    -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    background-image: url('data:image/svg+xml;utf8,<svg fill="#2c3e50" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); /* Custom arrow */
+    background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); /* Custom arrow, now white */
     background-repeat: no-repeat;
-    background-position: right 6px center; /* Ajustar posição da seta */
-    background-size: 14px; /* Ajustar tamanho da seta */
+    background-position: right 10px center; /* Adjusted position */
+    background-size: 18px; /* Adjusted size */
 }
 
 .value-display {
-    font-size: 1em; /* Ligeiramente menor */
+    font-size: 1em;
     font-weight: bold;
-    color: #1abc9c;
+    color: #8aff8a; /* Bright green from first CSS marker time */
+    background: rgba(255, 255, 255, 0.2); /* From first CSS value-display */
+    padding: 5px 10px; /* From first CSS value-display */
+    border-radius: 10px; /* From first CSS value-display */
 }
 
 button {
-    background: linear-gradient(45deg, #3498db, #2980b9); /* Standard blue button */
+    /* Adapted from first CSS: .action-btn */
+    background: linear-gradient(45deg, #3498db, #2980b9);
     color: white;
     border: none;
-    padding: 9px 18px; /* Reduzir padding */
-    border-radius: 8px;
+    padding: 10px 18px; /* Adjusted padding to match action-btn */
+    border-radius: 8px; /* Adjusted border-radius to match action-btn */
     cursor: pointer;
-    font-size: 0.95em; /* Ligeiramente menor */
-    transition: background 0.3s ease, transform 0.1s ease;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Ligeiramente menor shadow */
-    flex-grow: 1; /* Allow buttons to grow in flexible containers */
-    white-space: nowrap; /* Prevent text wrapping */
+    font-size: 0.95em;
+    transition: all 0.3s ease; /* From first CSS action-btn */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* From first CSS action-btn */
+    flex-grow: 1;
+    white-space: nowrap;
 }
 
 button:hover {
+    /* Adapted from first CSS: .action-btn:hover */
     background: linear-gradient(45deg, #2980b9, #3498db);
-    transform: translateY(-1px);
+    transform: translateY(-2px); /* From first CSS action-btn:hover */
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3); /* From first CSS action-btn:hover */
 }
 
 button:active {
-    transform: translateY(0.5px); /* Ligeiramente menor movimento */
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transform: translateY(0); /* Adjusted from first CSS .reset-btn:active, more consistent */
+    background: linear-gradient(45deg, #2980b9, #3498db); /* Keep the hover gradient or make it slightly darker if desired */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Smaller shadow on active */
 }
 
 button:disabled {
-    background: #5a6268;
+    opacity: 0.6; /* Adapted from first CSS */
     cursor: not-allowed;
-    opacity: 0.7;
-    box-shadow: none;
     transform: none;
+    box-shadow: none;
+    background: #6c757d; /* A neutral disabled color, adapted from first CSS's grey button */
 }
 
 hr {
     border: none;
-    border-top: 1px solid #5c7490;
-    margin: 15px 0; /* Reduzir margem */
+    border-top: 1px solid rgba(255, 255, 255, 0.2); /* Adapted for new theme */
+    margin: 20px 0; /* Adjusted margin */
 }
 
 /* Metronome Status Display */
 .metronome-status {
     text-align: center;
-    font-size: 1.4em; /* Ligeiramente menor */
+    font-size: 1.4em;
     font-weight: bold;
-    color: #f39c12; /* Orange for status */
+    color: #FF6B6B; /* Red from first CSS for highlights/warnings */
     min-height: 1.4em;
-    margin-top: 8px; /* Reduzir margem */
-    margin-bottom: 15px; /* Adicionar margem inferior para separar dos botões */
+    margin-top: 10px; /* Adjusted margin */
+    margin-bottom: 20px; /* Adjusted margin */
 }
 
 /* Global Controls (Play/Pause/Stop) */
 .global-controls {
     display: flex;
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    gap: 10px; /* Reduzir gap */
+    flex-wrap: wrap;
+    gap: 15px; /* Adjusted gap */
     justify-content: center;
-    margin-top: 0; /* Remove a margem superior já que movemos o elemento */
-    margin-bottom: 20px; /* Adicionar margem inferior para separar dos módulos */
+    margin-top: 0;
+    margin-bottom: 30px; /* Adjusted margin */
 }
 
 /* Subdivision Controls */
 .subdivision-controls {
     display: flex;
-    gap: 4px; /* Reduzir gap */
+    gap: 8px; /* Adjusted gap */
     width: 100%;
     justify-content: center;
 }
 .subdivision-controls button {
-    background: linear-gradient(45deg, #9b59b6, #8e44ad); /* Purple for subdivision buttons */
-    padding: 7px 12px; /* Reduzir padding */
-    font-size: 0.9em; /* Ligeiramente menor */
+    /* Adapted from first CSS: .action-btn for general button style */
+    background: linear-gradient(45deg, #3498db, #2980b9); /* Use the standard button style */
+    padding: 10px 18px; /* Consistent padding */
+    font-size: 0.95em; /* Consistent font size */
+    border-radius: 8px; /* Consistent border radius */
 }
 .subdivision-controls button.selected {
-    background: linear-gradient(45deg, #1abc9c, #16a085); /* Green when selected */
+    /* Adapted from first CSS: .play-btn (green) for selected state */
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    transform: translateY(-2px);
 }
 
 /* Clave Designer */
 .clave-designer-container {
-    background-color: #5c7490;
-    padding: 18px; /* Reduzir padding */
-    border-radius: 8px;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.1); /* Adapted from first CSS container style */
+    padding: 20px; /* Adapted from first CSS .control-group */
+    border-radius: 15px; /* Adapted from first CSS .control-group */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Adapted from first CSS .file-list-container */
     text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Adapted from first CSS .control-group */
 }
 
 .clave-designer-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px; /* Reduzir margem */
-    flex-wrap: wrap; /* Allow wrapping */
-    gap: 8px; /* Reduzir gap */
+    margin-bottom: 15px; /* Adjusted margin */
+    flex-wrap: wrap;
+    gap: 10px; /* Adjusted gap */
 }
 
 .clave-designer-header h3 {
     margin: 0;
-    font-size: 1.1em; /* Ligeiramente menor */
+    font-size: 1.2em; /* Adapted from first CSS h3 */
     text-align: left;
 }
 
 .clave-cycle-control {
-    flex-grow: 1; /* Allow it to take available space */
-    max-width: 220px; /* Reduzir largura máxima */
+    flex-grow: 1;
+    max-width: 250px; /* Adjusted max-width */
 }
 
 .clave-grid {
     display: grid;
-    grid-template-columns: repeat(16, 1fr); /* 16 columns for the 16 points */
-    gap: 4px; /* Reduzir gap */
-    margin-top: 12px; /* Reduzir margem */
+    grid-template-columns: repeat(16, 1fr);
+    gap: 5px; /* Adjusted gap */
+    margin-top: 15px; /* Adjusted margin */
 }
 
 .clave-point {
-    width: 28px; /* Ligeiramente menor */
-    height: 28px; /* Ligeiramente menor */
-    background-color: #6c757d; /* Default (off) */
-    border-radius: 4px;
+    width: 30px; /* Adjusted size */
+    height: 30px; /* Adjusted size */
+    background-color: rgba(255, 255, 255, 0.2); /* Adapted from first CSS */
+    border-radius: 5px; /* Adjusted radius */
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75em; /* Ligeiramente menor */
+    font-size: 0.8em; /* Adjusted font size */
     font-weight: bold;
-    color: rgba(255, 255, 255, 0.7);
-    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    color: rgba(255, 255, 255, 0.8); /* Adjusted color */
+    transition: all 0.2s ease; /* From first CSS file-cell */
     user-select: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Smaller shadow for consistency */
 }
 
 .clave-point:hover {
-    transform: translateY(-0.5px); /* Ligeiramente menor movimento */
+    transform: translateY(-2px); /* Adapted from first CSS file-cell:hover */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Adapted from first CSS file-cell:hover */
+    background: rgba(255, 255, 255, 0.3); /* Slightly brighter on hover */
 }
 
 .clave-point.beat-1 { /* Strong beat */
-    background-color: #e74c3c; /* Red */
+    background: linear-gradient(45deg, #FF6B6B, #FF8E8E); /* Red from first CSS reset-btn */
     color: white;
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4); /* Adapted from first CSS reset-btn */
 }
 .clave-point.beat-2 { /* Medium beat */
-    background-color: #f39c12; /* Orange/Yellow */
+    background: linear-gradient(45deg, #FFD700, #FFA500); /* A new orange/yellow gradient, similar to F39C12 but using the gradient style */
     color: white;
+    box-shadow: 0 2px 10px rgba(255, 215, 0, 0.4);
 }
 .clave-point.beat-0 { /* Off */
-    background-color: #6c757d; /* Gray */
+    background-color: rgba(255, 255, 255, 0.2); /* Consistent with default off state */
 }
 
 /* Visual indicator for current beat */
 .clave-point.active-beat {
-    box-shadow: 0 0 0 2px #1abc9c; /* Ligeiramente mais fino */
-    transform: scale(1.08); /* Ligeiramente menor scale */
+    box-shadow: 0 0 0 3px #8aff8a; /* Bright green from first CSS marker-time, thicker border */
+    transform: scale(1.1); /* Slightly larger scale */
 }
 
-.clave-point.inactive-clave-point { /* For points outside the active cycle length */
-    opacity: 0.2; /* Mais transparente */
-    pointer-events: none; /* Make them unclickable */
-    background-color: #4a607a; /* Slightly darker gray */
+.clave-point.inactive-clave-point {
+    opacity: 0.3; /* More transparent */
+    pointer-events: none;
+    background-color: rgba(255, 255, 255, 0.1); /* Darker translucent gray */
+    box-shadow: none;
+    transform: none;
 }
 
 
 .clave-info {
-    font-size: 0.8em; /* Ligeiramente menor */
+    font-size: 0.8em;
     color: rgba(255,255,255,0.7);
-    margin-top: 8px; /* Reduzir margem */
+    margin-top: 10px; /* Adjusted margin */
 }
 
 /* Time Map Module Styles */
 .time-map-controls {
-    background-color: #5c7490;
-    padding: 18px; /* Reduzir padding */
-    border-radius: 8px;
-    margin-bottom: 18px; /* Reduzir margem */
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.1); /* Adapted from first CSS container style */
+    padding: 20px; /* Adapted from first CSS .control-group */
+    border-radius: 15px; /* Adapted from first CSS .control-group */
+    margin-bottom: 20px; /* Adjusted margin */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Adapted from first CSS .file-list-container */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Adapted from first CSS .control-group */
 }
 
 .time-map-controls h3 {
     margin-top: 0;
-    margin-bottom: 12px; /* Reduzir margem */
+    margin-bottom: 15px; /* Adjusted margin */
     text-align: center;
 }
 
 .section-config-group {
     display: grid;
-    /* Alterar para 4 colunas se houver espaço, caso contrário, 2 e depois 1 */
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Reduzir min-width para 140px */
-    gap: 8px; /* Manter gap */
-    margin-bottom: 12px;
-    padding: 8px;
-    border: 1px dashed #7f8c8d;
-    border-radius: 5px;
-    background-color: #4a607a;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Adjusted min-width */
+    gap: 10px; /* Adjusted gap */
+    margin-bottom: 15px; /* Adjusted margin */
+    padding: 10px; /* Adjusted padding */
+    border: 1px dashed rgba(255, 255, 255, 0.3); /* Adapted for new theme */
+    border-radius: 10px; /* Adjusted radius */
+    background-color: rgba(255, 255, 255, 0.08); /* Slightly darker translucent */
 }
 
 @media (max-width: 768px) {
-    /* Manter 1 coluna para controles gerais, mas ajustar especificamente para timeMapClassicControls */
     .controls-grid {
         grid-template-columns: 1fr;
     }
-    /* NOVO: Forçar 2 colunas para timeMapClassicControls em telas médias */
     #timeMapClassicControls {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
     .clave-grid {
         grid-template-columns: repeat(8, 1fr);
-        gap: 3px;
+        gap: 4px; /* Adjusted gap */
     }
     .clave-point {
-        width: 22px;
-        height: 22px;
+        width: 25px; /* Adjusted size */
+        height: 25px; /* Adjusted size */
         font-size: 0.7em;
     }
     .clave-designer-header {
         flex-direction: column;
         align-items: flex-start;
+        gap: 10px; /* Adjusted gap */
     }
     .clave-cycle-control {
         width: 100%;
@@ -428,29 +484,29 @@ hr {
     }
     .mode-selector button, .global-controls button, .subdivision-controls button {
         font-size: 0.9em;
-        padding: 7px 12px;
+        padding: 8px 15px; /* Adjusted padding */
     }
     input[type="text"], input[type="number"], select {
         font-size: 0.9em;
-        padding: 6px 8px;
+        padding: 8px 10px; /* Adjusted padding */
     }
     .clave-info {
         font-size: 0.75em;
     }
     .section-buttons button {
-        padding: 5px 8px;
-        font-size: 0.8em;
+        padding: 6px 10px; /* Adjusted padding */
+        font-size: 0.85em; /* Adjusted font size */
     }
 }
 
 @media (max-width: 480px) {
     .clave-grid {
         grid-template-columns: repeat(4, 1fr);
-        gap: 2px;
+        gap: 3px; /* Adjusted gap */
     }
     .clave-point {
-        width: 18px;
-        height: 18px;
+        width: 20px; /* Adjusted size */
+        height: 20px; /* Adjusted size */
         font-size: 0.65em;
     }
     .container {
@@ -471,7 +527,6 @@ hr {
     .metronome-status {
         font-size: 1.2em;
     }
-    /* NOVO: Forçar 1 coluna para timeMapClassicControls em telas muito pequenas */
     #timeMapClassicControls {
         grid-template-columns: 1fr;
     }
@@ -483,10 +538,20 @@ hr {
 
 #addSectionBtn {
     width: auto;
-    margin-top: 12px; /* Reduzir margem */
-    align-self: center; /* Center button within flex container */
-    background: linear-gradient(45deg, #1abc9c, #16a085);
+    margin-top: 15px; /* Adjusted margin */
+    align-self: center;
+    /* Adapted from first CSS: .play-btn (green) for positive action */
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    padding: 12px 25px; /* Adjusted padding for a prominent button */
+    border-radius: 25px; /* Adjusted border-radius for prominent button */
+    font-size: 16px; /* Adjusted font size */
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3); /* Adapted shadow */
 }
+#addSectionBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
 
 .time-map-sections-list {
     list-style: none;
@@ -494,66 +559,71 @@ hr {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Reduzir gap */
+    gap: 10px; /* Adjusted gap */
 }
 
 .time-map-section-item {
-    background-color: #5c7490;
-    padding: 12px; /* Reduzir padding */
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1); /* Adapted from first CSS container style */
+    padding: 15px; /* Adjusted padding */
+    border-radius: 10px; /* Adjusted border-radius */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px; /* Reduzir gap */
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); /* Ligeiramente menor shadow */
-    flex-wrap: wrap; /* Allow wrapping on small screens */
-    border-left: 4px solid #1abc9c; /* Ligeiramente mais fino */
+    gap: 10px; /* Adjusted gap */
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2); /* Adjusted shadow for list items */
+    flex-wrap: wrap;
+    border-left: 5px solid #8aff8a; /* Bright green from first CSS marker-time, thicker border */
 }
 
 .time-map-section-item.active {
-    border-left: 4px solid #f39c12; /* Active section highlight */
-    background-color: #6c757d;
-    transform: scale(1.01); /* Ligeiramente menor scale */
+    border-left: 5px solid #FFD700; /* Yellow/Orange for active, adapted from clave-point.beat-2 */
+    background: rgba(255, 255, 255, 0.15); /* Slightly brighter when active */
+    transform: scale(1.01);
     transition: transform 0.1s ease;
 }
 
 .section-info {
     flex-grow: 1;
-    font-size: 1em; /* Ligeiramente menor */
-    color: #ecf0f1;
+    font-size: 1em;
+    color: white; /* Ensure text is white */
 }
 
 .section-buttons {
     display: flex;
-    gap: 4px; /* Reduzir gap */
-    flex-wrap: wrap; /* Allow buttons to wrap */
+    gap: 8px; /* Adjusted gap */
+    flex-wrap: wrap;
 }
 
 .section-buttons button {
-    padding: 7px 10px; /* Reduzir padding */
-    font-size: 0.85em; /* Ligeiramente menor */
-    background: linear-gradient(45deg, #e67e22, #d35400); /* Orange for edit/delete */
+    /* Adapted from first CSS .reset-btn (red) for edit/delete actions, but with more subtle sizing */
+    background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+    padding: 8px 15px; /* Adjusted padding */
+    font-size: 0.9em; /* Adjusted font size */
+    border-radius: 15px; /* Use the reset-btn border radius */
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3); /* Consistent shadow */
 }
 
 .section-buttons button.delete-btn {
-    background: linear-gradient(45deg, #e74c3c, #c0392b); /* Red for delete */
+    /* Use the same red for delete as the general section buttons */
+    background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
 }
 
 .section-buttons button:hover {
-    transform: translateY(-0.5px);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
 }
 
 @media (max-width: 768px) {
     .controls-grid, .section-config-group {
-        grid-template-columns: 1fr; /* Single column on smaller screens */
+        grid-template-columns: 1fr;
     }
     .clave-grid {
-        grid-template-columns: repeat(8, 1fr); /* 8 columns on smaller screens */
-        gap: 3px; /* Reduzir gap */
+        grid-template-columns: repeat(8, 1fr);
+        gap: 4px;
     }
     .clave-point {
-        width: 22px; /* Ligeiramente menor */
-        height: 22px; /* Ligeiramente menor */
+        width: 25px;
+        height: 25px;
         font-size: 0.7em;
     }
     .clave-designer-header {
@@ -561,7 +631,7 @@ hr {
         align-items: flex-start;
     }
     .clave-cycle-control {
-        width: 100%; /* Full width on small screens */
+        width: 100%;
         max-width: none;
     }
     .time-map-section-item {
@@ -572,38 +642,36 @@ hr {
         width: 100%;
         justify-content: flex-end;
     }
-    /* Ajustes para botões e inputs em telas menores */
     .mode-selector button, .global-controls button, .subdivision-controls button {
         font-size: 0.9em;
-        padding: 7px 12px;
+        padding: 8px 15px;
     }
     input[type="text"], input[type="number"], select {
         font-size: 0.9em;
-        padding: 6px 8px;
+        padding: 8px 10px;
     }
     .clave-info {
         font-size: 0.75em;
     }
     .section-buttons button {
-        padding: 5px 8px;
-        font-size: 0.8em;
+        padding: 6px 10px;
+        font-size: 0.85em;
     }
 }
 
 @media (max-width: 480px) {
     .clave-grid {
-        grid-template-columns: repeat(4, 1fr); /* 4 columns on very small screens */
-        gap: 2px; /* Reduzir gap */
+        grid-template-columns: repeat(4, 1fr);
+        gap: 3px;
     }
     .clave-point {
-        width: 18px; /* Ligeiramente menor */
-        height: 18px; /* Ligeiramente menor */
+        width: 20px;
+        height: 20px;
         font-size: 0.65em;
     }
     .container {
-        padding: 15px; /* Reduzir padding */
+        padding: 15px;
     }
-    /* Ajustes gerais de fonte e padding para telas muito pequenas */
     body {
         font-size: 15px;
     }
@@ -623,20 +691,31 @@ hr {
 /* style.css */
 
 .back-to-app-button {
-    display: block; /* Para ocupar a sua própria linha */
-    width: fit-content; /* Ajusta a largura ao conteúdo */
-    margin: 20px auto; /* Centraliza e adiciona espaço */
-    padding: 10px 20px;
-    background-color: #007bff; /* Um azul agradável */
+    display: block;
+    width: fit-content;
+    margin: 20px auto;
+    /* Adapted from first CSS: .action-btn */
+    background: linear-gradient(45deg, #3498db, #2980b9);
     color: white;
-    text-decoration: none; /* Remove o sublinhado do link */
-    border-radius: 5px;
+    text-decoration: none;
+    padding: 10px 18px; /* Consistent padding */
+    border-radius: 8px; /* Consistent border radius */
     text-align: center;
     font-weight: bold;
-    transition: background-color 0.2s ease; /* Transição suave para o hover */
+    font-size: 0.95em; /* Consistent font size */
+    transition: all 0.3s ease; /* Consistent transition */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Consistent shadow */
+    cursor: pointer;
 }
 
 .back-to-app-button:hover {
-    background-color: #0056b3; /* Cor mais escura ao passar o rato */
-    cursor: pointer;
+    /* Adapted from first CSS: .action-btn:hover */
+    background: linear-gradient(45deg, #2980b9, #3498db);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+}
+
+.back-to-app-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }

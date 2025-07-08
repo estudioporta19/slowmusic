@@ -15,9 +15,27 @@ body {
     font-size: 16px;
 }
 
+/* NOVO: Wrapper para os elementos que ficam no topo */
+.top-controls-wrapper {
+    width: 100%;
+    max-width: 850px; /* Limite a largura como o container principal */
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    gap: 15px; /* Espaço entre os grupos principais */
+    margin-bottom: 25px; /* Espaço abaixo deste grupo superior */
+    padding: 20px; /* Adiciona um padding para espaçamento interno */
+    background: rgba(255, 255, 255, 0.08); /* Adiciona um fundo similar ao container */
+    backdrop-filter: blur(15px);
+    border-radius: 25px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-sizing: border-box;
+}
+
 h1 {
     color: #fff;
-    margin-bottom: 20px;
+    margin-bottom: 20px; /* Aumentado ligeiramente para espaço do título */
     text-align: center;
     font-size: 2.5em;
     background: linear-gradient(45deg, #fff, #f0f0f0);
@@ -40,7 +58,7 @@ h3 {
     font-size: 1.2em;
 }
 
-/* Container Principal - Continua a ser a "caixa" principal, com mais destaque */
+/* Container Principal - Agora apenas para os módulos */
 .container {
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(15px);
@@ -56,16 +74,6 @@ h3 {
     border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* NOVO: Wrapper para os elementos que ficam no topo */
-.top-controls-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column; /* Inicialmente em coluna, ajusta em media query */
-    align-items: center;
-    gap: 15px; /* Espaço entre os grupos principais */
-    margin-bottom: 25px; /* Espaço abaixo deste grupo superior */
-}
-
 /* Global BPM Control - Agrupado com o botão Play/Pause */
 .global-bpm-play-group {
     display: flex;
@@ -73,6 +81,7 @@ h3 {
     gap: 15px; /* Espaço entre slider e botão */
     width: 100%; /* Ocupa a largura total para centralizar */
     justify-content: center; /* Centraliza o conteúdo */
+    flex-wrap: wrap; /* Permite quebrar em mobile */
 }
 
 .global-bpm-control { /* Apenas o slider e o label */
@@ -307,10 +316,11 @@ button:disabled {
     background: #6c757d;
 }
 
+/* Removido o hr entre os elementos do top-controls-wrapper */
 hr {
     border: none;
     border-top: 1px solid rgba(255, 255, 255, 0.15);
-    margin: 30px 0;
+    margin: 30px 0; /* Mantido para divisões dentro dos módulos, se aplicável */
 }
 
 /* Metronome Status Display */
@@ -321,12 +331,12 @@ hr {
     color: #FF6B6B;
     min-height: 1.5em;
     margin-top: 15px;
-    margin-bottom: 25px;
+    margin-bottom: 25px; /* Ajuste ligeiro */
 }
 
-/* Global Controls (Play/Pause/Stop) - Removido pois está agrupado */
+/* Global Controls (Play/Pause/Stop) - Agora integrado no global-bpm-play-group */
 .global-controls {
-    display: none; /* Esconde este grupo, pois o botão está agora com o slider */
+    display: none; /* Esconde este grupo, pois o botão Play/Pause foi movido */
 }
 
 /* Subdivision Controls */
@@ -503,7 +513,7 @@ hr {
 
 /* Media Queries Consolidado e Melhorado */
 @media (max-width: 850px) { /* Novo breakpoint para o max-width do container */
-    .container {
+    .container, .top-controls-wrapper {
         padding: 25px;
         gap: 20px;
     }
@@ -592,7 +602,7 @@ hr {
 }
 
 @media (max-width: 480px) {
-    .container {
+    .container, .top-controls-wrapper {
         padding: 18px;
         gap: 15px;
     }

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instruções de Uso</title>
+    <link rel="stylesheet" href="style.css"> <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c3e50; /* Cor de fundo semelhante ao seu app */
+            color: #ecf0f1; /* Cor do texto */
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #34495e; /* Fundo do container */
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        h1, h2 {
+            color: #1abc9c; /* Cor para títulos */
+        }
+        p, ul {
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .back-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #1abc9c;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .back-button:hover {
+            background-color: #16a085;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Instruções de Uso da Aplicação de Áudio</h1>
+
+        <p>Bem-vindo à aplicação! Aqui estão algumas instruções para o ajudar a tirar o máximo partido dela:</p>
+
+        <h2>1. Carregar Ficheiros de Áudio</h2>
+        <ul>
+            <li>Clique no botão **"Escolher Ficheiros"** para selecionar um ou vários ficheiros de áudio do seu dispositivo.</li>
+            <li>Os ficheiros serão carregados e listados na secção "Ficheiros Carregados".</li>
+            <li>Clique no nome de um ficheiro na lista para o **selecionar e iniciar a reprodução**. Se a música já estiver a tocar, clicar no nome do ficheiro irá pausá-la/retomá-la.</li>
+            <li>Pode remover um ficheiro da lista clicando no botão **"X"** ao lado do seu nome.</li>
+        </ul>
+
+        <h2>2. Controlo de Reprodução</h2>
+        <ul>
+            <li>Use o botão **"Reproduzir / Pausar"** (▶️/⏸️) para iniciar ou pausar a reprodução.</li>
+            <li>Ajuste a **velocidade** de reprodução usando o slider "Velocidade".</li>
+            <li>Ajuste o **tom** (pitch) usando o slider "Tom".</li>
+            <li>Clique no botão **"Reiniciar Controlo"** para redefinir a velocidade e o tom para os valores padrão (1.0x e 0 semitons) e parar a reprodução.</li>
+        </ul>
+
+        <h2>3. Looping (Repetição)</h2>
+        <ul>
+            <li>Na waveform (onda de áudio), pode definir os pontos de início (A) e fim (B) do loop.</li>
+            <li>Use os botões **"A"** e **"B"** para definir os pontos de loop na posição de reprodução atual.</li>
+            <li>Utilize os botões **"+0.01s" / "-0.01s"** ao lado dos valores de A e B para ajustes finos dos pontos de loop.</li>
+            <li>O botão **"Reiniciar A"** e **"Reiniciar B"** redefinem os pontos de loop para o início e fim da faixa, respetivamente.</li>
+            <li>Clique em **"Loop ON ✅ / OFF ❌"** para ativar ou desativar o modo de repetição.</li>
+            <li>Pode **guardar** os seus loops favoritos dando-lhes um nome e clicando em "Guardar Loop Atual". Os loops guardados incluem os pontos A e B, bem como as configurações de velocidade e tom.</li>
+            <li>Na lista de "Loops Guardados", pode **"Aplicar"** um loop para carregar as suas configurações e iniciar a reprodução, ou **remover** um loop.</li>
+            <li>Um aviso "Ficheiro não carregado ⚠️" aparecerá se o ficheiro associado a um loop guardado não estiver atualmente na sua lista.</li>
+        </ul>
+
+        <h2>4. Marcadores</h2>
+        <ul>
+            <li>Use o campo **"Nome do marcador"** e clique em **"Adicionar Marcador"** para marcar um ponto específico na faixa de áudio com um nome.</li>
+            <li>Os marcadores serão listados abaixo. Clique num marcador na lista para **saltar para esse ponto** na música. Se a música estiver a tocar, continuará a tocar a partir do novo ponto.</li>
+            <li>Use os botões **"← Marcador Anterior"** e **"Próximo Marcador →"** para navegar rapidamente entre os marcadores. A reprodução será mantida.</li>
+            <li>Clique no botão **"❌"** ao lado de um marcador para o remover.</li>
+        </ul>
+        
+        <h2>Atalhos de Teclado</h2>
+        <ul>
+            <li>**Espaço**: Reproduzir / Pausar</li>
+            <li>**A**: Definir ponto A do loop na posição atual</li>
+            <li>**B**: Definir ponto B do loop na posição atual</li>
+        </ul>
+
+        <a href="index.html" class="back-button">Voltar à Aplicação</a>
+    </div>
+</body>
+</html>

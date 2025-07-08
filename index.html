@@ -5,427 +5,362 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Practice Buddy</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-   <style>
-    /* Estilos Gerais e Reset */
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: linear-gradient(135deg, #1e1e1e, #333333);
-        color: #e0e0e0;
-        margin: 0;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-height: 100vh; /* Garante que o body ocupa pelo menos toda a altura do viewport */
-        box-sizing: border-box;
-    }
-
-    h1, h2 {
-        color: #1abc9c;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    /* Conteiner Principal da Aplicação */
-    #appContainer {
-        display: flex;
-        flex-wrap: wrap; /* Permite que os itens quebrem para a próxima linha */
-        gap: 20px; /* Espaço entre as seções */
-        width: 100%;
-        max-width: 1200px; /* Largura máxima para desktop */
-        justify-content: center; /* Centraliza as seções */
-    }
-
-    /* Estilos para cada Seção (Controles, Waveform, Loops) */
-    .panel {
-        background-color: #2c2c2c;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        flex-grow: 1; /* Permite que os painéis cresçam para preencher o espaço */
-        box-sizing: border-box; /* Inclui padding e border no width/height */
-        min-width: 280px; /* Largura mínima para evitar que fiquem muito apertados */
-    }
-
-    /* Ajustes específicos para as seções */
-    #fileSelection, #controls, #loopControls, #savedLoopsSection {
-        width: 100%; /* Por padrão, ocupam a largura total em telas pequenas */
-    }
-
-    #waveformContainer {
-        width: 100%;
-        position: relative; /* Necessário para posicionar os indicadores */
-        margin-top: 20px;
-        margin-bottom: 20px;
-        background-color: #1a1a1a;
-        border-radius: 8px;
-        overflow: hidden; /* Garante que os indicadores não saiam */
-        min-height: 150px; /* Altura mínima para a waveform */
-    }
-
-    #waveformCanvas {
-        display: block; /* Remove espaço extra abaixo do canvas */
-        width: 100%;
-        height: 150px; /* Altura fixa para a waveform */
-    }
-
-    /* Indicadores de Loop e Playback */
-    .loop-indicator, #playbackIndicator {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 2px; /* Espessura do indicador */
-        background-color: rgba(255, 255, 255, 0.7);
-        display: none;
-        pointer-events: none; /* Não interfere com cliques no canvas */
-    }
-
-    #loopIndicatorA { background-color: #ff6347; } /* Tomate */
-    #loopIndicatorB { background-color: #6a5acd; } /* SlateBlue */
-    #playbackIndicator { background-color: #1abc9c; z-index: 10; } /* Verde Água */
-
-    /* Estilos dos Inputs e Botões */
-    input[type="file"], input[type="text"], input[type="range"] {
-        width: calc(100% - 20px); /* Ajusta para padding */
-        padding: 10px;
-        margin-bottom: 15px;
-        border: 1px solid #444;
-        border-radius: 6px;
-        background-color: #3a3a3a;
-        color: #e0e0e0;
-        font-size: 1em;
-        box-sizing: border-box;
-    }
-
-    input[type="range"] {
-        -webkit-appearance: none;
-        height: 8px;
-        background: linear-gradient(to right, #1abc9c, #3498db);
-        outline: none;
-        opacity: 0.9;
-        transition: opacity .2s;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: #e0e0e0;
-        cursor: pointer;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-    }
-
-    .slider-group {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        margin-bottom: 10px;
-        padding: 0 10px; /* Adiciona padding para alinhar com inputs */
-        box-sizing: border-box;
-    }
-
-    .slider-group label {
-        flex-basis: 70px; /* Espaço fixo para a label */
-        margin-right: 10px;
-        text-align: right;
-        white-space: nowrap; /* Evita que o texto quebre */
-    }
-
-    .slider-group input[type="range"] {
-        flex-grow: 1; /* Preenche o restante do espaço */
-        margin-bottom: 0; /* Remove margem inferior para alinhamento */
-    }
-
-    .slider-value {
-        width: 60px; /* Largura fixa para o valor */
-        text-align: center;
-        margin-left: 10px;
-        font-weight: bold;
-        color: #1abc9c;
-    }
-
-    .button-group {
-        display: flex;
-        flex-wrap: wrap; /* Permite que os botões quebrem linha */
-        justify-content: center;
-        gap: 10px; /* Espaço entre os botões */
-        width: 100%;
-        margin-top: 10px;
-    }
-
-    button {
-        padding: 12px 20px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 1em;
-        font-weight: bold;
-        color: #fff;
-        background: linear-gradient(45deg, #3498db, #2980b9); /* Azul padrão */
-        transition: background 0.3s ease, transform 0.1s ease;
-        flex: 1 1 auto; /* Permite que o botão cresça/encolha */
-        max-width: 180px; /* Limita a largura em telas grandes */
-    }
-
-    button:hover {
-        opacity: 0.9;
-        transform: translateY(-1px);
-    }
-
-    button:active {
-        transform: translateY(0);
-    }
-
-    button:disabled {
-        background: linear-gradient(45deg, #6c757d, #5a6268);
-        cursor: not-allowed;
-        opacity: 0.6;
-    }
-
-    .reset-btn {
-        background: linear-gradient(45deg, #f39c12, #e67e22); /* Laranja */
-    }
-
-    .loop-point-value {
-        font-size: 0.9em;
-        color: #bbb;
-        margin-top: 5px;
-        text-align: center;
-        width: 100%;
-    }
-
-    /* Lista de Ficheiros Carregados */
-    #fileListContainer {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Colunas flexíveis */
-        gap: 10px;
-        width: 100%;
-        margin-top: 15px;
-        max-height: 200px; /* Altura máxima para rolagem */
-        overflow-y: auto; /* Adiciona rolagem vertical se necessário */
-        padding: 10px;
-        background-color: #222;
-        border-radius: 8px;
-        border: 1px solid #444;
-    }
-
-    .file-cell {
-        background-color: #444;
-        color: #eee;
-        padding: 8px;
-        border-radius: 6px;
-        text-align: center;
-        cursor: pointer;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis; /* Adiciona reticências se o nome for muito longo */
-        transition: background-color 0.2s ease;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center; /* Centraliza o texto */
-    }
-
-    .file-cell:hover {
-        background-color: #555;
-    }
-
-    .file-cell.selected {
-        background-color: #1abc9c; /* Cor de destaque para o ficheiro selecionado */
-        color: #fff;
-        font-weight: bold;
-    }
-
-    .file-cell-remove {
-        position: absolute;
-        top: 2px;
-        right: 2px;
-        background-color: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        font-size: 0.7em;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        opacity: 0.8;
-        transition: opacity 0.2s;
-        padding: 0;
-    }
-
-    .file-cell-remove:hover {
-        opacity: 1;
-    }
-
-    /* Lista de Loops Guardados */
-    #savedLoopsList {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        width: 100%;
-        max-height: 250px; /* Altura máxima para rolagem */
-        overflow-y: auto;
-        background-color: #222;
-        border-radius: 8px;
-        border: 1px solid #444;
-        padding: 10px;
-    }
-
-    #savedLoopsList li {
-        margin-bottom: 10px;
-    }
-
-    #savedLoopsList li:last-child {
-        margin-bottom: 0;
-    }
-
-    /* Media Queries para Telas Maiores (Desktop) */
-    @media (min-width: 768px) {
-        #appContainer {
-            flex-direction: row; /* Em telas maiores, as seções ficam em linha */
-            flex-wrap: wrap;
-        }
-
-        #fileSelection {
-            flex: 1 1 30%; /* Ocupa cerca de 30% da largura, mas cresce */
-            min-width: 300px;
-        }
-
-        #controls {
-            flex: 2 1 65%; /* Ocupa cerca de 65% da largura, sendo a seção principal */
-            min-width: 400px;
-        }
-
-        #waveformContainer {
-            width: 100%; /* Dentro de #controls, ocupa a largura total */
-            height: 200px; /* Altura maior para a waveform no desktop */
-        }
-        #waveformCanvas {
-             height: 200px; /* Altura maior para a waveform no desktop */
-        }
-
-        #loopControls {
-            flex: 1 1 45%; /* Ocupa quase metade da largura para desktop */
-            min-width: 350px;
-        }
-
-        #savedLoopsSection {
-            flex: 1 1 45%; /* Ocupa quase metade da largura para desktop */
-            min-width: 350px;
-        }
-
-        /* Reorganiza elementos específicos dentro dos painéis para desktop */
-        .slider-group {
-            flex-direction: row;
-        }
-
-        .button-group {
-            flex-wrap: nowrap; /* Tenta manter os botões na mesma linha */
-            justify-content: space-between;
-        }
-
-        button {
-            flex: none; /* Desativa o flex-grow */
-            width: auto;
-        }
-
-    }
-
-    /* Informação de Ficheiro */
-    #fileInfo {
-        text-align: center;
-        margin-top: 15px;
-        font-size: 0.9em;
-        color: #ccc;
-    }
-
-    #fileName {
-        font-weight: bold;
-        color: #1abc9c;
-    }
-
-    #loadingStatus {
-        text-align: center;
-        margin-top: 10px;
-        font-weight: bold;
-        color: #f39c12;
-    }
-</style> 
     
+    <style>
+        /* ... (seu CSS existente, sem alterações significativas aqui) ... */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .file-input-container {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-label {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        .file-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        .controls {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .control-group h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #fff;
+            font-size: 1.2em;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .control-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        label {
+            min-width: 80px;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
+        }
+        
+        .value-display {
+            min-width: 80px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+        
+        .reset-btn {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
+        }
+        
+        .reset-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .playback-controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .play-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        .play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        .play-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .file-info {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        
+        .loading {
+            text-align: center;
+            font-style: italic;
+            color: #ccc;
+        }
+
+        /* --- Estilos para o Waveform e Loop --- */
+        .waveform-container {
+            position: relative;
+            cursor: crosshair; /* Muda o cursor para indicar que é clicável */
+        }
+
+        .loop-indicator {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 3px; /* Largura das linhas indicadoras */
+            opacity: 0.7;
+            pointer-events: none; /* Garante que não interfere com cliques no canvas */
+        }
+
+        /* --- NOVOS ESTILOS PARA AS CÉLULAS DE FICHEIROS --- */
+        .file-list-container {
+            margin-top: 20px;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Layout responsivo de grelha */
+            gap: 15px;
+            max-height: 250px; /* Limita a altura e adiciona scroll */
+            overflow-y: auto;
+        }
+
+        .file-cell {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+            font-size: 0.9em;
+            word-break: break-word; /* Quebra palavras longas */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .file-cell:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .file-cell.selected {
+            background: linear-gradient(45deg, #007bff, #0056b3); /* Azul para selecionado */
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+            border-color: rgba(0, 123, 255, 0.6);
+            transform: scale(1.02);
+        }
+
+        .file-cell-remove {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .file-cell-remove:hover {
+            opacity: 1;
+            color: #ff4d4d;
+        }
+    </style>
 </head>
 <body>
-    <div id="appContainer"> <h1>🎵 Music Practice Buddy</h1>
+    <div class="container">
+        <h1>🎵 Music Practice Buddy</h1>
         
-        <div id="fileSelection" class="panel">
-            <h2>Ficheiros de Áudio</h2> <div class="file-input-container">
-                <input type="file" id="audioFile" class="file-input" accept="audio/*" multiple>
-                <label for="audioFile" class="file-label">📁 Selecionar Ficheiros de Áudio</label>
+        <div class="file-input-container">
+            <input type="file" id="audioFile" class="file-input" accept="audio/*" multiple>
+            <label for="audioFile" class="file-label">📁 Selecionar Ficheiros de Áudio</label>
+        </div>
+        
+        <div id="fileListContainer" class="file-list-container" style="display: none;">
+            </div>
+
+        <div id="fileInfo" class="file-info" style="display: none;">
+            <div id="fileName"></div>
+            <div id="loadingStatus" class="loading">A carregar...</div>
+        </div>
+        
+        <div id="controls" class="controls">
+            <div class="control-group">
+                <h3>🏃 Controlo de Velocidade</h3>
+                <div class="control-row">
+                    <label>Velocidade:</label>
+                    <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1">
+                    <span id="speedValue" class="value-display">1.0x</span>
+                    <button class="reset-btn" onclick="resetSpeed()">Reset</button>
+                </div>
             </div>
             
-            <div id="fileListContainer" class="file-list-container" style="display: none;">
+            <div class="control-group">
+                <h3>🎼 Controlo de Pitch</h3>
+                <div class="control-row">
+                    <label>Pitch:</label>
+                    <input type="range" id="pitchSlider" min="-12" max="12" step="1" value="0">
+                    <span id="pitchValue" class="value-display">0 meios tons</span>
+                    <button class="reset-btn" onclick="resetPitch()">Reset</button>
+                </div>
             </div>
 
-            <div id="fileInfo" class="file-info" style="display: none;">
-                <div id="fileName"></div>
-                <div id="loadingStatus" class="loading">A carregar...</div>
+            <div class="control-group">
+                <h3>🔄 Controlo de Loop</h3>
+                <div class="waveform-container" style="position: relative; width: 100%; height: 120px; background-color: rgba(255, 255, 255, 0.08); border-radius: 10px; margin-bottom: 15px; overflow: hidden;">
+                    <canvas id="waveformCanvas" width="760" height="120" style="display: block;"></canvas>
+                    <div id="loopIndicatorA" class="loop-indicator" style="left: 0%; background-color: #4CAF50;"></div>
+                    <div id="loopIndicatorB" class="loop-indicator" style="left: 100%; background-color: #FF6B6B;"></div>
+                    <div id="playbackIndicator" class="loop-indicator" style="left: 0%; background-color: #ffffff; width: 2px; z-index: 10; opacity: 0.8;"></div>
+                </div>
+                <div class="control-row">
+                    <label>Início (A):</label>
+                    <span id="loopAValue" class="value-display">00:00.000</span>
+                    <button class="reset-btn" onclick="setLoopA()">Definir A</button>
+                    <button class="reset-btn" onclick="resetLoopA()">Reset A</button>
+                </div>
+                <div class="control-row">
+                    <label>Fim (B):</label>
+                    <span id="loopBValue" class="value-display">00:00.000</span>
+                    <button class="reset-btn" onclick="setLoopB()">Definir B</button>
+                    <button class="reset-btn" onclick="resetLoopB()">Reset B</button>
+                </div>
+                <div class="control-row" style="justify-content: center;">
+                    <button id="toggleLoopBtn" class="play-btn" style="background: linear-gradient(45deg, #6c757d, #5a6268);" onclick="toggleLoop()">Loop OFF ❌</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>💾 Loops Guardados</h3>
+                <div class="control-row" style="margin-bottom: 10px;">
+                    <input type="text" id="loopNameInput" placeholder="Nome do loop (ex: Refrão, Solo)" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-size: 1em;">
+                    <button id="saveLoopBtn" class="play-btn" style="background: linear-gradient(45deg, #007bff, #0056b3); padding: 10px 20px;" onclick="saveCurrentLoop()">💾 Guardar Loop</button>
+                </div>
+                <div class="loop-list-container" style="max-height: 200px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; padding: 10px; background: rgba(255, 255, 255, 0.05);">
+                    <ul id="savedLoopsList" style="list-style: none; padding: 0; margin: 0;">
+                        <li style="color: rgba(255,255,255,0.7); text-align: center; padding: 10px;">Nenhum loop guardado ainda.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="playback-controls">
+                <button id="playBtn" class="play-btn" onclick="togglePlayback()">▶️ Reproduzir</button>
+                <button id="stopBtn" class="play-btn" onclick="stopPlayback()">⏹️ Parar</button>
             </div>
         </div>
-
-        <div id="controls" class="panel"> <h2>Controles de Reprodução</h2> <div class="control-group slider-group"> <label>Velocidade:</label>
-                <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1">
-                <span id="speedValue" class="value-display">1.0x</span>
-                <button class="reset-btn" onclick="resetSpeed()">Reset</button>
-            </div>
-            
-            <div class="control-group slider-group"> <label>Pitch:</label>
-                <input type="range" id="pitchSlider" min="-12" max="12" step="1" value="0">
-                <span id="pitchValue" class="value-display">0 meios tons</span>
-                <button class="reset-btn" onclick="resetPitch()">Reset</button>
-            </div>
-
-            <div id="waveformContainer"> <canvas id="waveformCanvas" width="760" height="150"></canvas> <div id="loopIndicatorA" class="loop-indicator"></div>
-                <div id="loopIndicatorB" class="loop-indicator"></div>
-                <div id="playbackIndicator" class="loop-indicator"></div>
-            </div>
-
-            <div class="button-group"> <button id="playBtn" onclick="togglePlayback()">▶️ Reproduzir</button>
-                <button id="stopBtn" onclick="stopPlayback()">⏹️ Parar</button>
-            </div>
-        </div>
-
-        <div id="loopControls" class="panel">
-            <h2>Controle de Loop</h2> <div class="slider-group"> <label>Início (A):</label>
-                <span id="loopAValue" class="loop-point-value">00:00.000</span>
-                <button class="reset-btn" onclick="setLoopA()">Definir A</button>
-                <button class="reset-btn" onclick="resetLoopA()">Reset A</button>
-            </div>
-            <div class="slider-group"> <label>Fim (B):</label>
-                <span id="loopBValue" class="loop-point-value">00:00.000</span>
-                <button class="reset-btn" onclick="setLoopB()">Definir B</button>
-                <button class="reset-btn" onclick="resetLoopB()">Reset B</button>
-            </div>
-            <div class="button-group"> <button id="toggleLoopBtn" style="background: linear-gradient(45deg, #6c757d, #5a6268);" onclick="toggleLoop()">Loop OFF ❌</button>
-            </div>
-        </div>
-
-        <div id="savedLoopsSection" class="panel">
-            <h2>Loops Guardados</h2> <div class="button-group"> <input type="text" id="loopNameInput" placeholder="Nome do loop (ex: Refrão, Solo)">
-                <button id="saveLoopBtn" onclick="saveCurrentLoop()">💾 Guardar Loop</button>
-            </div>
-            <ul id="savedLoopsList">
-                <li style="color: rgba(255,255,255,0.7); text-align: center; padding: 10px;">Nenhum loop guardado ainda.</li>
-            </ul>
-        </div>
-
-    </div> 
+    </div>
 
 <script>
     // --- Variáveis Globais (mantêm-se as mesmas) ---

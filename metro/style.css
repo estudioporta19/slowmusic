@@ -32,6 +32,26 @@ h1, h2, h3 {
     box-sizing: border-box;
 }
 
+/* Global BPM Control */
+.global-bpm-control {
+    background-color: #4a607a;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.global-bpm-control label {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+.global-bpm-control input[type="range"] {
+    width: 80%; /* Make BPM slider a bit wider */
+}
+
+
 /* Modo Selector */
 .mode-selector {
     display: flex;
@@ -112,6 +132,12 @@ label {
     margin-bottom: 5px;
     text-align: center;
     display: block; /* Ensures label takes full width */
+}
+
+small {
+    font-size: 0.8em;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
 }
 
 input[type="range"] {

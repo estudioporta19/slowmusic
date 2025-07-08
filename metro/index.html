@@ -13,7 +13,15 @@
     <h1>Metrónomo Avançado</h1>
 
     <div class="container">
-        <div class="module-group">
+        <div class="mode-selector">
+            <button id="modeClassicBtn" class="selected">Metrónomo Clássico</button>
+            <button id="modeClaveBtn">Clave Designer</button>
+            <button id="modeListBtn" disabled>Metrónomo de Lista (Em Breve)</button>
+        </div>
+
+        <hr>
+
+        <div id="classicMetronomeModule" class="module-group active-module">
             <h2>Metrónomo Clássico</h2>
             <div class="controls-grid">
                 <div class="control-group">
@@ -48,23 +56,21 @@
                 </div>
                 
                 <div class="control-group" id="compoundTimeGroup">
-                    <label>Compasso Composto (Ex: 7/4)</label>
+                    <label>Compasso Composto (Ex: 4+3)</label>
                     <input type="text" id="compoundSubdivisions" placeholder="Ex: 4+3 ou 3+4">
                     <small>Define acentos para compassos irregulares</small>
                 </div>
             </div>
         </div>
 
-        <hr>
-
-        <div class="module-group">
+        <div id="claveDesignerModule" class="module-group hidden-module">
             <h2>Clave Designer</h2>
             <div class="clave-designer-container">
                 <div class="clave-designer-header">
-                    <h3>Padrão de 16 Semicolcheias</h3>
-                    <div class="sync-toggle-group">
-                        <label for="syncClaveWithClassic">Sincronizar com Compasso:</label>
-                        <input type="checkbox" id="syncClaveWithClassic" checked>
+                    <h3>Padrão Personalizado</h3>
+                    <div class="control-group clave-cycle-control">
+                        <label for="claveCycleLength">Duração do Ciclo (1-16): <span id="claveCycleLengthValue" class="value-display">16</span></label>
+                        <input type="range" id="claveCycleLength" min="1" max="16" value="16">
                     </div>
                 </div>
                 <div class="clave-grid" id="claveGrid">
@@ -76,13 +82,16 @@
             </div>
         </div>
 
+        <div id="listMetronomeModule" class="module-group hidden-module">
+            <h2>Metrónomo de Lista</h2>
+            <p>Este módulo está em desenvolvimento. Permitirá sequenciar diferentes configurações de metrónomo e padrões de clave.</p>
+            </div>
+
         <hr>
 
         <div class="metronome-status" id="metronomeStatus"></div>
 
         <div class="global-controls">
-            <button id="mainMetronomeToggle" class="toggle-btn selected">Metrónomo Clássico: ON ✅</button>
-            <button id="claveDesignerToggle" class="toggle-btn selected">Clave Designer: ON ✅</button>
             <button id="playPauseBtn">▶️ Iniciar</button>
             <button id="stopBtn">⏹️ Parar</button>
         </div>

@@ -412,7 +412,7 @@ function updateMetronomeStatus() {
         } else if (activeMode === 'timeMap') {
             const currentSection = timeMap[currentMapSectionIndex];
             if (currentSection) {
-                // --- FIX: Display current measure correctly (add 1) ---
+                // CORREÇÃO AQUI: Adiciona 1 ao measuresPlayedInCurrentSection APENAS para exibição
                 let sectionInfo = `Mapa: Secção ${currentMapSectionIndex + 1}/${timeMap.length} (${measuresPlayedInCurrentSection + 1}/${currentSection.measures})`;
                 if (currentSection.type === 'classic') {
                     sectionInfo += ` | Tipo: Clássico | BPM: ${currentBPM}`;
@@ -430,6 +430,7 @@ function updateMetronomeStatus() {
         metronomeStatusDisplay.textContent = '';
     }
 }
+
 
 // --- Main Scheduling Loop ---
 

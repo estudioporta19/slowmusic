@@ -493,16 +493,57 @@ hr {
 }
 
 /* Time Map Module Styles */
-.time-map-controls {
-    background: none;
-    padding: 0;
-    border-radius: 0;
-    margin-bottom: 25px;
-    box-shadow: none;
-    border: none;
+/* Adicionado display flex para as colunas do mapa de tempo */
+.time-map-layout {
+    display: flex;
+    gap: 30px; /* Espaço entre as colunas */
+    flex-wrap: wrap; /* Permite que as colunas quebrem em telas menores */
+    margin-top: 20px; /* Espaço após o título "Mapa de Tempo" */
 }
 
-.time-map-controls h3 {
+.time-map-controls-column {
+    flex: 1 1 40%; /* Cresce e encolhe, com base de 40% */
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espaço entre os grupos de controle */
+    padding-right: 15px; /* Pequeno padding para afastar da borda da coluna direita */
+    border-right: 1px solid rgba(255, 255, 255, 0.1); /* Linha divisória sutil */
+}
+
+.time-map-list-column {
+    flex: 1 1 55%; /* Cresce e encolhe, com base de 55% */
+    display: flex;
+    flex-direction: column;
+    padding-left: 15px; /* Pequeno padding para afastar da borda da coluna esquerda */
+}
+
+.time-map-controls-column h3,
+.time-map-list-column h3 {
+    text-align: left; /* Alinhar títulos das colunas à esquerda */
+    margin-top: 0;
+}
+
+.time-map-controls-column #addSectionBtn {
+    margin-top: 20px;
+    align-self: flex-start; /* Alinha o botão "Adicionar Secção" à esquerda na coluna */
+}
+
+.time-map-controls-column .section-config-group {
+    background: none; /* Remove o fundo do section-config-group dentro da coluna para ser mais limpo */
+    border: none; /* Remove a borda pontilhada também */
+    padding: 0; /* Remove padding */
+    gap: 10px; /* Ajusta o gap interno */
+}
+
+.time-map-controls-column .control-group {
+    align-items: flex-start; /* Alinha os labels e inputs à esquerda */
+}
+
+.time-map-controls-column .control-group label {
+    text-align: left;
+}
+
+.time-map-controls h3 { /* Mantido para o título principal do módulo, se houver */
     margin-top: 0;
     margin-bottom: 20px;
     text-align: center;
@@ -559,19 +600,23 @@ hr {
         font-size: 1em;
     }
 
+    /* Ajustes para o Mapa de Tempo em telas menores */
+    .time-map-layout {
+        flex-direction: column; /* Colunas empilham-se em telas menores */
+        gap: 25px; /* Espaço entre as seções empilhadas */
+    }
 
-    .controls-grid {
-        grid-template-columns: 1fr;
+    .time-map-controls-column {
+        border-right: none; /* Remove a borda vertical */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Adiciona borda inferior */
+        padding-right: 0;
+        padding-bottom: 20px;
     }
-    .clave-grid {
-        grid-template-columns: repeat(8, 1fr); /* 8 por linha */
-        gap: 5px;
+
+    .time-map-list-column {
+        padding-left: 0;
     }
-    .clave-point {
-        width: 30px; /* Ajuste para 8 por linha */
-        height: 30px;
-        font-size: 0.8em;
-    }
+
     .clave-designer-header {
         flex-direction: column;
         align-items: flex-start;
@@ -683,7 +728,7 @@ hr {
 
 #addSectionBtn {
     width: auto;
-    margin-top: 20px;
+    /* margin-top: 20px; */ /* Removido para ser controlado pelo gap da coluna */
     align-self: center;
     background: linear-gradient(45deg, #4CAF50, #45a049);
     padding: 14px 28px;

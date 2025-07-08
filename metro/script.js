@@ -691,45 +691,56 @@ function applySectionSettings(section) {
 // These functions don't manage `next...ClickTime` or `current...Beat/Index` or `measuresPlayedInCurrentSection`
 // They just schedule clicks for *one measure* at a given `startTime`.
 // Depois (corrigido):
-function scheduleClassicMetronomeLogicOnly(measureStartTime) {
-    const sectionBPM = currentBPM; // Use the global BPM set by applySectionSettings
-    const sectionNumerator = timeNumerator;
-    const sectionDenominator = timeDenominator;
-    const sectionSubdivisionType = subdivisionType;
-    const sectionAccentedBeats = accentedBeats;
+// scheduleClassicMetronome - Pequena alteração para manter o currentClassicBeat como o TEMPO ATUAL
+function scheduleClassicMetronome() {
+    const secondsPerBaseNote = 60.0 / currentBPM;
+    const secondsPerSubdivisionBeat = secondsPerBaseNote / subdivisionType;
 
-    const secondsPerBaseNote = 60.0 / sectionBPM;
-    // Mover a declaração para fora do loop interno, tornando-a acessível
-    const secondsPerSubdivisionBeat = secondsPerBaseNote / sectionSubdivisionType; // <-- MOVIDO PARA AQUI
+    while (nextClassicClickTime < audioContext.currentTime + scheduleAheadTime) {
+        let frequency;
+        let volume;
+        let duration = 0.03;
 
-    for (let beat = 0; beat < sectionNumerator; beat++) {
-        for (let subd = 0; subd < sectionSubdivisionType; subd++) {
-            let clickTime = measureStartTime + (beat * secondsPerBaseNote) + (subd * secondsPerSubdivisionBeat); // <-- AGORA ESTÁ CERTO
-            
-            let frequency;
-            let volume;
-            let duration = 0.03;
+        // currentClassicBeat e currentClassicSubdivision referem-se ao próximo clique
+        const beatToPlay = currentClassicBeat;
+        const subdivisionToPlay = currentClassicSubdivision;
 
-            const isMainBeat = subd === 0;
-            const isFirstBeatOfMeasure = beat === 0 && subd === 0;
-            const isUserAccentedBeat = sectionAccentedBeats.has(beat) && isMainBeat;
+        const isMainBeat = subdivisionToPlay === 0;
+        const isFirstBeatOfMeasure = beatToPlay === 0 && subdivisionToPlay === 0;
+        const isUserAccentedBeat = accentedBeats.has(beatToPlay) && isMainBeat;
 
-            if (isFirstBeatOfMeasure) {
-                frequency = 1000;
-                volume = 0.9;
-                duration = 0.05;
-            } else if (isUserAccentedBeat) {
-                frequency = 880;
-                volume = 0.8;
-                duration = 0.04;
-            } else if (isMainBeat) {
-                frequency = 700;
-                volume = 0.6;
-            } else {
-                frequency = 500;
-                volume = 0.4;
+        if (isFirstBeatOfMeasure) {
+            frequency = 1000;
+            volume = 0.9;
+            duration = 0.05;
+        } else if (isUserAccentedBeat) {
+            frequency = 880;
+            volume = 0.8;
+            duration = 0.04;
+        } else if (isMainBeat) {
+            frequency = 700;
+            volume = 0.6;
+        } else {
+            frequency = 500;
+            volume = 0.4;
+        }
+        
+        createClickSound(frequency, duration, volume, nextClassicClickTime);
+
+        // AVANÇA OS CONTADORES APÓS AGENDAR O CLIQUE ATUAL
+        nextClassicClickTime += secondsPerSubdivisionBeat;
+        currentClassicSubdivision++;
+        
+        if (currentClassicSubdivision >= subdivisionType) {
+            currentClassicSubdivision = 0;
+            currentClassicBeat++;
+            if (currentClassicBeat >= timeNumerator) {
+                currentClassicBeat = 0; // Reset measure
+                // Notify time map that a measure has completed (only in time map mode)
+                if (isMapPlaying && activeMode === 'timeMap') { // Added check for activeMode === 'timeMap'
+                    measuresPlayedInCurrentSection++;
+                }
             }
-            createClickSound(frequency, duration, volume, clickTime);
         }
     }
 }

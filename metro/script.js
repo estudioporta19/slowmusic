@@ -73,6 +73,7 @@ const subdivision4Btn = document.getElementById('subdivision4Btn');
 const claveGrid = document.getElementById('claveGrid');
 const claveCycleLengthSlider = document.getElementById('claveCycleLength');
 const claveCycleLengthValueDisplay = document.getElementById('claveCycleLengthValue');
+const resetClaveBtn = document.getElementById('resetClaveBtn'); // New Reset button
 
 // Time Map Controls
 const sectionTypeSelect = document.getElementById('sectionType');
@@ -268,6 +269,18 @@ function renderClaveGrid() {
         claveGrid.appendChild(point);
     }
 }
+
+// New function to reset Clave Designer
+function resetClaveDesigner() {
+    stopMetronome(); // Stop metronome if playing
+    initializeClavePatternDefault(); // Reset pattern to default
+    claveCycleLength = 16; // Reset cycle length
+    claveCycleLengthSlider.value = 16; // Update slider
+    claveCycleLengthValueDisplay.textContent = 16; // Update display
+    renderClaveGrid(); // Re-render grid
+    console.log("Clave Designer resetado.");
+}
+
 
 // --- UI Update & Logic Functions (Time Map) ---
 
@@ -859,7 +872,7 @@ function setModuleControlsEnabled(enabled) {
     const controlsToDisable = [
         bpmSlider, timeNumeratorInput, timeDenominatorSelect, accentedBeatsInput,
         subdivisionOffBtn, subdivision2Btn, subdivision3Btn, subdivision4Btn,
-        claveCycleLengthSlider,
+        claveCycleLengthSlider, resetClaveBtn, // Added resetClaveBtn here
         // Also disable add section controls for Time Map when it's playing
         sectionTypeSelect, sectionBPMInput, sectionNumeratorInput, sectionDenominatorSelect,
         sectionSubdivisionSelect, sectionAccentedBeatsInput, sectionClaveBPMInput,
@@ -940,6 +953,7 @@ subdivision4Btn.addEventListener('click', () => { subdivisionType = 4; updateSub
 
 // Clave Designer Controls
 claveCycleLengthSlider.addEventListener('input', updateClaveCycleLength);
+resetClaveBtn.addEventListener('click', resetClaveDesigner); // New event listener for reset button
 
 // Time Map Controls
 sectionTypeSelect.addEventListener('change', showTimeMapSectionConfig);

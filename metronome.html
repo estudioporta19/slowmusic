@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metrónomo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS do teu programa principal, adaptado e adicionado aqui */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #2c3e50, #34495e); /* Cor de fundo escura */
+            color: #ecf0f1; /* Texto claro */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        h1, h2 {
+            color: #ecf0f1;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .container {
+            background-color: #3b506b; /* Fundo mais claro para o container principal */
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-sizing: border-box;
+        }
+
+        .controls-grid, .metronome-controls, .subdivision-controls {
+            display: grid;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .controls-grid {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+        
+        .control-group {
+            background-color: #4a607a; /* Fundo para grupos de controlo */
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        label {
+            font-size: 1em;
+            color: #ecf0f1;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            background: #5c7490; /* Cor da barra do slider */
+            border-radius: 5px;
+            outline: none;
+            transition: opacity .2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #1abc9c; /* Cor do thumb do slider */
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .value-display {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #1abc9c;
+        }
+
+        button {
+            background: linear-gradient(45deg, #3498db, #2980b9); /* Botão azul padrão */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background: linear-gradient(45deg, #2980b9, #3498db);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        button:disabled {
+            background: #5a6268;
+            cursor: not-allowed;
+            opacity: 0.7;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Estilos específicos do metrónomo */
+        .metronome-status {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #f39c12; /* Cor para o status */
+            min-height: 1.5em; /* Garante espaço */
+        }
+
+        .metronome-controls {
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        }
+
+        .subdivision-controls button {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad); /* Botões de subdivisão roxos */
+        }
+        .subdivision-controls button.selected {
+            background: linear-gradient(45deg, #1abc9c, #16a085); /* Verde quando selecionado */
+        }
+
+        /* Clave Designer Grid */
+        .clave-designer-container {
+            background-color: #4a607a;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .clave-grid {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr); /* 16 colunas para os 16 pontos */
+            gap: 5px;
+            margin-top: 15px;
+        }
+
+        .clave-point {
+            width: 30px; /* Largura do ponto */
+            height: 30px; /* Altura do ponto */
+            background-color: #6c757d; /* Cor padrão (desativado) */
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.7);
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            user-select: none; /* Evita seleção de texto */
+        }
+
+        .clave-point:hover {
+            transform: translateY(-1px);
+        }
+
+        .clave-point.beat-1 { /* Para a primeira batida de cada tempo */
+            background-color: #e74c3c; /* Vermelho forte */
+            color: white;
+        }
+        .clave-point.beat-2 { /* Para a segunda batida de cada tempo */
+            background-color: #f39c12; /* Laranja/Amarelo */
+            color: white;
+        }
+        .clave-point.beat-0 { /* Para as batidas fracas / off */
+            background-color: #6c757d; /* Cinzento (off) */
+        }
+        
+        /* Indicador visual da batida atual */
+        .clave-point.active-beat {
+            box-shadow: 0 0 0 3px #1abc9c; /* Anel verde brilhante */
+            transform: scale(1.1);
+        }
+
+        .clave-info {
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.7);
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .controls-grid {
+                grid-template-columns: 1fr; /* Colunas únicas em telas menores */
+            }
+            .clave-grid {
+                grid-template-columns: repeat(8, 1fr); /* 8 colunas em telas menores */
+            }
+            .clave-point {
+                width: 25px;
+                height: 25px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .clave-grid {
+                grid-template-columns: repeat(4, 1fr); /* 4 colunas em telas muito pequenas */
+            }
+            .clave-point {
+                width: 20px;
+                height: 20px;
+            }
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Metrónomo Avançado</h1>
+
+    <div class="container">
+        <div class="controls-grid">
+            <div class="control-group">
+                <label for="bpmSlider">BPM: <span id="bpmValue" class="value-display">120</span></label>
+                <input type="range" id="bpmSlider" min="40" max="240" value="120">
+            </div>
+
+            <div class="control-group">
+                <label for="beatsPerMeasureSlider">Tempos por Compasso: <span id="beatsPerMeasureValue" class="value-display">4</span></label>
+                <input type="range" id="beatsPerMeasureSlider" min="1" max="16" value="4">
+            </div>
+
+            <div class="control-group">
+                <label>Subdivisões:</label>
+                <div class="subdivision-controls">
+                    <button id="subdivisionOffBtn" class="selected">OFF</button>
+                    <button id="subdivision2Btn">2x</button>
+                    <button id="subdivision3Btn">3x</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="metronome-status" id="metronomeStatus"></div>
+
+        <div class="metronome-controls">
+            <button id="playPauseBtn">▶️ Iniciar</button>
+            <button id="stopBtn">⏹️ Parar</button>
+        </div>
+
+        <div class="clave-designer-container">
+            <h2>Clave Designer (Padrão de 16 Semicolcheias)</h2>
+            <div class="clave-grid" id="claveGrid">
+                </div>
+            <div class="clave-info">
+                Clique nos pontos para alternar o som: <span style="color:#e74c3c;">Forte</span>, <span style="color:#f39c12;">Médio</span>, <span style="color:#6c757d;">Desligado</span>.<br>
+                Cada bloco representa uma semicolcheia. Um compasso 4/4 = 16 semicolcheias.
+            </div>
+        </div>
+    </div>
+
+    <script src="metronome.js"></script>
+</body>
+</html>

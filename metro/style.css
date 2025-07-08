@@ -1,0 +1,352 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #2c3e50, #34495e); /* Dark background */
+    color: #ecf0f1; /* Light text */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+h1, h2, h3 {
+    color: #ecf0f1;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.container {
+    background-color: #3b506b; /* Lighter background for main container */
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    padding: 30px;
+    max-width: 900px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 25px; /* Increased gap for modules */
+    box-sizing: border-box;
+}
+
+.module-group {
+    background-color: #4a607a; /* Background for module sections */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+    width: 100%;
+}
+
+.control-group {
+    background-color: #5c7490; /* Even lighter background for individual control groups */
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+label {
+    font-size: 1em;
+    color: #ecf0f1;
+    margin-bottom: 5px;
+    text-align: center;
+    display: block; /* Ensures label takes full width */
+}
+
+input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 8px;
+    background: #7f8c8d; /* Grey for slider track */
+    border-radius: 5px;
+    outline: none;
+    transition: opacity .2s;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #1abc9c; /* Green thumb */
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+input[type="text"], select {
+    width: calc(100% - 20px); /* Adjust for padding */
+    padding: 8px 10px;
+    border-radius: 5px;
+    border: 1px solid #7f8c8d;
+    background-color: #ecf0f1;
+    color: #2c3e50;
+    font-size: 1em;
+    box-sizing: border-box; /* Include padding in width */
+}
+
+select {
+    -webkit-appearance: none; /* Remove default arrow on select */
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="#2c3e50" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); /* Custom arrow */
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+}
+
+.value-display {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #1abc9c;
+}
+
+button {
+    background: linear-gradient(45deg, #3498db, #2980b9); /* Standard blue button */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background 0.3s ease, transform 0.1s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    flex-grow: 1; /* Allow buttons to grow in flexible containers */
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+button:hover {
+    background: linear-gradient(45deg, #2980b9, #3498db);
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+button:disabled {
+    background: #5a6268;
+    cursor: not-allowed;
+    opacity: 0.7;
+    box-shadow: none;
+    transform: none;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #5c7490;
+    margin: 20px 0;
+}
+
+/* Metronome Status Display */
+.metronome-status {
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #f39c12; /* Orange for status */
+    min-height: 1.5em;
+    margin-top: 10px;
+}
+
+/* Global Controls (Play/Pause/Stop & Toggles) */
+.global-controls {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.toggle-btn {
+    background: linear-gradient(45deg, #1abc9c, #16a085); /* Green for ON */
+}
+.toggle-btn.selected { /* This will be the ON state */
+    background: linear-gradient(45deg, #1abc9c, #16a085);
+}
+.toggle-btn:not(.selected) { /* This will be the OFF state */
+    background: linear-gradient(45deg, #6c757d, #5a6268);
+}
+.toggle-btn:not(.selected):hover {
+    background: linear-gradient(45deg, #5a6268, #6c757d);
+}
+
+/* Subdivision Controls */
+.subdivision-controls {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+    justify-content: center;
+}
+.subdivision-controls button {
+    background: linear-gradient(45deg, #9b59b6, #8e44ad); /* Purple for subdivision buttons */
+    padding: 8px 15px; /* Slightly smaller padding */
+    font-size: 0.95em;
+}
+.subdivision-controls button.selected {
+    background: linear-gradient(45deg, #1abc9c, #16a085); /* Green when selected */
+}
+
+/* Clave Designer */
+.clave-designer-container {
+    background-color: #5c7490;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+.clave-designer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 10px;
+}
+
+.clave-designer-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+    text-align: left;
+}
+
+.sync-toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ecf0f1;
+    font-size: 0.9em;
+}
+
+.sync-toggle-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    /* Basic custom checkbox styling */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: 2px solid #1abc9c;
+    border-radius: 4px;
+    background-color: #ecf0f1;
+    transition: background-color 0.2s, border-color 0.2s;
+    position: relative;
+    top: 2px;
+}
+
+.sync-toggle-group input[type="checkbox"]:checked {
+    background-color: #1abc9c;
+    border-color: #1abc9c;
+}
+
+.sync-toggle-group input[type="checkbox"]:checked::after {
+    content: '✔';
+    display: block;
+    color: white;
+    font-size: 14px;
+    line-height: 1;
+    text-align: center;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+
+.clave-grid {
+    display: grid;
+    grid-template-columns: repeat(16, 1fr); /* 16 columns for the 16 points */
+    gap: 5px;
+    margin-top: 15px;
+}
+
+.clave-point {
+    width: 30px; /* Point width */
+    height: 30px; /* Point height */
+    background-color: #6c757d; /* Default (off) */
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.7);
+    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    user-select: none;
+}
+
+.clave-point:hover {
+    transform: translateY(-1px);
+}
+
+.clave-point.beat-1 { /* Strong beat */
+    background-color: #e74c3c; /* Red */
+    color: white;
+}
+.clave-point.beat-2 { /* Medium beat */
+    background-color: #f39c12; /* Orange/Yellow */
+    color: white;
+}
+.clave-point.beat-0 { /* Off */
+    background-color: #6c757d; /* Gray */
+}
+
+/* Visual indicator for current beat */
+.clave-point.active-beat {
+    box-shadow: 0 0 0 3px #1abc9c; /* Bright green ring */
+    transform: scale(1.1);
+}
+
+.clave-info {
+    font-size: 0.9em;
+    color: rgba(255,255,255,0.7);
+    margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+    .controls-grid {
+        grid-template-columns: 1fr; /* Single column on smaller screens */
+    }
+    .clave-grid {
+        grid-template-columns: repeat(8, 1fr); /* 8 columns on smaller screens */
+    }
+    .clave-point {
+        width: 25px;
+        height: 25px;
+    }
+    .clave-designer-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .clave-grid {
+        grid-template-columns: repeat(4, 1fr); /* 4 columns on very small screens */
+    }
+    .clave-point {
+        width: 20px;
+        height: 20px;
+    }
+    .container {
+        padding: 20px;
+    }
+    .global-controls button {
+        font-size: 0.9em;
+        padding: 8px 15px;
+    }
+}

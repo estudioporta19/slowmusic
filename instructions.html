@@ -4,31 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instruções de Uso</title>
-    <link rel="stylesheet" href="style.css"> 
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #2c3e50; 
-            color: #ecf0f1; 
+            background-color: #2c3e50; /* Fundo escuro */
+            color: #ecf0f1; /* Texto claro */
             margin: 0;
             padding: 20px;
             line-height: 1.6;
             display: flex;
-            justify-content: center;
-            align-items: flex-start; /* Alinhar ao topo */
+            justify-content: center; /* Centraliza horizontalmente */
+            align-items: flex-start; /* Alinha ao topo verticalmente */
             min-height: 100vh; /* Ocupa a altura total da viewport */
+            box-sizing: border-box; /* Inclui padding e bordas no tamanho total */
         }
         .container {
             max-width: 800px;
             width: 100%; /* Garante que o container se expande */
             margin: 20px; /* Margem em todos os lados para melhor visualização em pequenos ecrãs */
-            background-color: #34495e; 
+            background-color: #34495e; /* Fundo do container */
             padding: 30px;
             border-radius: 12px; /* Ligeiramente mais arredondado */
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Sombra mais suave */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Sombra suave */
+            box-sizing: border-box; /* Inclui padding e bordas no tamanho total */
         }
         h1, h2 {
-            color: #1abc9c; 
+            color: #1abc9c; /* Cor para títulos */
             text-align: center; /* Centrar títulos */
             margin-bottom: 25px; /* Mais espaço após os títulos */
         }
@@ -40,11 +41,25 @@
         p, ul {
             margin-bottom: 15px;
             font-size: 1.05em; /* Texto ligeiramente maior */
+            padding: 0; /* Remover padding padrão de ul */
+            list-style: none; /* Remover marcadores de lista padrão */
         }
         li {
-            margin-bottom: 8px;
-            padding-left: 5px; /* Recuo para os itens da lista */
+            margin-bottom: 10px; /* Mais espaço entre itens da lista */
+            padding-left: 15px; /* Recuo para os itens da lista */
+            position: relative; /* Para o marcador personalizado */
         }
+        li::before { /* Marcador de lista personalizado */
+            content: '•'; /* Ponto */
+            color: #1abc9c; /* Cor do ponto */
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+            position: absolute;
+            left: 0;
+        }
+
         .back-button {
             display: block; /* Ocupa a largura total para ser um "bloco" */
             width: fit-content; /* Ajusta a largura ao conteúdo */
@@ -58,52 +73,73 @@
             font-size: 1.1em; /* Fonte ligeiramente maior */
             font-weight: bold;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: none; /* Assegura que não há borda padrão */
         }
         .back-button:hover {
             background-color: #2980b9;
             transform: translateY(-2px);
         }
 
-        /* Estilos para as "teclas" de atalho */
-        .key-shortcut {
+        /* Estilos para as "teclas" de atalho e botões inline */
+        .key-shortcut, .inline-action-btn {
             display: inline-flex; /* Permite alinhar o texto e padding */
             align-items: center;
             justify-content: center;
-            min-width: 45px; /* Largura mínima para teclas */
-            height: 45px; /* Altura da tecla */
-            padding: 0 10px; /* Padding horizontal */
-            margin: 0 5px; /* Espaçamento entre teclas */
-            background-color: #55606d; /* Cor da tecla */
-            color: #ecf0f1; /* Cor do texto da tecla */
-            border-radius: 8px; /* Arredondamento */
-            box-shadow: 0 3px 0 #3a4550, /* Sombra para profundidade 3D */
-                        0 4px 8px rgba(0,0,0,0.4); /* Sombra mais suave */
+            min-width: 40px; /* Largura mínima para teclas/botões menores */
+            height: 30px; /* Altura da tecla/botão */
+            padding: 0 8px; /* Padding horizontal */
+            margin: 0 4px; /* Espaçamento entre elementos inline */
+            border-radius: 6px; /* Arredondamento */
             font-family: 'Courier New', Courier, monospace; /* Fonte monoespaçada para teclas */
-            font-size: 1.1em;
+            font-size: 0.95em; /* Tamanho da fonte */
             font-weight: bold;
             text-transform: uppercase; /* Maiúsculas */
-            border-bottom: 2px solid #3a4550; /* Borda inferior para efeito de botão */
+            box-shadow: 0 2px 0 rgba(0,0,0,0.3), 0 3px 6px rgba(0,0,0,0.2); /* Sombra mais subtil */
+            border: none; /* Remover bordas padrão de botões */
+            cursor: default; /* Indica que não é um botão clicável normal */
+            vertical-align: middle; /* Ajuda no alinhamento vertical com o texto */
+            flex-shrink: 0; /* Evita que o item encolha em espaços apertados */
+        }
+        .key-shortcut {
+            background-color: #55606d; /* Cor da tecla */
+            color: #ecf0f1; /* Cor do texto da tecla */
+        }
+        .inline-action-btn {
+            background: linear-gradient(45deg, #007bff, #0056b3); /* Ex: azul do botão de guardar loop */
+            color: white;
+            cursor: pointer; /* Indica que é clicável (mas não fará nada aqui) */
         }
         .key-shortcut.space-bar {
-            min-width: 120px; /* Largura maior para a barra de espaço */
+            min-width: 100px; /* Largura maior para a barra de espaço */
         }
-        .key-list {
-            list-style: none; /* Remover marcadores de lista */
-            padding: 0;
-            display: flex; /* Para alinhar as teclas horizontalmente */
-            flex-wrap: wrap; /* Permite que as teclas quebrem a linha */
-            justify-content: center; /* Centrar as teclas */
-            gap: 15px; /* Espaçamento entre as linhas */
-            margin-top: 20px;
-        }
-        .key-list li {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            font-size: 1.05em;
-        }
-        .key-list li span {
-            margin-left: 10px; /* Espaçamento entre a tecla e a descrição */
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            h2 {
+                font-size: 1.3em;
+            }
+            p, ul, li {
+                font-size: 0.95em;
+            }
+            .key-shortcut, .inline-action-btn {
+                min-width: 35px;
+                height: 28px;
+                font-size: 0.85em;
+            }
+            .key-shortcut.space-bar {
+                min-width: 80px;
+            }
+            .back-button {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
         }
     </style>
 </head>
@@ -113,40 +149,34 @@
 
         <h2>Carregar e Gerir Áudio</h2>
         <ul>
-            <li>**Selecionar Ficheiros:** Use o botão <label class="file-label-inline">📁 Selecionar Ficheiros de Áudio</label> para carregar músicas.</li>
-            <li>**Gerir Ficheiros:** Clique no nome de um ficheiro na lista para selecioná-lo. Use o <button class="inline-btn">X</button> para remover da lista.</li>
+            <li>Use o botão <span class="inline-action-btn">📁 Selecionar Ficheiros de Áudio</span> para carregar as suas músicas.</li>
+            <li>Clique no **nome de uma música** na lista para **reproduzir ou pausar**. Use o <span class="inline-action-btn">X</span> ao lado para remover.</li>
         </ul>
 
         <h2>Controlo de Reprodução</h2>
         <ul>
-            <li>Ajuste a **velocidade** e o **tom (pitch)** com os sliders dedicados. Use os botões <button class="inline-btn">Reset</button> para restaurar.</li>
-            <li>Clique na **waveform** para saltar para um ponto específico. Arraste para selecionar uma região.</li>
+            <li>Ajuste a **velocidade** e o **tom (pitch)** com os sliders. Use os botões <span class="inline-action-btn">Reset</span> para restaurar os valores padrão.</li>
+            <li>Pressione <span class="key-shortcut space-bar">Espaço</span> para reproduzir ou pausar a música.</li>
+            <li>Clique na **waveform** (onda de áudio) para saltar para um ponto específico.</li>
         </ul>
 
         <h2>Loops</h2>
         <ul>
-            <li>Defina os pontos **A** e **B** do loop usando os botões na secção "Controlo de Loop" ou <span class="key-shortcut">A</span> e <span class="key-shortcut">B</span> no teclado.</li>
-            <li>Ajuste fino dos pontos de loop com os botões <button class="inline-btn">+/-0.0X</button>.</li>
-            <li>Ative/desative o loop com o botão <button class="inline-btn">Loop ON/OFF</button>.</li>
-            <li>**Guardar Loops:** Dê um nome e use <button class="inline-btn">💾 Guardar Loop</button>. Loops guardados incluem pontos A/B, velocidade e tom.</li>
-            <li>**Aplicar Loops:** Na lista, clique <button class="inline-btn">Aplicar</button> para carregar um loop guardado.</li>
+            <li>Defina o início <span class="key-shortcut">A</span> e o fim <span class="key-shortcut">B</span> do loop usando os botões na secção "Controlo de Loop" ou as teclas <span class="key-shortcut">A</span> e <span class="key-shortcut">B</span> no teclado.</li>
+            <li>Ajuste os pontos de loop com precisão usando os botões <span class="inline-action-btn">+/-0.0X</span>.</li>
+            <li>Ative/desative o loop com o botão <span class="inline-action-btn">Loop ON ✅ / OFF ❌</span>.</li>
+            <li>**Guardar Loops:** Dê um nome e clique em <span class="inline-action-btn">💾 Guardar Loop</span>. Os loops guardados memorizam os pontos A/B, velocidade e tom.</li>
+            <li>**Aplicar Loops:** Na lista "Loops Guardados", clique em <span class="inline-action-btn">Aplicar</span> para carregar e iniciar um loop salvo.</li>
         </ul>
 
         <h2>Marcadores</h2>
         <ul>
-            <li>Adicione um marcador na posição atual com <button class="inline-btn">➕ Adicionar Marcador</button>.</li>
-            <li>Clique num marcador na lista para **saltar** para ele e continuar a tocar.</li>
-            <li>Navegue entre marcadores com <button class="inline-btn">◀️ Anterior</button> e <button class="inline-btn">Próximo ▶️</button>.</li>
-            <li>Remova marcadores com <button class="inline-btn">❌</button>.</li>
+            <li>Adicione um marcador na posição atual com <span class="inline-action-btn">➕ Adicionar Marcador</span>.</li>
+            <li>Clique num marcador na lista para **saltar para esse ponto na música**. A reprodução continuará se estiver ativa.</li>
+            <li>Navegue entre os marcadores com <span class="inline-action-btn">◀️ Anterior</span> e <span class="inline-action-btn">Próximo ▶️</span>.</li>
+            <li>Remova marcadores com <span class="inline-action-btn">❌</span>.</li>
         </ul>
-
-        <h2>Atalhos de Teclado</h2>
-        <ul class="key-list">
-            <li><span class="key-shortcut space-bar">Espaço</span><span>: Reproduzir / Pausar</span></li>
-            <li><span class="key-shortcut">A</span><span>: Definir ponto A do loop</span></li>
-            <li><span class="key-shortcut">B</span><span>: Definir ponto B do loop</span></li>
-        </ul>
-
+        
         <a href="index.html" class="back-button">Voltar à Aplicação</a>
     </div>
 </body>

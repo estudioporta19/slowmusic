@@ -1037,12 +1037,17 @@ function navigateToMarker(time) {
         return;
     }
 
+    // Guarda o estado de reprodução atual para decidir se deve recomeçar a tocar
+    const wasPlayingBeforeNavigation = isPlaying;
+
     stopPlayback(); // Para a reprodução atual
     seekPosition = time; // Define a nova posição de busca
-    updatePlaybackIndicator(); // Atualiza o indicador visual
+    updateLoopIndicators(); // Atualiza o indicador visual na waveform para a nova posição
     
-    // Opcional: iniciar reprodução automaticamente após navegar
-    // startPlayback(); 
+    // Se estava a tocar antes de navegar, inicia a reprodução automaticamente após saltar
+    if (wasPlayingBeforeNavigation) {
+        startPlayback();
+    }
 }
 
 function deleteMarker(index) {
@@ -1058,13 +1063,14 @@ function navigateToPreviousMarker() {
         const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
         const elapsed = audioContext.currentTime - playbackStartTime;
         currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
-    } else if (audioBuffer) {
+    } else if (audioBuffer) { // Se não estiver a tocar, usa a seekPosition atual
         currentPlaybackTime = seekPosition;
     }
 
     // Encontra o marcador anterior mais próximo
     let prevMarker = null;
     for (let i = markers.length - 1; i >= 0; i--) {
+        // Encontra o último marcador que é significativamente anterior à posição atual
         if (markers[i].time < currentPlaybackTime - 0.05) { // -0.05 para evitar o marcador atual
             prevMarker = markers[i];
             break;
@@ -1074,8 +1080,8 @@ function navigateToPreviousMarker() {
     if (prevMarker) {
         navigateToMarker(prevMarker.time);
     } else {
-        // Se não houver anterior, vai para o primeiro marcador
-        navigateToMarker(markers[0].time);
+        // Se não houver anterior, vai para o último marcador (ciclo)
+        navigateToMarker(markers[markers.length - 1].time);
     }
 }
 
@@ -1087,13 +1093,14 @@ function navigateToNextMarker() {
         const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
         const elapsed = audioContext.currentTime - playbackStartTime;
         currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
-    } else if (audioBuffer) {
+    } else if (audioBuffer) { // Se não estiver a tocar, usa a seekPosition atual
         currentPlaybackTime = seekPosition;
     }
 
     // Encontra o próximo marcador mais próximo
     let nextMarker = null;
     for (let i = 0; i < markers.length; i++) {
+        // Encontra o primeiro marcador que é significativamente posterior à posição atual
         if (markers[i].time > currentPlaybackTime + 0.05) { // +0.05 para evitar o marcador atual
             nextMarker = markers[i];
             break;
@@ -1103,11 +1110,10 @@ function navigateToNextMarker() {
     if (nextMarker) {
         navigateToMarker(nextMarker.time);
     } else {
-        // Se não houver próximo, vai para o primeiro marcador (ou último, dependendo da preferência)
+        // Se não houver próximo, vai para o primeiro marcador (ciclo)
         navigateToMarker(markers[0].time);
     }
 }
-
 // --- Chamada inicial para renderizar a lista de marcadores (vazia no início) ---
 document.addEventListener('DOMContentLoaded', renderMarkers);
 

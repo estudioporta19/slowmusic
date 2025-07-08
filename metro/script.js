@@ -24,6 +24,7 @@ let currentClassicSubdivision = 0; // Current subdivision within the beat (0-ind
 let currentDisplayClassicBeat = 0;
 let currentDisplayClassicSubdivision = 0;
 let currentDisplayClaveIndex = 0;
+let currentDisplayMapMeasure = 0; // NOVO: Variável para o compasso atual no Mapa de Tempo
 
 // --- Clave Designer Module State ---
 const CLAVE_OFF = 0;
@@ -412,8 +413,8 @@ function updateMetronomeStatus() {
         } else if (activeMode === 'timeMap') {
             const currentSection = timeMap[currentMapSectionIndex];
             if (currentSection) {
-                // CORREÇÃO AQUI: Adiciona 1 ao measuresPlayedInCurrentSection APENAS para exibição
-                let sectionInfo = `Mapa: Secção ${currentMapSectionIndex + 1}/${timeMap.length} (${measuresPlayedInCurrentSection + 1}/${currentSection.measures})`;
+                // CORRIGIDO: Usa a nova variável de display currentDisplayMapMeasure
+                let sectionInfo = `Mapa: Secção ${currentMapSectionIndex + 1}/${timeMap.length} (${currentDisplayMapMeasure}/${currentSection.measures})`;
                 if (currentSection.type === 'classic') {
                     sectionInfo += ` | Tipo: Clássico | BPM: ${currentBPM}`;
                 } else if (currentSection.type === 'clave') {
@@ -483,7 +484,7 @@ function scheduleClassicMetronome() {
         
         createClickSound(frequency, duration, volume, nextClassicClickTime);
 
-        // --- CORRECTION HERE: Update display variables *after* scheduling and *before* advancing counters ---
+        // --- CORREÇÃO AQUI: Update display variables *after* scheduling and *before* advancing counters ---
         currentDisplayClassicBeat = beatToPlay;
         currentDisplayClassicSubdivision = subdivisionToPlay;
         // --------------------------------------------------------------------------------------------------
@@ -540,7 +541,7 @@ function scheduleClaveDesigner() {
             }
         }
 
-        // --- CORRECTION HERE: Update display variable *after* scheduling and *before* advancing counters ---
+        // --- CORREÇÃO AQUI: Update display variable *after* scheduling and *before* advancing counters ---
         currentDisplayClaveIndex = currentClaveIndex;
         // --------------------------------------------------------------------------------------------------
 
@@ -591,12 +592,15 @@ function scheduleTimeMap() {
             scheduleClassicMetronomeLogicOnly(nextMapMeasureTime); // Schedule its beats within this measure
         } else if (currentSection.type === 'clave') {
             const sectionSecondsPerSemicolcheia = (60.0 / currentBPM) / 4; // Use global BPM
-            secondsPerCurrentMeasure = sectionSecondsPerSemicolcheia * 16; 
+            secondsPerCurrentMeasure = sectionSecondsPerSemicolcheia * 16;  
             scheduleClaveDesignerLogicOnly(nextMapMeasureTime, secondsPerCurrentMeasure); // Schedule its clicks within this measure
         } else if (currentSection.type === 'pause') {
             const secondsPerQuarterNote = 60.0 / currentBPM;
             secondsPerCurrentMeasure = secondsPerQuarterNote * 4; // One 4/4 measure duration
         }
+
+        // CORREÇÃO AQUI: Atualiza currentDisplayMapMeasure ANTES de measuresPlayedInCurrentSection ser incrementado
+        currentDisplayMapMeasure = measuresPlayedInCurrentSection + 1; 
 
         // Advance the time for the next measure
         nextMapMeasureTime += secondsPerCurrentMeasure;
@@ -799,6 +803,7 @@ async function startMetronome() {
         isMapPlaying = true;
         setModuleControlsEnabled(false); // Disable controls when map is playing
         renderTimeMapList(); // Highlight the first section
+        currentDisplayMapMeasure = 0; // CORRIGIDO: Inicializa a variável de display do mapa de tempo
     }
 
     updateMetronomeStatus(); // Call to reflect the initial state
@@ -824,6 +829,7 @@ function stopMetronome() {
     currentDisplayClassicBeat = 0;
     currentDisplayClassicSubdivision = 0;
     currentDisplayClaveIndex = 0;
+    currentDisplayMapMeasure = 0; // CORRIGIDO: Redefine a variável de display do mapa de tempo
 
 
     // Reset time map counters
@@ -838,7 +844,7 @@ function stopMetronome() {
         activePoint.classList.remove('active-beat');
     }
     // Re-render clave grid to clear all active highlights in case stop happens mid-beat
-    renderClaveGrid(); 
+    renderClaveGrid();  
     renderTimeMapList(); // Clear active section highlight
 
     // Re-enable individual module controls

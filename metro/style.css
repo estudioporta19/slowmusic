@@ -309,22 +309,46 @@ hr {
 /* Subdivision Controls */
 .subdivision-controls {
     display: flex;
-    gap: 8px; /* Adjusted gap */
+    gap: 8px; /* Ajustei o gap para dar um pouco mais de espaço, mas pode experimentar */
     width: 100%;
     justify-content: center;
+    flex-wrap: wrap; /* Adicionado para garantir que quebram a linha se a tela for muito pequena */
 }
 .subdivision-controls button {
-    /* Adapted from first CSS: .action-btn for general button style */
-    background: linear-gradient(45deg, #3498db, #2980b9); /* Use the standard button style */
-    padding: 10px 18px; /* Consistent padding */
-    font-size: 0.95em; /* Consistent font size */
-    border-radius: 8px; /* Consistent border radius */
+    /* Estilo adaptado para serem mais compactos */
+    background: linear-gradient(45deg, #3498db, #2980b9); /* Mantém o azul padrão */
+    color: white;
+    border: none;
+    padding: 7px 12px; /* Reduzido significativamente o padding */
+    border-radius: 8px; /* Mantém um bom arredondamento */
+    cursor: pointer;
+    font-size: 0.85em; /* Reduzido o tamanho da fonte */
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Sombra um pouco menor */
+    flex-grow: 0; /* IMPORANTE: Não permite que os botões cresçam e ocupem todo o espaço */
+    flex-shrink: 1; /* Permite que os botões encolham se necessário */
+    white-space: nowrap; /* Evita que o texto quebre */
 }
 .subdivision-controls button.selected {
-    /* Adapted from first CSS: .play-btn (green) for selected state */
-    background: linear-gradient(45deg, #4CAF50, #45a049);
-    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-    transform: translateY(-2px);
+    background: linear-gradient(45deg, #4CAF50, #45a049); /* Mantém o verde quando selecionado */
+    box-shadow: 0 5px 10px rgba(76, 175, 80, 0.3);
+    transform: translateY(-1px); /* Menor lift para um efeito mais sutil */
+}
+.subdivision-controls button:hover:not(.selected) {
+    background: linear-gradient(45deg, #2980b9, #3498db);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+.subdivision-controls button:active {
+    transform: translateY(0.5px); /* Menor movimento ao clicar */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.subdivision-controls button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    background: #6c757d;
 }
 
 /* Clave Designer */

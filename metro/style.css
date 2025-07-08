@@ -1,4 +1,4 @@
-/* style.css - Proposta de Melhoria de Design */
+/* style.css - Proposta de Melhoria de Design (Versão Compactada) */
 
 body {
     font-family: 'Roboto', sans-serif;
@@ -10,16 +10,16 @@ body {
     justify-content: flex-start;
     min-height: 100vh;
     margin: 0;
-    padding: 20px;
+    padding: 15px; /* Reduzido de 20px */
     box-sizing: border-box;
-    font-size: 16px;
+    font-size: 15px; /* Ligeiramente reduzido de 16px */
 }
 
 h1 {
     color: #fff;
-    margin-bottom: 20px;
+    margin-bottom: 18px; /* Reduzido de 20px */
     text-align: center;
-    font-size: 2.5em;
+    font-size: 2.3em; /* Reduzido de 2.5em */
     background: linear-gradient(45deg, #fff, #f0f0f0);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -28,53 +28,52 @@ h1 {
 
 h2 {
     color: #fff;
-    margin-bottom: 15px;
+    margin-bottom: 12px; /* Reduzido de 15px */
     text-align: center;
-    font-size: 1.8em;
+    font-size: 1.6em; /* Reduzido de 1.8em */
 }
 
 h3 {
     color: #fff;
-    margin-bottom: 15px;
+    margin-bottom: 12px; /* Reduzido de 15px */
     text-align: center;
-    font-size: 1.2em;
+    font-size: 1.1em; /* Reduzido de 1.2em */
 }
 
-/* Container Principal - Continua a ser a "caixa" principal, com mais destaque */
+/* Container Principal */
 .container {
-    background: rgba(255, 255, 255, 0.08); /* Ligeiramente mais transparente */
-    backdrop-filter: blur(15px); /* Mais blur para um efeito mais "vidro" */
-    border-radius: 25px; /* Ligeiramente mais arredondado */
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4); /* Sombra mais intensa para destacar */
-    padding: 35px; /* Mais padding interno para arejar */
-    max-width: 850px; /* Ligeiramente mais largo */
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    border-radius: 20px; /* Reduzido de 25px */
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4); /* Sombra mais compacta */
+    padding: 25px; /* Reduzido de 35px */
+    max-width: 750px; /* Reduzido de 850px */
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 25px; /* Mais espaço entre as secções principais */
+    gap: 20px; /* Reduzido de 25px */
     box-sizing: border-box;
-    border: 1px solid rgba(255, 255, 255, 0.15); /* Borda mais suave */
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Global BPM Control - Mantenho um pouco de background para agrupamento */
+/* Global BPM Control */
 .global-bpm-control {
-    background: rgba(255, 255, 255, 0.05); /* Fundo muito subtil, quase invisível */
-    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px; /* Reduzido de 20px */
     border-radius: 15px;
-    /* Removido box-shadow e border para reduzir a sensação de "caixa" */
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px; /* Reduzido de 10px */
 }
 .global-bpm-control label {
-    font-size: 1.2em; /* Ligeiramente maior */
+    font-size: 1.1em; /* Ligeiramente reduzido de 1.2em */
     font-weight: bold;
     color: white;
 }
 .global-bpm-control input[type="range"] {
-    width: 90%;
-    height: 8px;
+    width: 95%; /* Ligeiramente mais largo para preencher */
+    height: 7px; /* Reduzido de 8px */
     background: rgba(255, 255, 255, 0.2);
     border-radius: 5px;
     outline: none;
@@ -83,48 +82,55 @@ h3 {
 .global-bpm-control input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 22px; /* Ligeiramente maior */
-    height: 22px; /* Ligeiramente maior */
+    width: 20px; /* Reduzido de 22px */
+    height: 20px; /* Reduzido de 22px */
     background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 3px 12px rgba(255, 107, 107, 0.5); /* Sombra mais pronunciada */
+    box-shadow: 0 3px 10px rgba(255, 107, 107, 0.5); /* Sombra mais compacta */
 }
-
+.value-display {
+    font-size: 1em; /* Ligeiramente reduzido de 1.1em */
+    font-weight: bold;
+    color: #8aff8a;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 5px 10px; /* Reduzido de 6px 12px */
+    border-radius: 10px; /* Reduzido de 12px */
+}
 
 /* Modo Selector - Tabs */
 .mode-selector {
     display: flex;
     justify-content: center;
-    gap: 15px; /* Mais espaço entre os botões */
-    margin-bottom: 25px; /* Mais margem inferior */
+    gap: 10px; /* Reduzido de 15px */
+    margin-bottom: 20px; /* Reduzido de 25px */
     flex-wrap: wrap;
 }
 
 .mode-selector button {
-    padding: 12px 22px; /* Ligeiramente maiores */
-    font-size: 1em; /* Ligeiramente maior */
+    padding: 10px 18px; /* Reduzido de 12px 22px */
+    font-size: 0.95em; /* Reduzido de 1em */
     font-weight: bold;
     border: none;
-    border-radius: 10px; /* Mais arredondado */
+    border-radius: 8px; /* Reduzido de 10px */
     cursor: pointer;
     transition: all 0.3s ease;
     background: linear-gradient(45deg, #3498db, #2980b9);
     color: white;
-    box-shadow: 0 5px 8px rgba(0, 0, 0, 0.25); /* Sombra mais visível */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Sombra mais compacta */
     flex-shrink: 0;
 }
 
 .mode-selector button.selected {
     background: linear-gradient(45deg, #4CAF50, #45a049);
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5); /* Sombra mais forte */
-    transform: translateY(-3px); /* Mais "lift" */
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4); /* Sombra mais compacta */
+    transform: translateY(-2px); /* Reduzido de -3px */
 }
 
 .mode-selector button:hover:not(.selected) {
     background: linear-gradient(45deg, #2980b9, #3498db);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.35); /* Sombra mais forte */
+    transform: translateY(-2px); /* Reduzido de -3px */
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3); /* Sombra mais compacta */
 }
 
 .mode-selector button:disabled {
@@ -135,13 +141,72 @@ h3 {
     background: #6c757d;
 }
 
+/* Global Controls (Play/Pause/Stop) */
+.global-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px; /* Reduzido de 20px */
+    justify-content: center;
+    margin-top: 0;
+    margin-bottom: 25px; /* Reduzido de 35px */
+}
+
+.global-controls button {
+    padding: 10px 20px; /* Reduzido de 12px 22px */
+    border-radius: 8px; /* Reduzido de 10px */
+    font-size: 0.95em; /* Reduzido de 1em */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Sombra mais compacta */
+}
+
+.global-controls button:hover {
+    transform: translateY(-2px); /* Reduzido de -3px */
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3); /* Sombra mais compacta */
+}
+
+.back-to-app-button {
+    display: block;
+    width: fit-content;
+    margin: 20px auto; /* Reduzido de 25px */
+    background: linear-gradient(45deg, #3498db, #2980b9);
+    color: white;
+    text-decoration: none;
+    padding: 10px 18px; /* Reduzido de 12px 22px */
+    border-radius: 8px; /* Reduzido de 10px */
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.95em; /* Reduzido de 1em */
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Sombra mais compacta */
+    cursor: pointer;
+}
+
+.back-to-app-button:hover {
+    background: linear-gradient(45deg, #2980b9, #3498db);
+    transform: translateY(-2px); /* Reduzido de -3px */
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3); /* Sombra mais compacta */
+}
+
+hr {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    margin: 20px 0; /* Reduzido de 30px */
+}
+
+/* Metronome Status Display */
+.metronome-status {
+    text-align: center;
+    font-size: 1.3em; /* Reduzido de 1.5em */
+    font-weight: bold;
+    color: #FF6B6B;
+    min-height: 1.3em; /* Ajustado */
+    margin-top: 10px; /* Reduzido de 15px */
+    margin-bottom: 20px; /* Reduzido de 25px */
+}
 
 /* Module Grouping & Visibility */
 .module-group {
-    /* Removido background, padding, border-radius, box-shadow e border */
-    /* Deixa o container principal definir o fundo e a "moldura" */
     display: none;
-    padding: 0; /* Remover padding aqui, o conteúdo interno terá seu próprio espaçamento */
+    padding: 0;
 }
 
 .module-group.active-module {
@@ -152,48 +217,46 @@ h3 {
     display: none;
 }
 
-
 .controls-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Ligeiramente mais largo */
-    gap: 20px; /* Mais espaço entre os grupos de controlo */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Reduzido de 220px */
+    gap: 15px; /* Reduzido de 20px */
     width: 100%;
 }
 
-/* Control Group - Estes são os elementos que mais contribuíam para o "caixa dentro de caixa".
-   Vamos torná-los mais leves, focando em "separação" em vez de "background". */
+/* Control Group */
 .control-group {
-    background: none; /* Removido o background */
-    padding: 0; /* Removido o padding */
-    border-radius: 0; /* Removido border-radius */
+    background: none;
+    padding: 0;
+    border-radius: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px; /* Ligeiramente menor gap interno */
-    box-shadow: none; /* Removido box-shadow */
-    border: none; /* Removido border */
+    gap: 6px; /* Reduzido de 8px */
+    box-shadow: none;
+    border: none;
 }
 
 label {
-    font-size: 1em; /* Ligeiramente maior */
+    font-size: 0.95em; /* Reduzido de 1em */
     color: white;
-    margin-bottom: 5px;
+    margin-bottom: 3px; /* Reduzido de 5px */
     text-align: center;
     display: block;
 }
 
 small {
-    font-size: 0.78em; /* Ligeiramente maior */
-    color: rgba(255,255,255,0.75); /* Ligeiramente menos transparente para melhor legibilidade */
+    font-size: 0.75em; /* Reduzido de 0.78em */
+    color: rgba(255,255,255,0.75);
     text-align: center;
-    line-height: 1.4; /* Melhora a legibilidade */
+    line-height: 1.3; /* Ligeiramente reduzido */
 }
 
 input[type="range"] {
     width: 100%;
     -webkit-appearance: none;
-    height: 10px; /* Ligeiramente mais grosso */
-    background: rgba(255, 255, 255, 0.25); /* Ligeiramente menos transparente */
+    height: 8px; /* Reduzido de 10px */
+    background: rgba(255, 255, 255, 0.25);
     border-radius: 5px;
     outline: none;
     transition: opacity .2s;
@@ -202,413 +265,192 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 24px; /* Maior */
-    height: 24px; /* Maior */
+    width: 20px; /* Reduzido de 24px */
+    height: 20px; /* Reduzido de 24px */
     background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 3px 15px rgba(255, 107, 107, 0.6); /* Sombra mais pronunciada */
+    box-shadow: 0 3px 12px rgba(255, 107, 107, 0.6);
 }
 
 input[type="text"], input[type="number"], select {
-    width: calc(100% - 20px);
-    padding: 12px; /* Mais padding para melhor toque */
-    border-radius: 12px; /* Mais arredondado */
-    border: 1px solid rgba(255, 255, 255, 0.25); /* Borda mais visível */
-    background-color: rgba(255, 255, 255, 0.12); /* Mais translúcido */
+    width: calc(100% - 16px); /* Reduzido de 20px */
+    padding: 10px; /* Reduzido de 12px */
+    border-radius: 10px; /* Reduzido de 12px */
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.12);
     color: white;
-    font-size: 1em; /* Ligeiramente maior */
+    font-size: 0.95em; /* Reduzido de 1em */
     box-sizing: border-box;
     transition: all 0.2s ease;
 }
 
-input[type="text"]:focus, input[type="number"]:focus, select:focus {
-    border-color: #8aff8a; /* Borda verde ao focar */
-    box-shadow: 0 0 0 2px rgba(138, 255, 138, 0.3);
-    outline: none;
-}
-
-
 select {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 12px center; /* Ajustado */
-    background-size: 20px; /* Ligeiramente maior */
+    background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); /* Icone ligeiramente menor */
+    background-position: right 10px center; /* Ajustado */
+    background-size: 18px; /* Reduzido de 20px */
 }
 
-.value-display {
-    font-size: 1.1em; /* Ligeiramente maior */
-    font-weight: bold;
-    color: #8aff8a;
-    background: rgba(255, 255, 255, 0.15); /* Mais translúcido */
-    padding: 6px 12px; /* Ligeiramente maior */
-    border-radius: 12px; /* Mais arredondado */
-}
-
-button {
+button { /* Estilos genéricos para botões */
     background: linear-gradient(45deg, #3498db, #2980b9);
     color: white;
     border: none;
-    padding: 12px 22px; /* Mais padding para um aspeto mais "premium" */
-    border-radius: 10px; /* Mais arredondado */
+    padding: 10px 18px; /* Reduzido de 12px 22px */
+    border-radius: 8px; /* Reduzido de 10px */
     cursor: pointer;
-    font-size: 1em; /* Ligeiramente maior */
+    font-size: 0.95em; /* Reduzido de 1em */
     transition: all 0.3s ease;
-    box-shadow: 0 5px 8px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Sombra mais compacta */
     flex-grow: 1;
     white-space: nowrap;
 }
 
 button:hover {
     background: linear-gradient(45deg, #2980b9, #3498db);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.35);
+    transform: translateY(-2px); /* Reduzido de -3px */
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3); /* Sombra mais compacta */
 }
 
-button:active {
-    transform: translateY(0);
-    background: linear-gradient(45deg, #2980b9, #3498db);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-}
-
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-    background: #6c757d;
-}
-
-hr {
-    border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.15); /* Linha mais subtil */
-    margin: 30px 0; /* Mais espaço à volta */
-}
-
-/* Metronome Status Display */
-.metronome-status {
-    text-align: center;
-    font-size: 1.5em; /* Ligeiramente maior */
-    font-weight: bold;
-    color: #FF6B6B;
-    min-height: 1.5em;
-    margin-top: 15px; /* Mais margem */
-    margin-bottom: 25px; /* Mais margem */
-}
-
-/* Global Controls (Play/Pause/Stop) */
-.global-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px; /* Mais espaço entre os botões */
-    justify-content: center;
-    margin-top: 0;
-    margin-bottom: 35px; /* Mais margem inferior */
-}
 
 /* Subdivision Controls */
 .subdivision-controls {
     display: flex;
-    gap: 10px; /* Mais espaço entre os botões */
+    gap: 8px; /* Reduzido de 10px */
     width: 100%;
     justify-content: center;
     flex-wrap: wrap;
 }
 .subdivision-controls button {
-    background: linear-gradient(45deg, #3498db, #2980b9);
-    color: white;
-    border: none;
-    padding: 8px 14px; /* Ligeiramente maiores */
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.9em; /* Ligeiramente maior */
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 7px rgba(0, 0, 0, 0.2); /* Sombra mais visível */
-    flex-grow: 0;
-    flex-shrink: 1;
-    white-space: nowrap;
+    padding: 7px 12px; /* Reduzido de 8px 14px */
+    border-radius: 7px; /* Reduzido de 8px */
+    font-size: 0.85em; /* Reduzido de 0.9em */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* Sombra mais compacta */
 }
 .subdivision-controls button.selected {
-    background: linear-gradient(45deg, #4CAF50, #45a049);
-    box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4); /* Sombra mais forte */
-    transform: translateY(-2px); /* Mais "lift" */
+    box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3); /* Sombra mais compacta */
+    transform: translateY(-1.5px); /* Reduzido de -2px */
 }
 .subdivision-controls button:hover:not(.selected) {
-    background: linear-gradient(45deg, #2980b9, #3498db);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1.5px); /* Reduzido de -2px */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25); /* Sombra mais compacta */
 }
-.subdivision-controls button:active {
-    transform: translateY(1px); /* Maior movimento ao clicar */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-.subdivision-controls button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-    background: #6c757d;
-}
+
 
 /* Clave Designer */
 .clave-designer-container {
-    background: none; /* Removido background */
-    padding: 0; /* Removido padding */
-    border-radius: 0; /* Removido border-radius */
-    box-shadow: none; /* Removido box-shadow */
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
     text-align: center;
-    border: none; /* Removido border */
+    border: none;
 }
 
 .clave-designer-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px; /* Mais margem */
+    margin-bottom: 15px; /* Reduzido de 20px */
     flex-wrap: wrap;
-    gap: 15px; /* Mais espaço */
+    gap: 10px; /* Reduzido de 15px */
 }
 
 .clave-designer-header h3 {
     margin: 0;
-    font-size: 1.3em; /* Ligeiramente maior */
+    font-size: 1.2em; /* Reduzido de 1.3em */
     text-align: left;
 }
 
 .clave-cycle-control {
     flex-grow: 1;
-    max-width: 300px; /* Ligeiramente mais largo */
-    /* Podemos adicionar uma borda ou sombra leve aqui se quisermos agrupar visualmente */
-    padding: 15px; /* Adicionado padding para agrupar visualmente */
-    background: rgba(255, 255, 255, 0.05); /* Fundo subtil para este controlo específico */
-    border-radius: 12px;
+    max-width: 280px; /* Reduzido de 300px */
+    padding: 12px; /* Reduzido de 15px */
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px; /* Reduzido de 12px */
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 
 .clave-grid {
     display: grid;
     grid-template-columns: repeat(16, 1fr);
-    gap: 6px; /* Mais espaço entre os pontos */
-    margin-top: 20px; /* Mais margem */
+    gap: 4px; /* Reduzido de 6px */
+    margin-top: 15px; /* Reduzido de 20px */
 }
 
 .clave-point {
-    width: 35px; /* Ligeiramente maiores */
-    height: 35px; /* Ligeiramente maiores */
-    background-color: rgba(255, 255, 255, 0.15); /* Mais translúcido */
-    border-radius: 7px; /* Ligeiramente mais arredondado */
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.85em; /* Ligeiramente maior */
-    font-weight: bold;
-    color: rgba(255, 255, 255, 0.85); /* Mais visível */
-    transition: all 0.2s ease;
-    user-select: none;
-    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.25); /* Sombra mais pronunciada */
+    width: 30px; /* Reduzido de 35px */
+    height: 30px; /* Reduzido de 35px */
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 5px; /* Reduzido de 7px */
+    font-size: 0.8em; /* Reduzido de 0.85em */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Sombra mais compacta */
 }
 
 .clave-point:hover {
-    transform: translateY(-3px); /* Mais "lift" */
-    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35); /* Sombra mais forte */
-    background: rgba(255, 255, 255, 0.25); /* Mais brilhante no hover */
-}
-
-.clave-point.beat-1 {
-    background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
-    color: white;
-    box-shadow: 0 3px 12px rgba(255, 107, 107, 0.5);
-}
-.clave-point.beat-2 {
-    background: linear-gradient(45deg, #FFD700, #FFA500);
-    color: white;
-    box-shadow: 0 3px 12px rgba(255, 215, 0, 0.5);
-}
-.clave-point.beat-0 {
-    background-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px); /* Reduzido de -3px */
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3); /* Sombra mais compacta */
+    background: rgba(255, 255, 255, 0.2); /* Menos brilhante no hover */
 }
 
 /* Visual indicator for current beat */
 .clave-point.active-beat {
-    box-shadow: 0 0 0 4px #8aff8a; /* Borda mais espessa */
-    transform: scale(1.15); /* Mais scale */
+    box-shadow: 0 0 0 3px #8aff8a; /* Borda mais fina */
+    transform: scale(1.1); /* Reduzido de 1.15 */
 }
 
 .clave-point.inactive-clave-point {
-    opacity: 0.25; /* Mais transparente para os inativos */
-    pointer-events: none;
-    background-color: rgba(255, 255, 255, 0.08); /* Mais escuro e transparente */
-    box-shadow: none;
-    transform: none;
+    opacity: 0.2; /* Ligeiramente mais transparente */
+    background-color: rgba(255, 255, 255, 0.06); /* Ligeiramente mais escuro */
 }
 
-
 .clave-info {
-    font-size: 0.85em; /* Ligeiramente maior */
+    font-size: 0.8em; /* Reduzido de 0.85em */
     color: rgba(255,255,255,0.75);
-    margin-top: 15px; /* Mais margem */
+    margin-top: 12px; /* Reduzido de 15px */
 }
 
 /* Time Map Module Styles */
 .time-map-controls {
-    background: none; /* Removido background */
-    padding: 0; /* Removido padding */
-    border-radius: 0; /* Removido border-radius */
-    margin-bottom: 25px; /* Mais margem */
-    box-shadow: none; /* Removido box-shadow */
-    border: none; /* Removido border */
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    margin-bottom: 20px; /* Reduzido de 25px */
+    box-shadow: none;
+    border: none;
 }
 
 .time-map-controls h3 {
     margin-top: 0;
-    margin-bottom: 20px; /* Mais margem */
+    margin-bottom: 15px; /* Reduzido de 20px */
     text-align: center;
 }
 
 .section-config-group {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Ligeiramente mais largo */
-    gap: 15px; /* Mais espaço */
-    margin-bottom: 20px; /* Mais margem */
-    padding: 15px; /* Mais padding */
-    border: 1px dashed rgba(255, 255, 255, 0.2); /* Borda mais suave e translúcida */
-    border-radius: 12px; /* Mais arredondado */
-    background-color: rgba(255, 255, 255, 0.06); /* Ligeiramente mais transparente */
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Reduzido de 180px */
+    gap: 12px; /* Reduzido de 15px */
+    margin-bottom: 15px; /* Reduzido de 20px */
+    padding: 12px; /* Reduzido de 15px */
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 10px; /* Reduzido de 12px */
+    background-color: rgba(255, 255, 255, 0.06);
 }
 
-/* Media Queries Consolidado e Melhorado */
-@media (max-width: 850px) { /* Novo breakpoint para o max-width do container */
-    .container {
-        padding: 25px;
-        gap: 20px;
-    }
-}
-
-@media (max-width: 768px) {
-    h1 { font-size: 2.2em; }
-    h2 { font-size: 1.6em; }
-    h3 { font-size: 1.1em; }
-    .controls-grid {
-        grid-template-columns: 1fr;
-    }
-    .clave-grid {
-        grid-template-columns: repeat(8, 1fr); /* 8 por linha */
-        gap: 5px;
-    }
-    .clave-point {
-        width: 30px; /* Ajuste para 8 por linha */
-        height: 30px;
-        font-size: 0.8em;
-    }
-    .clave-designer-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    .clave-cycle-control {
-        width: 100%;
-        max-width: none;
-    }
-    .time-map-section-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .section-buttons {
-        width: 100%;
-        justify-content: flex-end;
-    }
-    .mode-selector button, .global-controls button, .subdivision-controls button {
-        font-size: 0.95em;
-        padding: 10px 18px;
-    }
-    input[type="text"], input[type="number"], select {
-        font-size: 0.95em;
-        padding: 10px 10px;
-    }
-    .clave-info {
-        font-size: 0.8em;
-    }
-    .section-buttons button {
-        padding: 7px 12px;
-        font-size: 0.88em;
-    }
-    .section-config-group {
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 12px;
-    }
-}
-
-@media (max-width: 480px) {
-    .container {
-        padding: 18px;
-        gap: 15px;
-    }
-    body {
-        font-size: 14px;
-        padding: 10px;
-    }
-    h1 { font-size: 1.8em; }
-    h2 { font-size: 1.4em; }
-    h3 { font-size: 1em; }
-    .clave-grid {
-        grid-template-columns: repeat(4, 1fr); /* 4 por linha */
-        gap: 4px;
-    }
-    .clave-point {
-        width: 35px; /* Ajuste para 4 por linha, dando mais espaço */
-        height: 35px;
-        font-size: 0.8em;
-    }
-    .metronome-status {
-        font-size: 1.1em;
-    }
-    .section-config-group {
-        grid-template-columns: 1fr; /* Coluna única em ecrãs muito pequenos */
-        gap: 8px;
-    }
-    .mode-selector button, .global-controls button, .subdivision-controls button {
-        font-size: 0.85em;
-        padding: 8px 12px;
-    }
-    input[type="text"], input[type="number"], select {
-        font-size: 0.85em;
-        padding: 8px 10px;
-    }
-    .clave-info {
-        font-size: 0.7em;
-    }
-    .section-buttons button {
-        padding: 5px 8px;
-        font-size: 0.8em;
-    }
-}
-
-/* O resto do CSS para os elementos individuais fora de control-group etc., permanece o mesmo ou ligeiramente ajustado. */
-
-.section-config-group.hidden {
-    display: none;
-}
-
+/* Add Section Button */
 #addSectionBtn {
     width: auto;
-    margin-top: 20px;
+    margin-top: 15px; /* Reduzido de 20px */
     align-self: center;
     background: linear-gradient(45deg, #4CAF50, #45a049);
-    padding: 14px 28px; /* Ligeiramente maior */
-    border-radius: 30px; /* Mais arredondado */
-    font-size: 17px; /* Ligeiramente maior */
-    box-shadow: 0 5px 18px rgba(76, 175, 80, 0.4);
+    padding: 12px 24px; /* Reduzido de 14px 28px */
+    border-radius: 25px; /* Reduzido de 30px */
+    font-size: 0.95em; /* Ajustado de 17px */
+    box-shadow: 0 3px 12px rgba(76, 175, 80, 0.35); /* Sombra mais compacta */
 }
 #addSectionBtn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+    transform: translateY(-2px); /* Reduzido de -3px */
+    box-shadow: 0 5px 18px rgba(76, 175, 80, 0.45); /* Sombra mais compacta */
 }
-
 
 .time-map-sections-list {
     list-style: none;
@@ -616,82 +458,174 @@ hr {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 12px; /* Mais espaço */
+    gap: 10px; /* Reduzido de 12px */
 }
 
 .time-map-section-item {
-    background: rgba(255, 255, 255, 0.08); /* Mais translúcido */
-    padding: 18px; /* Mais padding */
-    border-radius: 12px; /* Mais arredondado */
+    background: rgba(255, 255, 255, 0.08);
+    padding: 15px; /* Reduzido de 18px */
+    border-radius: 10px; /* Reduzido de 12px */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 15px; /* Mais espaço */
-    box-shadow: 0 7px 15px rgba(0, 0, 0, 0.25); /* Sombra mais pronunciada */
+    gap: 10px; /* Reduzido de 15px */
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2); /* Sombra mais compacta */
     flex-wrap: wrap;
-    border-left: 6px solid #8aff8a; /* Borda mais espessa */
+    border-left: 5px solid #8aff8a; /* Reduzido de 6px */
 }
 
 .time-map-section-item.active {
-    border-left: 6px solid #FFD700;
-    background: rgba(255, 255, 255, 0.12); /* Mais brilhante quando ativo */
-    transform: scale(1.02); /* Mais scale */
+    border-left: 5px solid #FFD700; /* Reduzido de 6px */
+    background: rgba(255, 255, 255, 0.1); /* Ligeiramente menos brilhante */
+    transform: scale(1.01); /* Reduzido de 1.02 */
     transition: transform 0.15s ease;
 }
 
 .section-info {
     flex-grow: 1;
-    font-size: 1.05em; /* Ligeiramente maior */
+    font-size: 1em; /* Reduzido de 1.05em */
     color: white;
 }
 
 .section-buttons {
     display: flex;
-    gap: 10px; /* Mais espaço */
+    gap: 8px; /* Reduzido de 10px */
     flex-wrap: wrap;
 }
 
 .section-buttons button {
     background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
-    padding: 9px 16px; /* Ligeiramente maior */
-    font-size: 0.92em; /* Ligeiramente maior */
-    border-radius: 18px; /* Mais arredondado */
-    box-shadow: 0 3px 12px rgba(255, 107, 107, 0.4);
-}
-
-.section-buttons button.delete-btn {
-    background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+    padding: 8px 14px; /* Reduzido de 9px 16px */
+    font-size: 0.88em; /* Reduzido de 0.92em */
+    border-radius: 16px; /* Reduzido de 18px */
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.35); /* Sombra mais compacta */
 }
 
 .section-buttons button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 18px rgba(255, 107, 107, 0.5);
+    transform: translateY(-1.5px); /* Reduzido de -2px */
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.45); /* Sombra mais compacta */
 }
 
-.back-to-app-button {
-    display: block;
-    width: fit-content;
-    margin: 25px auto; /* Mais margem */
-    background: linear-gradient(45deg, #3498db, #2980b9);
-    color: white;
-    text-decoration: none;
-    padding: 12px 22px; /* Consistente com outros botões */
-    border-radius: 10px; /* Consistente com outros botões */
-    text-align: center;
-    font-weight: bold;
-    font-size: 1em; /* Consistente */
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 8px rgba(0, 0, 0, 0.25);
-    cursor: pointer;
+/* Media Queries Consolidado e Melhorado para Compactação */
+@media (max-width: 800px) { /* Novo breakpoint, ligeiramente abaixo do max-width do container */
+    .container {
+        padding: 20px;
+        gap: 18px;
+    }
 }
 
-.back-to-app-button:hover {
-    background: linear-gradient(45deg, #2980b9, #3498db);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.35);
+@media (max-width: 768px) {
+    h1 { font-size: 2.1em; margin-bottom: 15px; }
+    h2 { font-size: 1.5em; margin-bottom: 10px; }
+    h3 { font-size: 1em; margin-bottom: 10px; }
+    .controls-grid {
+        grid-template-columns: 1fr; /* Força uma coluna única para melhor empilhamento */
+        gap: 12px;
+    }
+    .clave-grid {
+        grid-template-columns: repeat(8, 1fr); /* 8 por linha em tablets */
+        gap: 3px;
+    }
+    .clave-point {
+        width: 28px; /* Ajuste para 8 por linha */
+        height: 28px;
+        font-size: 0.75em;
+    }
+    .clave-designer-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    .clave-cycle-control {
+        width: 100%;
+        max-width: none;
+        padding: 10px;
+    }
+    .time-map-section-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 12px;
+    }
+    .section-buttons {
+        width: 100%;
+        justify-content: flex-end;
+        gap: 6px;
+    }
+    .mode-selector button, .global-controls button, .subdivision-controls button {
+        font-size: 0.9em;
+        padding: 9px 16px;
+    }
+    input[type="text"], input[type="number"], select {
+        font-size: 0.9em;
+        padding: 9px;
+    }
+    .clave-info {
+        font-size: 0.75em;
+    }
+    .section-buttons button {
+        padding: 6px 10px;
+        font-size: 0.85em;
+    }
+    .section-config-group {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Mais compacto em 768px */
+        gap: 10px;
+    }
 }
 
-.back-to-app-button:active {
-    transform: translateY(0);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+@media (max-width: 480px) {
+    .container {
+        padding: 15px;
+        gap: 12px;
+        border-radius: 15px; /* Ainda mais compacto */
+    }
+    body {
+        font-size: 13px;
+        padding: 8px;
+    }
+    h1 { font-size: 1.6em; margin-bottom: 12px; }
+    h2 { font-size: 1.2em; margin-bottom: 8px; }
+    h3 { font-size: 0.9em; margin-bottom: 8px; }
+    .clave-grid {
+        grid-template-columns: repeat(4, 1fr); /* 4 por linha em smartphones */
+        gap: 3px;
+    }
+    .clave-point {
+        width: 32px; /* Ajuste para 4 por linha, maior para toque */
+        height: 32px;
+        font-size: 0.75em;
+    }
+    .metronome-status {
+        font-size: 1em;
+        margin-top: 8px;
+        margin-bottom: 15px;
+    }
+    .section-config-group {
+        grid-template-columns: 1fr; /* Coluna única em ecrãs muito pequenos */
+        gap: 6px;
+        padding: 10px;
+    }
+    .mode-selector button, .global-controls button, .subdivision-controls button {
+        font-size: 0.8em;
+        padding: 7px 10px;
+    }
+    input[type="text"], input[type="number"], select {
+        font-size: 0.8em;
+        padding: 7px;
+    }
+    .clave-info {
+        font-size: 0.65em;
+    }
+    .section-buttons button {
+        padding: 5px 8px;
+        font-size: 0.75em;
+    }
+    #addSectionBtn {
+        padding: 10px 20px;
+        font-size: 0.9em;
+    }
+    .time-map-section-item {
+        padding: 10px;
+    }
 }

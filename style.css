@@ -506,3 +506,143 @@
             font-size: 14px;
         }
     }
+/* ... (Seus estilos existentes) ... */
+
+/* Estilo para os botões de ajuste fino */
+.fine-tune-btn {
+    background: linear-gradient(45deg, #5cb85c, #4cae4c); /* Um verde mais suave */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 12px;
+    margin-left: 5px;
+    cursor: pointer;
+    font-size: 0.85em; /* Um pouco menor para caber melhor */
+    transition: background 0.3s ease, transform 0.1s ease;
+    white-space: nowrap; /* Impede a quebra de linha do texto do botão */
+}
+
+.fine-tune-btn:hover {
+    background: linear-gradient(45deg, #4cae4c, #449d44);
+    transform: translateY(-1px);
+}
+
+.fine-tune-btn:active {
+    transform: translateY(0);
+    background: linear-gradient(45deg, #449d44, #398439);
+}
+
+/* Ajuste para o control-row para acomodar mais botões */
+.control-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Alinhar à esquerda para mais espaço */
+    flex-wrap: wrap; /* Permitir que os botões quebrem para a próxima linha em telas pequenas */
+    gap: 8px; /* Espaçamento entre os itens */
+}
+
+.control-row label,
+.control-row .value-display {
+    flex-shrink: 0; /* Impedir que encolham */
+}
+
+/* Ajuste específico para os botões de reset ficarem à direita se houver espaço */
+.control-row .reset-btn {
+    margin-left: auto; /* Empurra para a direita se houver espaço */
+}
+
+/* Estilos para os botões de navegação de marcadores */
+.nav-marker-btn {
+    background: linear-gradient(45deg, #6c757d, #5a6268); /* Cinzento */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background 0.3s ease, transform 0.1s ease;
+    flex-grow: 1; /* Para que ocupem o espaço disponível */
+    margin: 0 5px; /* Espaçamento entre eles */
+}
+
+.nav-marker-btn:hover {
+    background: linear-gradient(45deg, #5a6268, #495057);
+    transform: translateY(-1px);
+}
+
+.nav-marker-btn:active {
+    transform: translateY(0);
+    background: linear-gradient(45deg, #495057, #343a40);
+}
+
+/* Estilo para os itens da lista de marcadores */
+.marker-list-container ul li {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.marker-list-container ul li:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.marker-list-container ul li span.marker-time {
+    font-weight: bold;
+    color: #8aff8a; /* Um verde claro para o tempo */
+    margin-right: 10px;
+}
+
+.marker-list-container ul li button.delete-marker-btn {
+    background: none;
+    border: none;
+    color: #ff6b6b; /* Vermelho para o ícone de eliminar */
+    font-size: 1.2em;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: color 0.2s ease;
+}
+
+.marker-list-container ul li button.delete-marker-btn:hover {
+    color: #ff4d4d;
+}
+
+/* Media Queries para telemóveis - ajustar layout se necessário */
+@media (max-width: 768px) {
+    .control-row {
+        flex-direction: row; /* Manter linha */
+        justify-content: space-between; /* Espalhar itens */
+        flex-wrap: wrap;
+    }
+
+    .fine-tune-btn {
+        padding: 6px 10px; /* Reduzir padding para caber mais */
+        font-size: 0.8em;
+        margin-left: 0; /* Remover margem extra */
+        flex-grow: 1; /* Permite que cresçam para preencher espaço */
+        min-width: 70px; /* Largura mínima para botões */
+    }
+
+    .control-row .reset-btn {
+        margin-left: 5px; /* Ajuste para telemóvel */
+    }
+
+    /* Forçar o "Definir A/B" e "Reset A/B" a ficarem numa nova linha se necessário */
+    .control-row button:nth-last-child(2), /* 'Definir A' / 'Definir B' */
+    .control-row button:last-child { /* 'Reset A' / 'Reset B' */
+        /* display: block; */ /* Pode ser útil para empurrar para a nova linha */
+        /* width: 100%; */ /* Ocupar toda a largura */
+        margin-top: 5px; /* Espaçamento superior */
+    }
+
+    .nav-marker-btn {
+        padding: 8px 15px;
+        font-size: 0.9em;
+        margin: 5px 2px; /* Ajustar margem para telemóvel */
+    }
+}

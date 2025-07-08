@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Practice Buddy</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="style.css"> </head>
+    <link rel="stylesheet" href="style.css"> 
+</head>
 <body>
     <div class="container">
         <h1>🎵 Music Practice Buddy</h1>
@@ -55,12 +56,20 @@
                 <div class="control-row">
                     <label>Início (A):</label>
                     <span id="loopAValue" class="value-display">00:00.000</span>
+                    <button class="fine-tune-btn" onclick="adjustLoopA(-0.05)">-0.05s</button>
+                    <button class="fine-tune-btn" onclick="adjustLoopA(0.05)">+0.05s</button>
+                    <button class="fine-tune-btn" onclick="adjustLoopA(-0.01)">-0.01s</button>
+                    <button class="fine-tune-btn" onclick="adjustLoopA(0.01)">+0.01s</button>
                     <button class="reset-btn" onclick="setLoopA()">Definir A</button>
                     <button class="reset-btn" onclick="resetLoopA()">Reset A</button>
                 </div>
                 <div class="control-row">
                     <label>Fim (B):</label>
                     <span id="loopBValue" class="value-display">00:00.000</span>
+                    <button class="fine-tune-btn" onclick="adjustLoopB(-0.05)">-0.05s</button>
+                    <button class="fine-tune-btn" onclick="adjustLoopB(0.05)">+0.05s</button>
+                    <button class="fine-tune-btn" onclick="adjustLoopB(-0.01)">-0.01s</button>
+                    <button class="fine-tune-btn" onclick="adjustLoopB(0.01)">+0.01s</button>
                     <button class="reset-btn" onclick="setLoopB()">Definir B</button>
                     <button class="reset-btn" onclick="resetLoopB()">Reset B</button>
                 </div>
@@ -87,5 +96,6 @@
             </div>
         </div>
     </div>
-    <script src="main.js"></script> </body>
+    <script src="main.js"></script> 
+</body>
 </html>

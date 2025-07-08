@@ -32,12 +32,61 @@ h1, h2, h3 {
     box-sizing: border-box;
 }
 
+/* Modo Selector */
+.mode-selector {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.mode-selector button {
+    background: linear-gradient(45deg, #34495e, #2c3e50); /* Darker button for modes */
+    color: #ecf0f1;
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1.1em;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.mode-selector button.selected {
+    background: linear-gradient(45deg, #1abc9c, #16a085); /* Green when selected */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+}
+
+.mode-selector button:hover:not(.selected) {
+    background: linear-gradient(45deg, #4a607a, #3b506b);
+}
+
+.mode-selector button:disabled {
+    background: #5a6268;
+    cursor: not-allowed;
+    opacity: 0.7;
+    box-shadow: none;
+    transform: none;
+}
+
+
+/* Module Grouping & Visibility */
 .module-group {
     background-color: #4a607a; /* Background for module sections */
     padding: 20px;
     border-radius: 10px;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: none; /* Hidden by default */
 }
+
+.module-group.active-module {
+    display: block; /* Show active module */
+}
+
+.hidden-module {
+    display: none;
+}
+
 
 .controls-grid {
     display: grid;
@@ -161,26 +210,13 @@ hr {
     margin-top: 10px;
 }
 
-/* Global Controls (Play/Pause/Stop & Toggles) */
+/* Global Controls (Play/Pause/Stop) */
 .global-controls {
     display: flex;
     flex-wrap: wrap; /* Allow wrapping on smaller screens */
     gap: 15px;
     justify-content: center;
     margin-top: 20px;
-}
-
-.toggle-btn {
-    background: linear-gradient(45deg, #1abc9c, #16a085); /* Green for ON */
-}
-.toggle-btn.selected { /* This will be the ON state */
-    background: linear-gradient(45deg, #1abc9c, #16a085);
-}
-.toggle-btn:not(.selected) { /* This will be the OFF state */
-    background: linear-gradient(45deg, #6c757d, #5a6268);
-}
-.toggle-btn:not(.selected):hover {
-    background: linear-gradient(45deg, #5a6268, #6c757d);
 }
 
 /* Subdivision Controls */
@@ -223,48 +259,10 @@ hr {
     text-align: left;
 }
 
-.sync-toggle-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #ecf0f1;
-    font-size: 0.9em;
+.clave-cycle-control {
+    flex-grow: 1; /* Allow it to take available space */
+    max-width: 250px; /* Limit width */
 }
-
-.sync-toggle-group input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    /* Basic custom checkbox styling */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    border: 2px solid #1abc9c;
-    border-radius: 4px;
-    background-color: #ecf0f1;
-    transition: background-color 0.2s, border-color 0.2s;
-    position: relative;
-    top: 2px;
-}
-
-.sync-toggle-group input[type="checkbox"]:checked {
-    background-color: #1abc9c;
-    border-color: #1abc9c;
-}
-
-.sync-toggle-group input[type="checkbox"]:checked::after {
-    content: '✔';
-    display: block;
-    color: white;
-    font-size: 14px;
-    line-height: 1;
-    text-align: center;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-}
-
 
 .clave-grid {
     display: grid;
@@ -311,6 +309,13 @@ hr {
     transform: scale(1.1);
 }
 
+.clave-point.inactive-clave-point { /* For points outside the active cycle length */
+    opacity: 0.3;
+    pointer-events: none; /* Make them unclickable */
+    background-color: #4a607a; /* Slightly darker gray */
+}
+
+
 .clave-info {
     font-size: 0.9em;
     color: rgba(255,255,255,0.7);
@@ -332,6 +337,10 @@ hr {
         flex-direction: column;
         align-items: flex-start;
     }
+    .clave-cycle-control {
+        width: 100%; /* Full width on small screens */
+        max-width: none;
+    }
 }
 
 @media (max-width: 480px) {
@@ -345,7 +354,7 @@ hr {
     .container {
         padding: 20px;
     }
-    .global-controls button {
+    .global-controls button, .mode-selector button {
         font-size: 0.9em;
         padding: 8px 15px;
     }

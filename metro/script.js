@@ -1026,11 +1026,13 @@ function scheduleClassicMetronomeLogicOnly(measureStartTime) {
     const sectionAccentedBeats = accentedBeats;
 
     const secondsPerBaseNote = 60.0 / sectionBPM;
-    const secondsPerSubdivisionBeat = secondsPerBaseNote / sectionSubdivisionType;
+    // This is the correct variable name, defined locally in this function
+    const secondsPerSubdivisionBeat = secondsPerBaseNote / sectionSubdivisionType; 
 
     for (let beat = 0; beat < sectionNumerator; beat++) {
         for (let subd = 0; subd < sectionSubdivisionType; subd++) {
-            let clickTime = measureStartTime + (beat * secondsPerBaseNote) + (subd * sectionSecondsPerSubdivisionBeat);
+            // FIX IS HERE: Changed 'sectionSecondsPerSubdivisionBeat' to 'secondsPerSubdivisionBeat'
+            let clickTime = measureStartTime + (beat * secondsPerBaseNote) + (subd * secondsPerSubdivisionBeat); 
             
             let frequency;
             let volume;

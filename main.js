@@ -212,7 +212,6 @@ async function handleFileClick(index) {
         startPlayback(); // Inicia a reprodução automaticamente após a seleção
     }
 }
-
 async function selectFile(index) {
     // Se já está selecionado e o buffer está carregado, não faz nada
     // A lógica de play/pause para o ficheiro ativo é tratada em handleFileClick
@@ -227,14 +226,19 @@ async function selectFile(index) {
     seekPosition = 0; // Reinicia a posição de busca ao selecionar um novo ficheiro
     resetControls(); // Reinicia sliders e loops
 
+    // --- MUDANÇA AQUI: Limpa os marcadores e os renderiza novamente ---
+    markers = [];         // Limpa o array de marcadores
+    renderMarkers();      // Atualiza a UI para mostrar uma lista vazia de marcadores
+    // -----------------------------------------------------------------
+
     activeFileIndex = index;
     // O áudioBuffer é definido aqui, vindo do array audioFiles
-    audioBuffer = audioFiles[activeFileIndex].buffer; 
+    audioBuffer = audioFiles[activeFileIndex].buffer;
     fileNameEl.textContent = `Ficheiro: ${audioFiles[activeFileIndex].name}`;
-    
+
     // Atualiza a seleção visual
     document.querySelectorAll('.file-cell').forEach((cell) => {
-        if (parseInt(cell.dataset.index) === activeFileIndex) {    
+        if (parseInt(cell.dataset.index) === activeFileIndex) {
             cell.classList.add('selected');
         } else {
             cell.classList.remove('selected');
@@ -242,7 +246,7 @@ async function selectFile(index) {
     });
 
     drawWaveform(audioBuffer);
-    loopB = audioBuffer.duration;    
+    loopB = audioBuffer.duration;
     loopBValueEl.textContent = formatTime(loopB);
     updateLoopIndicators();
 

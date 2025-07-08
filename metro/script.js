@@ -14,8 +14,8 @@ let currentBPM = 120; // BPM is now global
 let timeNumerator = 4; // Top number of time signature (e.g., 4 in 4/4)
 let timeDenominator = 4; // Bottom number of time signature (e.g., 4 in 4/4)
 let subdivisionType = 1; // 1 = none, 2 = 8th notes, 3 = 12th notes (triplets), 4 = 16th notes
-let compoundSubdivisions = []; // e.g., [4, 3] for 7/4. Empty if simple time.
-let accentedBeats = new Set(); // NEW: Set of beats to accent (e.g., {3, 5, 7})
+// Removed compoundSubdivisions logic
+let accentedBeats = new Set(); // Set of beats to accent (e.g., {3, 5, 7})
 
 let nextClassicClickTime = 0.0;
 let currentClassicBeat = 0; // Current beat within the measure (0-indexed)
@@ -50,8 +50,7 @@ const listMetronomeModule = document.getElementById('listMetronomeModule');
 const timeNumeratorInput = document.getElementById('timeNumerator');
 const timeNumeratorValueDisplay = document.getElementById('timeNumeratorValue');
 const timeDenominatorSelect = document.getElementById('timeDenominator');
-const compoundSubdivisionsInput = document.getElementById('compoundSubdivisions');
-const compoundTimeGroup = document.getElementById('compoundTimeGroup');
+// Removed compoundSubdivisionsInput and compoundTimeGroup
 const accentedBeatsInput = document.getElementById('accentedBeats'); // NEW
 
 const subdivisionOffBtn = document.getElementById('subdivisionOffBtn');
@@ -117,34 +116,11 @@ function updateTimeSignature() {
     timeNumeratorValueDisplay.textContent = timeNumerator;
     timeDenominator = parseInt(timeDenominatorSelect.value);
     
-    // Show/hide compound time input based on numerator
-    if (timeNumerator > 4 && timeNumerator !== 6 && timeNumerator !== 9 && timeNumerator !== 12) { // Typically irregular meters
-        compoundTimeGroup.style.display = 'flex';
-    } else {
-        compoundTimeGroup.style.display = 'none';
-        compoundSubdivisionsInput.value = ''; // Clear input
-        compoundSubdivisions = []; // Clear array
-    }
-
+    // Removed compound time group logic here as it's now handled by accentedBeats
     resetAndSchedule();
 }
 
-function parseCompoundSubdivisions() {
-    const input = compoundSubdivisionsInput.value.trim();
-    if (!input) {
-        compoundSubdivisions = [];
-        return;
-    }
-    const parts = input.split('+').map(p => parseInt(p.trim()));
-    if (parts.every(p => !isNaN(p) && p > 0) && parts.reduce((sum, val) => sum + val, 0) === timeNumerator) {
-        compoundSubdivisions = parts;
-    } else {
-        compoundSubdivisions = [];
-        alert('Formato de compasso composto inválido. Use apenas números inteiros e garanta que a soma é igual ao número de tempos.');
-        compoundSubdivisionsInput.value = '';
-    }
-    resetAndSchedule();
-}
+// Removed parseCompoundSubdivisions function
 
 function parseAccentedBeats() {
     const input = accentedBeatsInput.value.trim();
@@ -154,7 +130,8 @@ function parseAccentedBeats() {
     }
     const parts = input.split(',').map(p => parseInt(p.trim()));
     for (const beat of parts) {
-        if (!isNaN(beat) && beat > 1 && beat <= timeNumerator) { // Beat must be > 1 and within measure
+        // Only add if it's a valid beat number, greater than 1 (as 1st beat is always strong), and within measure
+        if (!isNaN(beat) && beat >= 2 && beat <= timeNumerator) {
             accentedBeats.add(beat - 1); // Store as 0-indexed
         }
     }
@@ -260,7 +237,7 @@ function updateMetronomeStatus() {
         } else if (activeMode === 'clave') {
             statusText += `Clave: ${currentClaveIndex + 1}/${claveCycleLength}`;
         } else if (activeMode === 'list') {
-            statusText += `Lista: (Em Breve)`;
+            statusText += `Mapa de Tempo: (Em Breve)`;
         }
         metronomeStatusDisplay.textContent = statusText;
     } else {
@@ -284,11 +261,7 @@ function scheduler() {
 
 // --- Classic Metronome Scheduling Logic ---
 function scheduleClassicMetronome() {
-    // Calculate how many base notes (semínimas if denominator is 4) are in a whole note (16 semicolches)
-    const baseNotesPerWholeNote = 16 / timeDenominator; // Example: 4/4 -> 16/4 = 4 base notes per whole note
     const secondsPerBaseNote = 60.0 / currentBPM; // Duration of one base note (e.g., one quarter note at 120BPM = 0.5s)
-    
-    // Duration of a single subdivision beat
     const secondsPerSubdivisionBeat = secondsPerBaseNote / subdivisionType;
 
     while (nextClassicClickTime < audioContext.currentTime + scheduleAheadTime) {
@@ -296,35 +269,18 @@ function scheduleClassicMetronome() {
         let volume;
         let duration = 0.03; // Default duration for a subtle click
 
-        // Determine if it's a downbeat, strong accent, or subdivision
+        // Determine if it's a downbeat, user-defined accent, or subdivision
         const isMainBeat = currentClassicSubdivision === 0;
         const isFirstBeatOfMeasure = currentClassicBeat === 0 && currentClassicSubdivision === 0;
-        const isUserAccentedBeat = accentedBeats.has(currentClassicBeat) && isMainBeat; // NEW
-
-        let isCompoundAccent = false;
-        if (compoundSubdivisions.length > 0) {
-            let beatCounter = 0;
-            let currentCompoundGroupStartBeat = 0;
-            for (let i = 0; i < compoundSubdivisions.length; i++) {
-                if (currentClassicBeat === currentCompoundGroupStartBeat && i > 0 && isMainBeat) {
-                    isCompoundAccent = true; // Mark as accent if it's the start of a new group (not the very first beat of measure)
-                    break;
-                }
-                currentCompoundGroupStartBeat += compoundSubdivisions[i];
-            }
-        }
+        const isUserAccentedBeat = accentedBeats.has(currentClassicBeat) && isMainBeat;
 
         if (isFirstBeatOfMeasure) {
             frequency = 1000; // Very high pitch for the absolute downbeat
             volume = 0.9;
             duration = 0.05;
-        } else if (isCompoundAccent) {
-            frequency = 880; // High pitch for compound accents
+        } else if (isUserAccentedBeat) { // User-defined accents for other beats
+            frequency = 880; // High pitch for user-defined accents
             volume = 0.8;
-            duration = 0.04;
-        } else if (isUserAccentedBeat) { // NEW: User-defined accents
-            frequency = 800; // Slightly lower than compound accent, but still distinct
-            volume = 0.75;
             duration = 0.04;
         } else if (isMainBeat) {
             frequency = 700; // Medium pitch for other main beats
@@ -522,7 +478,7 @@ modeListBtn.addEventListener('click', () => switchMode('list'));
 // Classic Metronome Controls
 timeNumeratorInput.addEventListener('input', updateTimeSignature);
 timeDenominatorSelect.addEventListener('change', updateTimeSignature);
-compoundSubdivisionsInput.addEventListener('change', parseCompoundSubdivisions);
+// Removed event listener for compoundSubdivisionsInput
 accentedBeatsInput.addEventListener('change', parseAccentedBeats); // NEW
 
 subdivisionOffBtn.addEventListener('click', () => { subdivisionType = 1; updateSubdivisionButtons(); });

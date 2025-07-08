@@ -960,7 +960,154 @@ function renderSavedLoops() {
         savedLoopsListEl.appendChild(li);
     });
 }
+// ... (seu código JavaScript existente) ...
 
+// --- Elementos HTML para Marcadores ---
+const markerNameInput = document.getElementById('markerNameInput');
+const markersListEl = document.getElementById('markersList');
+
+// --- Variáveis para Marcadores ---
+let markers = []; // Array para armazenar { name: "Nome", time: 123.45 }
+
+// --- FUNÇÕES PARA MARCADORES ---
+
+function addMarker() {
+    if (!audioBuffer) {
+        alert('Por favor, carregue e selecione um ficheiro de áudio primeiro.');
+        return;
+    }
+
+    let markerName = markerNameInput.value.trim();
+    if (!markerName) {
+        markerName = `Marcador ${markers.length + 1}`; // Nome padrão se não for fornecido
+    }
+
+    let currentPlaybackTime = 0;
+    if (isPlaying && soundtouchWorkletNode) {
+        const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
+        const elapsed = audioContext.currentTime - playbackStartTime;
+        currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
+    } else if (audioBuffer) {
+        currentPlaybackTime = seekPosition;
+    }
+
+    // Adicionar o marcador
+    markers.push({ name: markerName, time: currentPlaybackTime });
+    // Ordenar os marcadores por tempo
+    markers.sort((a, b) => a.time - b.time);
+
+    renderMarkers(); // Atualizar a lista visual
+    markerNameInput.value = ''; // Limpar o input
+}
+
+function renderMarkers() {
+    markersListEl.innerHTML = ''; // Limpar a lista atual
+
+    if (markers.length === 0) {
+        markersListEl.innerHTML = '<li style="color: rgba(255,255,255,0.7); text-align: center; padding: 10px;">Nenhum marcador guardado ainda.</li>';
+        return;
+    }
+
+    markers.forEach((marker, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span class="marker-time">${formatTime(marker.time)}</span>
+            <span class="marker-name">${marker.name}</span>
+            <button class="delete-marker-btn" data-index="${index}">❌</button>
+        `;
+        li.onclick = () => navigateToMarker(marker.time); // Navegar ao clicar no item
+        
+        // Adicionar listener para o botão de eliminar
+        li.querySelector('.delete-marker-btn').onclick = (e) => {
+            e.stopPropagation(); // Previne que o clique no botão ative o clique no LI
+            deleteMarker(index);
+        };
+
+        markersListEl.appendChild(li);
+    });
+}
+
+function navigateToMarker(time) {
+    if (!audioBuffer) {
+        alert('Por favor, carregue e selecione um ficheiro de áudio primeiro.');
+        return;
+    }
+
+    stopPlayback(); // Para a reprodução atual
+    seekPosition = time; // Define a nova posição de busca
+    updatePlaybackIndicator(); // Atualiza o indicador visual
+    
+    // Opcional: iniciar reprodução automaticamente após navegar
+    // startPlayback(); 
+}
+
+function deleteMarker(index) {
+    markers.splice(index, 1); // Remove o marcador do array
+    renderMarkers(); // Atualiza a lista visual
+}
+
+function navigateToPreviousMarker() {
+    if (!audioBuffer || markers.length === 0) return;
+
+    let currentPlaybackTime = 0;
+    if (isPlaying && soundtouchWorkletNode) {
+        const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
+        const elapsed = audioContext.currentTime - playbackStartTime;
+        currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
+    } else if (audioBuffer) {
+        currentPlaybackTime = seekPosition;
+    }
+
+    // Encontra o marcador anterior mais próximo
+    let prevMarker = null;
+    for (let i = markers.length - 1; i >= 0; i--) {
+        if (markers[i].time < currentPlaybackTime - 0.05) { // -0.05 para evitar o marcador atual
+            prevMarker = markers[i];
+            break;
+        }
+    }
+
+    if (prevMarker) {
+        navigateToMarker(prevMarker.time);
+    } else {
+        // Se não houver anterior, vai para o primeiro marcador
+        navigateToMarker(markers[0].time);
+    }
+}
+
+function navigateToNextMarker() {
+    if (!audioBuffer || markers.length === 0) return;
+
+    let currentPlaybackTime = 0;
+    if (isPlaying && soundtouchWorkletNode) {
+        const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
+        const elapsed = audioContext.currentTime - playbackStartTime;
+        currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
+    } else if (audioBuffer) {
+        currentPlaybackTime = seekPosition;
+    }
+
+    // Encontra o próximo marcador mais próximo
+    let nextMarker = null;
+    for (let i = 0; i < markers.length; i++) {
+        if (markers[i].time > currentPlaybackTime + 0.05) { // +0.05 para evitar o marcador atual
+            nextMarker = markers[i];
+            break;
+        }
+    }
+
+    if (nextMarker) {
+        navigateToMarker(nextMarker.time);
+    } else {
+        // Se não houver próximo, vai para o primeiro marcador (ou último, dependendo da preferência)
+        navigateToMarker(markers[0].time);
+    }
+}
+
+// --- Chamada inicial para renderizar a lista de marcadores (vazia no início) ---
+document.addEventListener('DOMContentLoaded', renderMarkers);
+
+// ... (o resto do seu código JavaScript) ...
 document.addEventListener('DOMContentLoaded', loadSavedLoops);
 document.addEventListener('keydown', (e) => {
     // Ignora eventos de teclado se o utilizador estiver a escrever num input (ex: nome do loop)

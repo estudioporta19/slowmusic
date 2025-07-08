@@ -569,40 +569,110 @@ waveformCanvas.addEventListener('click', (e) => {
     }
 });
 
+const FINE_TUNE_STEP = 0.01; // Ajuste fino em segundos (10 milissegundos)
+
+function adjustLoop(loopPoint, adjustment) {
+    if (!audioBuffer) {
+        alert('Por favor, carregue e selecione um ficheiro de áudio primeiro.');
+        return;
+    }
+
+    let newLoopValue;
+    if (loopPoint === 'A') {
+        newLoopValue = loopA + adjustment;
+        // Limitar A para não ser menor que 0 e não ser maior que B
+        loopA = Math.max(0, Math.min(newLoopValue, loopB - 0.001)); // -0.001 para garantir A < B
+        loopAValueEl.textContent = formatTime(loopA);
+    } else if (loopPoint === 'B') {
+        newLoopValue = loopB + adjustment;
+        // Limitar B para não ser maior que a duração total e não ser menor que A
+        loopB = Math.min(audioBuffer.duration, Math.max(newLoopValue, loopA + 0.001)); // +0.001 para garantir B > A
+        loopBValueEl.textContent = formatTime(loopB);
+    }
+
+    updateLoopIndicators();
+
+    // Se o loop estiver ativo e a reprodução estiver a decorrer,
+    // reiniciar a reprodução para aplicar imediatamente o novo ponto.
+    if (loopEnabled && isPlaying) {
+        seekPosition = loopA; // Sempre começa do A quando o loop está ativo
+        stopPlayback();
+        startPlayback();
+    } else if (loopPoint === 'A' && !isPlaying) {
+        // Se ajustar A enquanto parado, move o indicador de reprodução para A
+        seekPosition = loopA;
+        updateLoopIndicators();
+    } else if (loopPoint === 'B' && !isPlaying) {
+        // Se ajustar B enquanto parado, e a posição atual estiver dentro do loop,
+        // mas não iniciar a reprodução. Apenas atualiza indicadores.
+        // Se quiser que o indicador de reprodução vá para B, pode fazer:
+        // seekPosition = loopB; updateLoopIndicators();
+        // Mas geralmente não é necessário, o indicador é para 'current playback'
+    }
+}
+
+function adjustLoopA(adjustment) {
+    adjustLoop('A', adjustment);
+}
+
+function adjustLoopB(adjustment) {
+    adjustLoop('B', adjustment);
+}
+
+// --- Modificações nas funções existentes para consistência ---
+
+// Pequena refatoração para evitar duplicação de código na lógica de `setLoopA` e `setLoopB`
+// Esta função auxiliar vai ser chamada por setLoopA e setLoopB
+function updateAndPlayLoop(targetLoopPoint, newTime) {
+    if (!audioBuffer || !audioContext) return;
+
+    if (targetLoopPoint === 'A') {
+        loopA = Math.min(loopB - 0.001, newTime); // Garante A < B
+        loopA = Math.max(0, loopA); // Garante A >= 0
+        loopAValueEl.textContent = formatTime(loopA);
+    } else if (targetLoopPoint === 'B') {
+        loopB = Math.max(loopA + 0.001, newTime); // Garante B > A
+        loopB = Math.min(loopB, audioBuffer.duration); // Garante B <= duração
+        loopBValueEl.textContent = formatTime(loopB);
+    }
+
+    updateLoopIndicators();
+
+    // Se o loop estiver ativo e/ou a reprodução estiver a decorrer, reinicia a reprodução
+    if (loopEnabled || isPlaying) { // Se o loop estiver ativo OU se estiver a tocar
+        seekPosition = loopA; // Sempre reinicia no A
+        stopPlayback();
+        startPlayback();
+    } else {
+        // Se não está a tocar e não está em loop, apenas move o indicador de reprodução
+        seekPosition = newTime; // Para que o indicador de reprodução se posicione
+        updateLoopIndicators();
+    }
+}
+
+
 function setLoopA() {
-    if (!audioBuffer || !audioContext) return;    
-        
     let currentPlaybackTime = 0;
     if (isPlaying && soundtouchWorkletNode) {
         const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
         const elapsed = audioContext.currentTime - playbackStartTime;
         currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
-    } else if (audioBuffer) {    
+    } else if (audioBuffer) {
         currentPlaybackTime = seekPosition;
     }
-
-    loopA = Math.min(loopB - 0.1, currentPlaybackTime);
-    loopA = Math.max(0, loopA);    
-    loopAValueEl.textContent = formatTime(loopA);
-    updateLoopIndicators();
+    updateAndPlayLoop('A', currentPlaybackTime);
 }
 
 function setLoopB() {
-    if (!audioBuffer || !audioContext) return;    
-
     let currentPlaybackTime = 0;
     if (isPlaying && soundtouchWorkletNode) {
         const currentTempo = soundtouchWorkletNode.parameters.get('tempo').value;
         const elapsed = audioContext.currentTime - playbackStartTime;
         currentPlaybackTime = (loopEnabled ? loopA : seekPosition) + (elapsed * currentTempo);
-    } else if (audioBuffer) {    
+    } else if (audioBuffer) {
         currentPlaybackTime = seekPosition;
     }
-
-    loopB = Math.max(loopA + 0.1, currentPlaybackTime);
-    loopB = Math.min(loopB, audioBuffer.duration);    
-    loopBValueEl.textContent = formatTime(loopB);
-    updateLoopIndicators();
+    updateAndPlayLoop('B', currentPlaybackTime);
 }
 
 function resetLoopA() {

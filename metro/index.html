@@ -10,34 +10,27 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Metrónomo Avançado</h1>
-
-    <div class="container">
-        
-        <div class="global-bpm-control">
-            <label for="bpmSlider">BPM: <span id="bpmValue" class="value-display">120</span></label>
-            <input type="range" id="bpmSlider" min="40" max="320" value="120">
-        </div>
-
-        <hr>
+    <div class="top-controls-wrapper">
+        <h1>Metrónomo Avançado</h1>
 
         <div class="mode-selector">
             <button id="modeClassicBtn" class="selected">Metrónomo Clássico</button>
             <button id="modeClaveBtn">Clave Designer</button>
             <button id="modeListBtn">Mapa de Tempo</button>
+            <button id="homeBtn">Home</button> </div>
+        
+        <div class="global-bpm-play-group">
+            <div class="global-bpm-control">
+                <label for="bpmSlider">BPM: <span id="bpmValue" class="value-display">120</span></label>
+                <input type="range" id="bpmSlider" min="40" max="320" value="120">
+            </div>
+            <button class="play-pause-btn" id="playPauseBtn">▶️ Iniciar</button> 
         </div>
-
-        <hr>
 
         <div class="metronome-status" id="metronomeStatus"></div>
+    </div>
 
-        <div class="global-controls">
-            <button id="playPauseBtn">▶️ Iniciar</button>
-            <button id="stopBtn">⏹️ Parar</button>
-        </div>
-        
-        <a href="https://estudioporta19.github.io/slowmusic/" class="back-to-app-button">Voltar à Aplicação</a>
-
+    <div class="container">
         <div id="classicMetronomeModule" class="module-group active-module">
             <h2>Metrónomo Clássico</h2>
             <div class="controls-grid">
@@ -63,7 +56,6 @@
                 </div>
             </div>
         </div>
-
         
         <div id="claveDesignerModule" class="module-group hidden-module">
             <h2>Clave Designer</h2>
@@ -157,7 +149,7 @@
 
             <h3>Secções do Mapa</h3>
             <ul id="timeMapSectionsList" class="time-map-sections-list">
-                </ul>
+            </ul>
         </div>
     </div>
 

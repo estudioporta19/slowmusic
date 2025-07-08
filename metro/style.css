@@ -128,7 +128,9 @@ h3 {
     width: 100%; /* Ocupa a largura total para centralizar */
 }
 
-.mode-selector button {
+/* APLICA ESTILOS DE BOTÃO A TAGS <BUTTON> E TAMBÉM À NOVA CLASSE button-as-link */
+.mode-selector button,
+.mode-selector .button-as-link { /* Adicionado .button-as-link para estilizar o link como botão */
     padding: 10px 18px; /* Padding ligeiramente reduzido */
     font-size: 0.95em; /* Ligeiramente menor */
     font-weight: bold;
@@ -140,6 +142,10 @@ h3 {
     color: white;
     box-shadow: 0 5px 8px rgba(0, 0, 0, 0.25);
     flex-shrink: 0;
+    text-decoration: none; /* REMOVE O SUBLINHADO PADRÃO DO LINK */
+    display: inline-flex; /* Usa flexbox para centralizar o texto verticalmente, se necessário */
+    align-items: center;
+    justify-content: center;
 }
 
 .mode-selector button.selected {
@@ -148,7 +154,8 @@ h3 {
     transform: translateY(-3px);
 }
 
-.mode-selector button:hover:not(.selected) {
+.mode-selector button:hover:not(.selected),
+.mode-selector .button-as-link:hover { /* Incluído o hover para a nova classe */
     background: linear-gradient(45deg, #2980b9, #3498db);
     transform: translateY(-3px);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.35);
@@ -275,6 +282,7 @@ select {
     border-radius: 12px;
 }
 
+/* REGRAS GERAIS PARA BOTÕES - CERTIFIQUE-SE QUE ESTA SELEÇÃO SE MANTÉM ABAIXO DA .mode-selector button SE HOUVER CONFLITOS ESPECÍFICOS */
 button {
     background: linear-gradient(45deg, #3498db, #2980b9);
     color: white;
@@ -531,7 +539,8 @@ hr {
         justify-content: center;
         gap: 8px; /* Reduz o gap entre os botões */
     }
-    .mode-selector button {
+    .mode-selector button,
+    .mode-selector .button-as-link { /* Incluído o link para responsividade */
         padding: 10px 15px; /* Reduz padding em mobile */
         font-size: 0.9em;
     }
@@ -617,7 +626,8 @@ hr {
     .mode-selector {
         gap: 6px; /* Ainda mais compacto em ecrãs pequenos */
     }
-    .mode-selector button {
+    .mode-selector button,
+    .mode-selector .button-as-link { /* Incluído o link para responsividade */
         padding: 8px 12px;
         font-size: 0.85em;
     }

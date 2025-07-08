@@ -1,48 +1,62 @@
-    /* ... (seu CSS existente, sem alterações significativas aqui) ... */
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        color: white;
-    }
-    
-    .container {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        padding: 30px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    h1 {
-        text-align: center;
-        margin-bottom: 30px;
-        font-size: 2.5em;
-        background: linear-gradient(45deg, #fff, #f0f0f0);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
+/* ... (seu CSS existente, sem alterações significativas aqui) ... */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: white;
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Alterações AQUI para centralizar o H1 */
+header {
+    display: grid; /* Usa display grid para um controlo mais preciso */
+    grid-template-columns: 1fr auto 1fr; /* 3 colunas: espaço flexível, conteúdo, espaço flexível */
+    align-items: center; /* Alinha verticalmente no centro */
+    margin-bottom: 20px; /* Mantém a margem inferior */
+    gap: 10px; /* Espaço entre os itens do grid */
+    position: relative; /* Necessário para posicionar o botão absolutamente em media queries futuras, se necessário */
+}
+
+header h1 {
+    grid-column: 1 / 4; /* Faz com que o título ocupe todas as 3 colunas */
+    text-align: center; /* **Centraliza o texto do título dentro dessas 3 colunas** */
+    margin: 0; /* Remove margens padrão que possam afetar o alinhamento */
+    padding: 0; /* Remove paddings padrão */
+    font-size: 2.5em; /* Mantém o tamanho da fonte existente */
+    background: linear-gradient(45deg, #fff, #f0f0f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
 /* Estilos para o Botão de Instruções */
 .instructions-btn {
-    /* Geralmente, este botão fica no canto, então vamos dar-lhe um posicionamento flexível */
-    margin-left: auto; /* Empurra o botão para a direita se estiver num container flex */
-    padding: 10px 18px; /* Preenchimento interno */
-    font-size: 0.95em; /* Tamanho da fonte ligeiramente menor */
-    font-weight: bold; /* Negrito */
-    border: none; /* Sem borda */
-    border-radius: 8px; /* Cantos arredondados */
-    cursor: pointer; /* Cursor de clique */
-    transition: all 0.3s ease; /* Transição suave para hover */
-
-    /* Cores e gradiente */
-    background: linear-gradient(45deg, #3498db, #2980b9); /* Azul agradável */
-    color: white; /* Texto branco */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Sombra para profundidade */
+    grid-column: 3 / 4; /* Coloca o botão na terceira coluna */
+    justify-self: end; /* Alinha o botão à direita dentro da sua coluna */
+    z-index: 1; /* Garante que o botão fique sobreposto se houver sobreposição */
+    
+    /* Seus estilos visuais existentes foram mantidos aqui */
+    padding: 10px 18px; 
+    font-size: 0.95em; 
+    font-weight: bold; 
+    border: none; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    transition: all 0.3s ease; 
+    background: linear-gradient(45deg, #3498db, #2980b9); 
+    color: white; 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); 
 }
 
 .instructions-btn:hover {
@@ -51,273 +65,300 @@
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3); /* Sombra mais pronunciada */
 }
 
-/* Se o seu header for um container flex, isto ajuda a alinhar o botão */
-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Espaça o título e o botão */
-    margin-bottom: 20px; /* Margem inferior para separar do resto */
-    flex-wrap: wrap; /* Permite que os itens quebrem para a linha seguinte em ecrãs pequenos */
-}
-
-/* Para o caso de ecrãs muito pequenos, ajuste o tamanho da fonte do título */
+/* Media Query para ecrãs pequenos: Ajusta o layout do header */
 @media (max-width: 600px) {
+    header {
+        /* Para ecrãs pequenos, talvez seja melhor empilhar ou ajustar a posição */
+        /* Opção 1: Empilhar título e botão */
+        grid-template-columns: 1fr; /* Uma única coluna */
+        gap: 15px; /* Espaçamento entre o título e o botão */
+        padding: 0 10px; /* Adiciona algum padding lateral */
+    }
+
     header h1 {
+        grid-column: 1 / 2; /* O título ocupa a única coluna */
+        text-align: center; /* Centraliza o título */
         font-size: 1.8em; /* Reduz o tamanho do título em ecrãs pequenos */
     }
+    
     .instructions-btn {
+        grid-column: 1 / 2; /* O botão também ocupa a única coluna */
+        justify-self: center; /* Centraliza o botão horizontalmente */
         padding: 8px 15px; /* Ajusta o padding do botão */
         font-size: 0.85em; /* Ajusta o tamanho da fonte do botão */
+        width: fit-content; /* O botão só ocupa a largura do seu conteúdo */
+        margin: 0 auto; /* Centraliza o botão se ele for um bloco */
     }
+    /* Se preferir o botão no canto superior direito mesmo em móvel: */
+    /*
+    header {
+        grid-template-columns: 1fr auto; 
+        gap: 15px 10px; 
+        padding: 0 10px; 
+    }
+    header h1 {
+        grid-column: 1 / 3; 
+        text-align: center; 
+        font-size: 1.8em; 
+    }
+    .instructions-btn {
+        grid-column: 2 / 3; 
+        grid-row: 1 / 2; 
+        justify-self: end; 
+        align-self: start; 
+        padding: 8px 15px; 
+        font-size: 0.85em; 
+    }
+    */
 }
-    
-    .file-input-container {
-        margin-bottom: 30px;
-        text-align: center;
-    }
-    
-    .file-input {
-        display: none;
-    }
-    
-    .file-label {
-        display: inline-block;
-        padding: 15px 30px;
-        background: linear-gradient(45deg, #4CAF50, #45a049);
-        color: white;
-        border-radius: 25px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: all 0.3s ease;
-        border: none;
-        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-    }
-    
-    .file-label:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-    }
-    
-    .controls {
-        display: none;
-        margin-top: 30px;
-    }
-    
-    .control-group {
-        margin-bottom: 25px;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 20px;
-        border-radius: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    
-    .control-group h3 {
-        margin-top: 0;
-        margin-bottom: 15px;
-        color: #fff;
-        font-size: 1.2em;
-    }
-    
-    .control-row {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 15px;
-    }
-    
-    .control-row:last-child {
-        margin-bottom: 0;
-    }
-    
-    label {
-        min-width: 80px;
-        font-weight: bold;
-    }
-    
-    input[type="range"] {
-        flex: 1;
-        height: 8px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 5px;
-        outline: none;
-        -webkit-appearance: none;
-    }
-    
-    input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 20px;
-        height: 20px;
-        background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
-        border-radius: 50%;
-        cursor: pointer;
-        box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
-    }
-    
-    input[type="range"]::-moz-range-thumb {
-        width: 20px;
-        height: 20px;
-        background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
-        border-radius: 50%;
-        cursor: pointer;
-        border: none;
-        box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
-    }
-    
-    .value-display {
-        min-width: 80px;
-        text-align: center;
-        font-weight: bold;
-        font-size: 14px;
-        background: rgba(255, 255, 255, 0.2);
-        padding: 5px 10px;
-        border-radius: 10px;
-    }
-    
-    .reset-btn {
-        background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 15px;
-        cursor: pointer;
-        font-size: 12px;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
-    }
-    
-    .reset-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
-    }
-    
-    .playback-controls {
-        text-align: center;
-        margin-top: 20px;
-        /* Adicione estas propriedades para layout em ecrãs pequenos */
-        display: flex; /* Mantenha como flex */
-        flex-direction: row; /* Padrão em desktop */
-        justify-content: center;
-        gap: 20px; /* Espaço entre os botões */
-    }
-    
-    .play-btn {
-        background: linear-gradient(45deg, #4CAF50, #45a049);
-        color: white;
-        border: none;
-        padding: 15px 30px;
-        border-radius: 25px;
-        cursor: pointer;
-        font-size: 16px;
-        /* margin: 0 10px; */ /* Remova ou ajuste esta margem se o gap for suficiente */
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-    }
-    
-    .play-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-    }
-    
-    .play-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-    }
-    
-    .file-info {
-        text-align: center;
-        margin-top: 20px;
-        padding: 15px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        font-size: 14px;
-    }
-    
-    .loading {
-        text-align: center;
-        font-style: italic;
-        color: #ccc;
-    }
 
-    /* --- Estilos para o Waveform e Loop --- */
-    .waveform-container {
-        position: relative;
-        cursor: crosshair; /* Muda o cursor para indicar que é clicável */
-    }
+.file-input-container {
+    margin-bottom: 30px;
+    text-align: center;
+}
 
-    .loop-indicator {
-        position: absolute;
-        top: 0;
-        height: 100%;
-        width: 3px; /* Largura das linhas indicadoras */
-        opacity: 0.7;
-        pointer-events: none; /* Garante que não interfere com cliques no canvas */
-    }
+.file-input {
+    display: none;
+}
 
-    /* --- NOVOS ESTILOS PARA AS CÉLULAS DE FICHEIROS --- */
-    .file-list-container {
-        margin-top: 20px;
-        margin-bottom: 30px;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(5px);
-        border-radius: 15px;
-        padding: 15px;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Layout responsivo de grelha */
-        gap: 15px;
-        max-height: 250px; /* Limita a altura e adiciona scroll */
-        overflow-y: auto;
-    }
+.file-label {
+    display: inline-block;
+    padding: 15px 30px;
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
 
-    .file-cell {
-        background: rgba(255, 255, 255, 0.15);
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-weight: bold;
-        font-size: 0.9em;
-        word-break: break-word; /* Quebra palavras longas */
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-    }
+.file-label:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
 
-    .file-cell:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-        background: rgba(255, 255, 255, 0.25);
-    }
+.controls {
+    display: none;
+    margin-top: 30px;
+}
 
-    .file-cell.selected {
-        background: linear-gradient(45deg, #007bff, #0056b3); /* Azul para selecionado */
-        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
-        border-color: rgba(0, 123, 255, 0.6);
-        transform: scale(1.02);
-    }
+.control-group {
+    margin-bottom: 25px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
 
-    .file-cell-remove {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1.2em;
-        font-weight: bold;
-        position: absolute;
-        top: 5px;
-        right: 8px;
-        cursor: pointer;
-        opacity: 0.7;
-        transition: opacity 0.2s ease;
-    }
+.control-group h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #fff;
+    font-size: 1.2em;
+}
 
-    .file-cell-remove:hover {
-        opacity: 1;
-        color: #ff4d4d;
-    }
-    .fine-tune-btn {
+.control-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.control-row:last-child {
+    margin-bottom: 0;
+}
+
+label {
+    min-width: 80px;
+    font-weight: bold;
+}
+
+input[type="range"] {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
+}
+
+.value-display {
+    min-width: 80px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 10px;
+    border-radius: 10px;
+}
+
+.reset-btn {
+    background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
+}
+
+.reset-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+}
+
+.playback-controls {
+    text-align: center;
+    margin-top: 20px;
+    display: flex; /* Mantenha como flex */
+    flex-direction: row; /* Padrão em desktop */
+    justify-content: center;
+    gap: 20px; /* Espaço entre os botões */
+}
+
+.play-btn {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    /* margin: 0 10px; */ /* Remova ou ajuste esta margem se o gap for suficiente */
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.play-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.play-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.file-info {
+    text-align: center;
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.loading {
+    text-align: center;
+    font-style: italic;
+    color: #ccc;
+}
+
+/* --- Estilos para o Waveform e Loop --- */
+.waveform-container {
+    position: relative;
+    cursor: crosshair; /* Muda o cursor para indicar que é clicável */
+}
+
+.loop-indicator {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 3px; /* Largura das linhas indicadoras */
+    opacity: 0.7;
+    pointer-events: none; /* Garante que não interfere com cliques no canvas */
+}
+
+/* --- NOVOS ESTILOS PARA AS CÉLULAS DE FICHEIROS --- */
+.file-list-container {
+    margin-top: 20px;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Layout responsivo de grelha */
+    gap: 15px;
+    max-height: 250px; /* Limita a altura e adiciona scroll */
+    overflow-y: auto;
+}
+
+.file-cell {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: bold;
+    font-size: 0.9em;
+    word-break: break-word; /* Quebra palavras longas */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.file-cell:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.file-cell.selected {
+    background: linear-gradient(45deg, #007bff, #0056b3); /* Azul para selecionado */
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+    border-color: rgba(0, 123, 255, 0.6);
+    transform: scale(1.02);
+}
+
+.file-cell-remove {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2em;
+    font-weight: bold;
+    position: absolute;
+    top: 5px;
+    right: 8px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.file-cell-remove:hover {
+    opacity: 1;
+    color: #ff4d4d;
+}
+
+.fine-tune-btn {
     background: linear-gradient(45deg, #5cb85c, #4cae4c); /* Um verde mais suave */
     color: white;
     border: none;
@@ -359,197 +400,185 @@ header {
     margin-left: auto; /* Empurra para a direita se houver espaço */
 }
 
-/* Media Queries para telemóveis - ajustar layout se necessário */
+/* --- Media Queries para responsividade --- */
 @media (max-width: 768px) {
+    body {
+        padding: 10px; /* Reduz o padding para ecrãs menores */
+        max-width: 100%; /* Ocupa a largura total disponível */
+    }
+
+    .container {
+        padding: 15px; /* Reduz o padding do container */
+        border-radius: 10px; /* Arredondamento menor em ecrãs pequenos */
+    }
+
+    /* Ajuste para o header em ecrãs pequenos para centralizar o título e manter o botão */
+    header {
+        grid-template-columns: 1fr; /* Uma única coluna, empilhando o título e o botão */
+        gap: 15px; /* Espaçamento entre eles */
+        padding: 0 10px; /* Adiciona algum padding lateral */
+    }
+
+    header h1 {
+        grid-column: 1 / 2; /* O título ocupa a única coluna */
+        text-align: center; /* Centraliza o título */
+        font-size: 1.8em; /* Reduz o tamanho do título em ecrãs pequenos */
+    }
+    
+    .instructions-btn {
+        grid-column: 1 / 2; /* O botão também ocupa a única coluna */
+        justify-self: center; /* Centraliza o botão horizontalmente */
+        padding: 8px 15px; /* Ajusta o padding do botão */
+        font-size: 0.85em; /* Ajusta o tamanho da fonte do botão */
+        width: fit-content; /* O botão só ocupa a largura do seu conteúdo */
+        margin: 0 auto; /* Centraliza o botão se ele for um bloco */
+    }
+
+    .file-label {
+        padding: 12px 20px; /* Reduz o padding do botão de ficheiro */
+        font-size: 14px;
+        width: 100%; /* Ocupa a largura total */
+        box-sizing: border-box; /* Garante que o padding não adicione largura extra */
+    }
+
+    .control-group {
+        padding: 15px; /* Reduz o padding dos grupos de controlo */
+        margin-bottom: 15px;
+    }
+
+    .control-group h3 {
+        font-size: 1.1em; /* Diminui o tamanho dos subtítulos */
+        margin-bottom: 10px;
+    }
+
     .control-row {
-        flex-direction: row; /* Manter linha */
-        justify-content: space-between; /* Espalhar itens */
-        flex-wrap: wrap;
+        flex-direction: column; /* Empilha os elementos em colunas */
+        align-items: stretch; /* Estica os itens para preencher a largura */
+        gap: 10px; /* Espaço menor entre os elementos empilhados */
+        margin-bottom: 10px;
+    }
+    
+    .control-row:last-child {
+        margin-bottom: 0;
     }
 
-    .fine-tune-btn {
-        padding: 6px 10px; /* Reduzir padding para caber mais */
-        font-size: 0.8em;
-        margin-left: 0; /* Remover margem extra */
-        flex-grow: 1; /* Permite que cresçam para preencher espaço */
-        min-width: 70px; /* Largura mínima para botões */
+    label {
+        min-width: auto; /* Remove a largura mínima fixa */
+        text-align: left; /* Alinha o texto à esquerda */
+        margin-bottom: 5px; /* Espaço abaixo do label */
     }
 
-    .control-row .reset-btn {
-        margin-left: 5px; /* Ajuste para telemóvel */
+    input[type="range"] {
+        width: 100%; /* Garante que o slider ocupe a largura total */
     }
 
-    /* Forçar o "Definir A/B" e "Reset A/B" a ficarem numa nova linha se necessário */
-    .control-row button:nth-last-child(2), /* 'Definir A' / 'Definir B' */
-    .control-row button:last-child { /* 'Reset A' / 'Reset B' */
-        /* display: block; */ /* Pode ser útil para empurrar para a nova linha */
-        /* width: 100%; */ /* Ocupar toda a largura */
-        margin-top: 5px; /* Espaçamento superior */
+    .value-display {
+        min-width: 60px; /* Ajusta a largura mínima do display de valor */
+        font-size: 12px;
+        padding: 4px 8px; /* Reduz o padding */
+    }
+
+    .reset-btn {
+        width: 100%; /* Ocupa a largura total quando empilhado */
+        padding: 10px 15px;
+        font-size: 12px;
+    }
+
+    .control-row button { /* Aplica ao botão "Definir A/B" */
+        width: 100%; /* Para que os botões "Definir" e "Reset" ocupem toda a largura */
+        box-sizing: border-box;
+        margin-top: 5px; /* Espaço entre o valor e o botão */
+    }
+    /* Ajuste para o grupo de botões do loop */
+    .control-row[style="justify-content: center;"] {
+        flex-direction: column;
+        align-items: center; /* Centraliza o botão Loop ON/OFF */
+    }
+
+    .playback-controls {
+        flex-direction: column; /* Empilha os botões Play/Stop */
+        gap: 15px; /* Espaçamento entre os botões empilhados */
+    }
+
+    .play-btn {
+        width: 100%; /* Botões Play/Stop ocupam a largura total */
+        box-sizing: border-box;
+        margin: 0; /* Remove a margem horizontal fixa */
+        padding: 12px 20px; /* Ajusta o padding */
+        font-size: 15px;
+    }
+
+    /* Ajustes para a lista de ficheiros */
+    .file-list-container {
+        grid-template-columns: 1fr; /* Uma coluna por padrão em telemóvel */
+        gap: 10px;
+        padding: 10px;
+        max-height: 200px; /* Pode ajustar a altura conforme necessário */
+    }
+    
+    .file-cell {
+        padding: 12px;
+        font-size: 0.85em;
+    }
+
+    .file-cell-remove {
+        top: 3px;
+        right: 5px;
+        font-size: 1em;
+    }
+    
+    /* Ajustes para os loops guardados */
+    .loop-list-container {
+        padding: 8px;
+    }
+    #loopNameInput {
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 10px;
+        margin-right: 0 !important; /* Overrides existing inline style */
+    }
+    #saveLoopBtn {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px 15px !important;
+        font-size: 14px !important;
+    }
+    .loop-list-container ul li {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 8px 0;
+    }
+    .loop-list-container .buttonsDiv {
+        flex-direction: row; /* Botões "Aplicar" e "X" podem continuar lado a lado ou empilhar */
+        width: 100%;
+        justify-content: flex-end; /* Alinha à direita */
+        margin-top: 5px;
+    }
+    .loop-list-container .buttonsDiv .reset-btn {
+        width: auto; /* Deixa os botões voltarem ao seu tamanho natural */
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+    .loop-list-container .buttonsDiv .reset-btn:first-child {
+        margin-right: 5px;
+    }
+
+}
+
+/* Regras para ecrãs muito pequenos (ex: iPhone SE) */
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.6em;
+    }
+    .file-label {
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+    .play-btn {
+        padding: 10px 15px;
+        font-size: 14px;
     }
 }
-    /* --- Media Queries para responsividade --- */
-    @media (max-width: 768px) {
-        body {
-            padding: 10px; /* Reduz o padding para ecrãs menores */
-            max-width: 100%; /* Ocupa a largura total disponível */
-        }
-
-        .container {
-            padding: 15px; /* Reduz o padding do container */
-            border-radius: 10px; /* Arredondamento menor em ecrãs pequenos */
-        }
-
-        h1 {
-            font-size: 1.8em; /* Diminui o tamanho do título */
-            margin-bottom: 20px;
-        }
-
-        .file-label {
-            padding: 12px 20px; /* Reduz o padding do botão de ficheiro */
-            font-size: 14px;
-            width: 100%; /* Ocupa a largura total */
-            box-sizing: border-box; /* Garante que o padding não adicione largura extra */
-        }
-
-        .control-group {
-            padding: 15px; /* Reduz o padding dos grupos de controlo */
-            margin-bottom: 15px;
-        }
-
-        .control-group h3 {
-            font-size: 1.1em; /* Diminui o tamanho dos subtítulos */
-            margin-bottom: 10px;
-        }
-
-        .control-row {
-            flex-direction: column; /* Empilha os elementos em colunas */
-            align-items: stretch; /* Estica os itens para preencher a largura */
-            gap: 10px; /* Espaço menor entre os elementos empilhados */
-            margin-bottom: 10px;
-        }
-        
-        .control-row:last-child {
-            margin-bottom: 0;
-        }
-
-        label {
-            min-width: auto; /* Remove a largura mínima fixa */
-            text-align: left; /* Alinha o texto à esquerda */
-            margin-bottom: 5px; /* Espaço abaixo do label */
-        }
-
-        input[type="range"] {
-            width: 100%; /* Garante que o slider ocupe a largura total */
-        }
-
-        .value-display {
-            min-width: 60px; /* Ajusta a largura mínima do display de valor */
-            font-size: 12px;
-            padding: 4px 8px; /* Reduz o padding */
-        }
-
-        .reset-btn {
-            width: 100%; /* Ocupa a largura total quando empilhado */
-            padding: 10px 15px;
-            font-size: 12px;
-        }
-
-        .control-row button { /* Aplica ao botão "Definir A/B" */
-            width: 100%; /* Para que os botões "Definir" e "Reset" ocupem toda a largura */
-            box-sizing: border-box;
-            margin-top: 5px; /* Espaço entre o valor e o botão */
-        }
-        /* Ajuste para o grupo de botões do loop */
-        .control-row[style="justify-content: center;"] {
-            flex-direction: column;
-            align-items: center; /* Centraliza o botão Loop ON/OFF */
-        }
-
-        .playback-controls {
-            flex-direction: column; /* Empilha os botões Play/Stop */
-            gap: 15px; /* Espaçamento entre os botões empilhados */
-        }
-
-        .play-btn {
-            width: 100%; /* Botões Play/Stop ocupam a largura total */
-            box-sizing: border-box;
-            margin: 0; /* Remove a margem horizontal fixa */
-            padding: 12px 20px; /* Ajusta o padding */
-            font-size: 15px;
-        }
-
-        /* Ajustes para a lista de ficheiros */
-        .file-list-container {
-            grid-template-columns: 1fr; /* Uma coluna por padrão em telemóvel */
-            gap: 10px;
-            padding: 10px;
-            max-height: 200px; /* Pode ajustar a altura conforme necessário */
-        }
-        
-        .file-cell {
-            padding: 12px;
-            font-size: 0.85em;
-        }
-
-        .file-cell-remove {
-            top: 3px;
-            right: 5px;
-            font-size: 1em;
-        }
-        
-        /* Ajustes para os loops guardados */
-        .loop-list-container {
-            padding: 8px;
-        }
-        #loopNameInput {
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-            margin-right: 0 !important; /* Overrides existing inline style */
-        }
-        #saveLoopBtn {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 10px 15px !important;
-            font-size: 14px !important;
-        }
-        .loop-list-container ul li {
-            flex-direction: column;
-            align-items: flex-start;
-            padding: 8px 0;
-        }
-        .loop-list-container .buttonsDiv {
-            flex-direction: row; /* Botões "Aplicar" e "X" podem continuar lado a lado ou empilhar */
-            width: 100%;
-            justify-content: flex-end; /* Alinha à direita */
-            margin-top: 5px;
-        }
-        .loop-list-container .buttonsDiv .reset-btn {
-            width: auto; /* Deixa os botões voltarem ao seu tamanho natural */
-            font-size: 12px;
-            padding: 6px 12px;
-        }
-        .loop-list-container .buttonsDiv .reset-btn:first-child {
-            margin-right: 5px;
-        }
-
-    }
-
-    /* Regras para ecrãs muito pequenos (ex: iPhone SE) */
-    @media (max-width: 480px) {
-        h1 {
-            font-size: 1.6em;
-        }
-        .file-label {
-            padding: 10px 15px;
-            font-size: 13px;
-        }
-        .play-btn {
-            padding: 10px 15px;
-            font-size: 14px;
-        }
-    }
-/* ... (Seus estilos existentes) ... */
 
 /* Estilo para os botões de ajuste fino */
 .fine-tune-btn {

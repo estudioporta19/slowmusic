@@ -382,13 +382,99 @@ hr {
 
 .section-config-group {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Min width ligeiramente menor */
-    gap: 8px; /* Reduzir gap */
-    margin-bottom: 12px; /* Reduzir margem */
-    padding: 8px; /* Reduzir padding */
+    /* Alterar para 4 colunas se houver espaço, caso contrário, 2 e depois 1 */
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* Reduzir min-width para 140px */
+    gap: 8px; /* Manter gap */
+    margin-bottom: 12px;
+    padding: 8px;
     border: 1px dashed #7f8c8d;
     border-radius: 5px;
     background-color: #4a607a;
+}
+
+@media (max-width: 768px) {
+    /* Manter 1 coluna para controles gerais, mas ajustar especificamente para timeMapClassicControls */
+    .controls-grid {
+        grid-template-columns: 1fr;
+    }
+    /* NOVO: Forçar 2 colunas para timeMapClassicControls em telas médias */
+    #timeMapClassicControls {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    .clave-grid {
+        grid-template-columns: repeat(8, 1fr);
+        gap: 3px;
+    }
+    .clave-point {
+        width: 22px;
+        height: 22px;
+        font-size: 0.7em;
+    }
+    .clave-designer-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .clave-cycle-control {
+        width: 100%;
+        max-width: none;
+    }
+    .time-map-section-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .section-buttons {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    .mode-selector button, .global-controls button, .subdivision-controls button {
+        font-size: 0.9em;
+        padding: 7px 12px;
+    }
+    input[type="text"], input[type="number"], select {
+        font-size: 0.9em;
+        padding: 6px 8px;
+    }
+    .clave-info {
+        font-size: 0.75em;
+    }
+    .section-buttons button {
+        padding: 5px 8px;
+        font-size: 0.8em;
+    }
+}
+
+@media (max-width: 480px) {
+    .clave-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2px;
+    }
+    .clave-point {
+        width: 18px;
+        height: 18px;
+        font-size: 0.65em;
+    }
+    .container {
+        padding: 15px;
+    }
+    body {
+        font-size: 15px;
+    }
+    h1 {
+        font-size: 2em;
+    }
+    h2 {
+        font-size: 1.6em;
+    }
+    h3 {
+        font-size: 1.2em;
+    }
+    .metronome-status {
+        font-size: 1.2em;
+    }
+    /* NOVO: Forçar 1 coluna para timeMapClassicControls em telas muito pequenas */
+    #timeMapClassicControls {
+        grid-template-columns: 1fr;
+    }
 }
 
 .section-config-group.hidden {

@@ -13,6 +13,14 @@
     <h1>Metrónomo Avançado</h1>
 
     <div class="container">
+        
+        <div class="global-bpm-control">
+            <label for="bpmSlider">BPM: <span id="bpmValue" class="value-display">120</span></label>
+            <input type="range" id="bpmSlider" min="40" max="320" value="120">
+        </div>
+
+        <hr>
+
         <div class="mode-selector">
             <button id="modeClassicBtn" class="selected">Metrónomo Clássico</button>
             <button id="modeClaveBtn">Clave Designer</button>
@@ -21,28 +29,25 @@
 
         <hr>
 
+        
         <div id="classicMetronomeModule" class="module-group active-module">
             <h2>Metrónomo Clássico</h2>
             <div class="controls-grid">
-                <div class="control-group">
-                    <label for="bpmSlider">BPM: <span id="bpmValue" class="value-display">120</span></label>
-                    <input type="range" id="bpmSlider" min="40" max="240" value="120">
-                </div>
-
                 <div class="control-group">
                     <label for="timeNumerator">Tempos: <span id="timeNumeratorValue" class="value-display">4</span></label>
                     <input type="range" id="timeNumerator" min="1" max="16" value="4">
                 </div>
 
                 <div class="control-group">
-                    <label for="timeDenominator">Tipo de tempo (Denominador): <span id="timeDenominatorValue" class="value-display">4</span></label>
+                    <label for="timeDenominator">Tipo de tempo (Denominador):</label>
                     <select id="timeDenominator">
-                        <option value="1">Inteira</option>
-                        <option value="2">Mínima</option>
-                        <option value="4" selected>Semínima</option>
-                        <option value="8">Colcheia</option>
-                        <option value="16">Semicolcheia</option>
+                        <option value="1">Inteira (1/1)</option>
+                        <option value="2">Mínima (1/2)</option>
+                        <option value="4" selected>Semínima (1/4)</option>
+                        <option value="8">Colcheia (1/8)</option>
+                        <option value="16">Semicolcheia (1/16)</option>
                     </select>
+                    <small>Define o valor da batida principal.</small>
                 </div>
 
                 <div class="control-group">
@@ -55,26 +60,35 @@
                     </div>
                 </div>
                 
+                <div class="control-group">
+                    <label for="accentedBeats">Acentuar Tempos (Exceto 1º)</label>
+                    <input type="text" id="accentedBeats" placeholder="Ex: 3, 5, 7">
+                    <small>Tempos a acentuar (separados por vírgulas)</small>
+                </div>
+
                 <div class="control-group" id="compoundTimeGroup">
                     <label>Compasso Composto (Ex: 4+3)</label>
                     <input type="text" id="compoundSubdivisions" placeholder="Ex: 4+3 ou 3+4">
-                    <small>Define acentos para compassos irregulares</small>
+                    <small>Define acentos fortes para agrupamentos irregulares.</small>
+                    <small style="color: yellow;">(Ex: 2.5+1.5 não suportado ainda. Apenas inteiros)</small>
                 </div>
             </div>
         </div>
 
+        
         <div id="claveDesignerModule" class="module-group hidden-module">
             <h2>Clave Designer</h2>
             <div class="clave-designer-container">
                 <div class="clave-designer-header">
                     <h3>Padrão Personalizado</h3>
                     <div class="control-group clave-cycle-control">
-                        <label for="claveCycleLength">Duração do Ciclo (1-16): <span id="claveCycleLengthValue" class="value-display">16</span></label>
+                        <label for="claveCycleLength">Duração do Ciclo (1-16 semicolcheias): <span id="claveCycleLengthValue" class="value-display">16</span></label>
                         <input type="range" id="claveCycleLength" min="1" max="16" value="16">
                     </div>
                 </div>
                 <div class="clave-grid" id="claveGrid">
-                    </div>
+                    
+                </div>
                 <div class="clave-info">
                     Clique nos pontos para alternar o som: <span style="color:#e74c3c;">Forte</span>, <span style="color:#f39c12;">Médio</span>, <span style="color:#6c757d;">Desligado</span>.<br>
                     Cada bloco representa uma semicolcheia.
@@ -82,10 +96,12 @@
             </div>
         </div>
 
+        
         <div id="listMetronomeModule" class="module-group hidden-module">
             <h2>Metrónomo de Lista</h2>
             <p>Este módulo está em desenvolvimento. Permitirá sequenciar diferentes configurações de metrónomo e padrões de clave.</p>
-            </div>
+            
+        </div>
 
         <hr>
 
@@ -93,7 +109,7 @@
 
         <div class="global-controls">
             <button id="playPauseBtn">▶️ Iniciar</button>
-            <button id="stopBtn">⏹️ Parar</button>
+            <button id="stopBtn">⏹️️ Parar</button>
         </div>
     </div>
 

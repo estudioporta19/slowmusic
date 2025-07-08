@@ -5,25 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Practice Buddy</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>🎵 Music Practice Buddy</h1>
-        
+        <header>
+            <h1>🎵 Music Practice Buddy</h1>
+            <button class="action-btn instructions-btn" onclick="window.location.href='instructions.html'">Instruções</button>
+        </header>
         <div class="file-input-container">
             <input type="file" id="audioFile" class="file-input" accept="audio/*" multiple>
             <label for="audioFile" class="file-label">📁 Selecionar Ficheiros de Áudio</label>
         </div>
-        
+
         <div id="fileListContainer" class="file-list-container" style="display: none;">
-            </div>
+        </div>
 
         <div id="fileInfo" class="file-info" style="display: none;">
             <div id="fileName"></div>
             <div id="loadingStatus" class="loading">A carregar...</div>
         </div>
-        
+
         <div id="controls" class="controls">
             <div class="control-group">
                 <h3>🏃 Controlo de Velocidade</h3>
@@ -34,7 +36,7 @@
                     <button class="reset-btn" onclick="resetSpeed()">Reset</button>
                 </div>
             </div>
-            
+
             <div class="control-group">
                 <h3>🎼 Controlo de Pitch</h3>
                 <div class="control-row">
@@ -113,6 +115,6 @@
             </div>
         </div>
     </div>
-    <script src="main.js"></script> 
+    <script src="main.js"></script>
 </body>
 </html>

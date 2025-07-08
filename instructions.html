@@ -4,94 +4,147 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instruções de Uso</title>
-    <link rel="stylesheet" href="style.css"> <style>
+    <link rel="stylesheet" href="style.css"> 
+    <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #2c3e50; /* Cor de fundo semelhante ao seu app */
-            color: #ecf0f1; /* Cor do texto */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #2c3e50; 
+            color: #ecf0f1; 
             margin: 0;
             padding: 20px;
             line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Alinhar ao topo */
+            min-height: 100vh; /* Ocupa a altura total da viewport */
         }
         .container {
             max-width: 800px;
-            margin: 20px auto;
-            background-color: #34495e; /* Fundo do container */
+            width: 100%; /* Garante que o container se expande */
+            margin: 20px; /* Margem em todos os lados para melhor visualização em pequenos ecrãs */
+            background-color: #34495e; 
             padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 12px; /* Ligeiramente mais arredondado */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Sombra mais suave */
         }
         h1, h2 {
-            color: #1abc9c; /* Cor para títulos */
+            color: #1abc9c; 
+            text-align: center; /* Centrar títulos */
+            margin-bottom: 25px; /* Mais espaço após os títulos */
+        }
+        h2 {
+            margin-top: 30px; /* Mais espaço antes de cada secção */
+            border-bottom: 2px solid rgba(26, 188, 156, 0.3); /* Linha divisória */
+            padding-bottom: 10px;
         }
         p, ul {
             margin-bottom: 15px;
+            font-size: 1.05em; /* Texto ligeiramente maior */
         }
         li {
             margin-bottom: 8px;
+            padding-left: 5px; /* Recuo para os itens da lista */
         }
         .back-button {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #1abc9c;
+            display: block; /* Ocupa a largura total para ser um "bloco" */
+            width: fit-content; /* Ajusta a largura ao conteúdo */
+            margin: 30px auto 10px auto; /* Centrar e margem */
+            padding: 12px 25px; /* Maior preenchimento */
+            background-color: #3498db; /* Azul para o botão de voltar */
             color: white;
             text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-size: 1.1em; /* Fonte ligeiramente maior */
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         .back-button:hover {
-            background-color: #16a085;
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        /* Estilos para as "teclas" de atalho */
+        .key-shortcut {
+            display: inline-flex; /* Permite alinhar o texto e padding */
+            align-items: center;
+            justify-content: center;
+            min-width: 45px; /* Largura mínima para teclas */
+            height: 45px; /* Altura da tecla */
+            padding: 0 10px; /* Padding horizontal */
+            margin: 0 5px; /* Espaçamento entre teclas */
+            background-color: #55606d; /* Cor da tecla */
+            color: #ecf0f1; /* Cor do texto da tecla */
+            border-radius: 8px; /* Arredondamento */
+            box-shadow: 0 3px 0 #3a4550, /* Sombra para profundidade 3D */
+                        0 4px 8px rgba(0,0,0,0.4); /* Sombra mais suave */
+            font-family: 'Courier New', Courier, monospace; /* Fonte monoespaçada para teclas */
+            font-size: 1.1em;
+            font-weight: bold;
+            text-transform: uppercase; /* Maiúsculas */
+            border-bottom: 2px solid #3a4550; /* Borda inferior para efeito de botão */
+        }
+        .key-shortcut.space-bar {
+            min-width: 120px; /* Largura maior para a barra de espaço */
+        }
+        .key-list {
+            list-style: none; /* Remover marcadores de lista */
+            padding: 0;
+            display: flex; /* Para alinhar as teclas horizontalmente */
+            flex-wrap: wrap; /* Permite que as teclas quebrem a linha */
+            justify-content: center; /* Centrar as teclas */
+            gap: 15px; /* Espaçamento entre as linhas */
+            margin-top: 20px;
+        }
+        .key-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+        .key-list li span {
+            margin-left: 10px; /* Espaçamento entre a tecla e a descrição */
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Instruções de Uso da Aplicação de Áudio</h1>
+        <h1>Guia Rápido</h1>
 
-        <p>Bem-vindo à aplicação! Aqui estão algumas instruções para o ajudar a tirar o máximo partido dela:</p>
-
-        <h2>1. Carregar Ficheiros de Áudio</h2>
+        <h2>Carregar e Gerir Áudio</h2>
         <ul>
-            <li>Clique no botão **"Escolher Ficheiros"** para selecionar um ou vários ficheiros de áudio do seu dispositivo.</li>
-            <li>Os ficheiros serão carregados e listados na secção "Ficheiros Carregados".</li>
-            <li>Clique no nome de um ficheiro na lista para o **selecionar e iniciar a reprodução**. Se a música já estiver a tocar, clicar no nome do ficheiro irá pausá-la/retomá-la.</li>
-            <li>Pode remover um ficheiro da lista clicando no botão **"X"** ao lado do seu nome.</li>
+            <li>**Selecionar Ficheiros:** Use o botão <label class="file-label-inline">📁 Selecionar Ficheiros de Áudio</label> para carregar músicas.</li>
+            <li>**Gerir Ficheiros:** Clique no nome de um ficheiro na lista para selecioná-lo. Use o <button class="inline-btn">X</button> para remover da lista.</li>
         </ul>
 
-        <h2>2. Controlo de Reprodução</h2>
+        <h2>Controlo de Reprodução</h2>
         <ul>
-            <li>Use o botão **"Reproduzir / Pausar"** (▶️/⏸️) para iniciar ou pausar a reprodução.</li>
-            <li>Ajuste a **velocidade** de reprodução usando o slider "Velocidade".</li>
-            <li>Ajuste o **tom** (pitch) usando o slider "Tom".</li>
-            <li>Clique no botão **"Reiniciar Controlo"** para redefinir a velocidade e o tom para os valores padrão (1.0x e 0 semitons) e parar a reprodução.</li>
+            <li>Ajuste a **velocidade** e o **tom (pitch)** com os sliders dedicados. Use os botões <button class="inline-btn">Reset</button> para restaurar.</li>
+            <li>Clique na **waveform** para saltar para um ponto específico. Arraste para selecionar uma região.</li>
         </ul>
 
-        <h2>3. Looping (Repetição)</h2>
+        <h2>Loops</h2>
         <ul>
-            <li>Na waveform (onda de áudio), pode definir os pontos de início (A) e fim (B) do loop.</li>
-            <li>Use os botões **"A"** e **"B"** para definir os pontos de loop na posição de reprodução atual.</li>
-            <li>Utilize os botões **"+0.01s" / "-0.01s"** ao lado dos valores de A e B para ajustes finos dos pontos de loop.</li>
-            <li>O botão **"Reiniciar A"** e **"Reiniciar B"** redefinem os pontos de loop para o início e fim da faixa, respetivamente.</li>
-            <li>Clique em **"Loop ON ✅ / OFF ❌"** para ativar ou desativar o modo de repetição.</li>
-            <li>Pode **guardar** os seus loops favoritos dando-lhes um nome e clicando em "Guardar Loop Atual". Os loops guardados incluem os pontos A e B, bem como as configurações de velocidade e tom.</li>
-            <li>Na lista de "Loops Guardados", pode **"Aplicar"** um loop para carregar as suas configurações e iniciar a reprodução, ou **remover** um loop.</li>
-            <li>Um aviso "Ficheiro não carregado ⚠️" aparecerá se o ficheiro associado a um loop guardado não estiver atualmente na sua lista.</li>
+            <li>Defina os pontos **A** e **B** do loop usando os botões na secção "Controlo de Loop" ou <span class="key-shortcut">A</span> e <span class="key-shortcut">B</span> no teclado.</li>
+            <li>Ajuste fino dos pontos de loop com os botões <button class="inline-btn">+/-0.0X</button>.</li>
+            <li>Ative/desative o loop com o botão <button class="inline-btn">Loop ON/OFF</button>.</li>
+            <li>**Guardar Loops:** Dê um nome e use <button class="inline-btn">💾 Guardar Loop</button>. Loops guardados incluem pontos A/B, velocidade e tom.</li>
+            <li>**Aplicar Loops:** Na lista, clique <button class="inline-btn">Aplicar</button> para carregar um loop guardado.</li>
         </ul>
 
-        <h2>4. Marcadores</h2>
+        <h2>Marcadores</h2>
         <ul>
-            <li>Use o campo **"Nome do marcador"** e clique em **"Adicionar Marcador"** para marcar um ponto específico na faixa de áudio com um nome.</li>
-            <li>Os marcadores serão listados abaixo. Clique num marcador na lista para **saltar para esse ponto** na música. Se a música estiver a tocar, continuará a tocar a partir do novo ponto.</li>
-            <li>Use os botões **"← Marcador Anterior"** e **"Próximo Marcador →"** para navegar rapidamente entre os marcadores. A reprodução será mantida.</li>
-            <li>Clique no botão **"❌"** ao lado de um marcador para o remover.</li>
+            <li>Adicione um marcador na posição atual com <button class="inline-btn">➕ Adicionar Marcador</button>.</li>
+            <li>Clique num marcador na lista para **saltar** para ele e continuar a tocar.</li>
+            <li>Navegue entre marcadores com <button class="inline-btn">◀️ Anterior</button> e <button class="inline-btn">Próximo ▶️</button>.</li>
+            <li>Remova marcadores com <button class="inline-btn">❌</button>.</li>
         </ul>
-        
+
         <h2>Atalhos de Teclado</h2>
-        <ul>
-            <li>**Espaço**: Reproduzir / Pausar</li>
-            <li>**A**: Definir ponto A do loop na posição atual</li>
-            <li>**B**: Definir ponto B do loop na posição atual</li>
+        <ul class="key-list">
+            <li><span class="key-shortcut space-bar">Espaço</span><span>: Reproduzir / Pausar</span></li>
+            <li><span class="key-shortcut">A</span><span>: Definir ponto A do loop</span></li>
+            <li><span class="key-shortcut">B</span><span>: Definir ponto B do loop</span></li>
         </ul>
 
         <a href="index.html" class="back-button">Voltar à Aplicação</a>

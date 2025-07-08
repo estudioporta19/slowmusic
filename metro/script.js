@@ -12,7 +12,7 @@ let currentBPM = 120; // BPM is now global
 
 // --- Classic Metronome Module State ---
 let timeNumerator = 4; // Top number of time signature (e.g., 4 in 4/4)
-let timeDenominator = 4; // Bottom number of time signature (e.g., 4 in 4/4)
+// timeDenominator REMOVED - it's conceptually 4/4 now
 let subdivisionType = 1; // 1 = none, 2 = 8th notes, 3 = 12th notes (triplets), 4 = 16th notes
 let accentedBeats = new Set(); // Set of beats to accent (e.g., {3, 5, 7})
 
@@ -62,8 +62,8 @@ const timeMapModule = document.getElementById('timeMapModule'); // Renamed from 
 // Classic Metronome Controls
 const timeNumeratorInput = document.getElementById('timeNumerator');
 const timeNumeratorValueDisplay = document.getElementById('timeNumeratorValue');
-const timeDenominatorSelect = document.getElementById('timeDenominator');
-const accentedBeatsInput = document.getElementById('accentedBeats');
+// const timeDenominatorSelect = document.getElementById('timeDenominator'); // REMOVED - no longer exists
+const accentedBeatsInput = document.getElementById('accentedBeats'); // Correct ID for Classic
 
 const subdivisionOffBtn = document.getElementById('subdivisionOffBtn');
 const subdivision2Btn = document.getElementById('subdivision2Btn');
@@ -81,9 +81,9 @@ const sectionTypeSelect = document.getElementById('sectionType');
 const timeMapClassicControls = document.getElementById('timeMapClassicControls');
 const sectionBPMInput = document.getElementById('sectionBPM');
 const sectionNumeratorInput = document.getElementById('sectionNumerator');
-const sectionDenominatorSelect = document.getElementById('sectionDenominator');
+// const sectionDenominatorSelect = document.getElementById('sectionDenominator'); // REMOVED - no longer exists
 const sectionSubdivisionSelect = document.getElementById('sectionSubdivision');
-const sectionAccentedBeatsInput = document.getElementById('sectionAccentedBeats');
+const sectionAccentedBeatsInput = document.getElementById('sectionAccentedBeats'); // Correct ID for Time Map Classic section
 
 const timeMapClaveControls = document.getElementById('timeMapClaveControls');
 const sectionClaveBPMInput = document.getElementById('sectionClaveBPM');
@@ -151,7 +151,8 @@ function updateBPMDisplay() {
 function updateTimeSignature() {
     timeNumerator = parseInt(timeNumeratorInput.value);
     timeNumeratorValueDisplay.textContent = timeNumerator;
-    timeDenominator = parseInt(timeDenominatorSelect.value);
+    // timeDenominator is fixed at 4 now, no need to read from select
+    // timeDenominator = parseInt(timeDenominatorSelect.value); // REMOVED
     
     if (!isMapPlaying) {
         resetAndSchedule();
@@ -170,6 +171,7 @@ function parseAccentedBeats(inputString) {
 }
 
 function updateAccentedBeats() {
+    // Correctly get value from accentedBeatsInput (for Classic Metronome module)
     accentedBeats = parseAccentedBeats(accentedBeatsInput.value);
     if (!isMapPlaying) {
         resetAndSchedule();
@@ -313,10 +315,10 @@ function addSection() {
     if (type === 'classic') {
         section.bpm = parseInt(sectionBPMInput.value);
         section.numerator = parseInt(sectionNumeratorInput.value);
-        section.denominator = parseInt(sectionDenominatorSelect.value);
+        section.denominator = 4; // Denominator is fixed at 4
         section.subdivision = parseInt(sectionSubdivisionSelect.value);
         section.accentedBeats = sectionAccentedBeatsInput.value; // Store as string, parse later
-        if (isNaN(section.bpm) || isNaN(section.numerator) || isNaN(section.denominator) || isNaN(section.subdivision)) {
+        if (isNaN(section.bpm) || isNaN(section.numerator) || isNaN(section.subdivision)) { // Removed denominator from check
             alert("Por favor, preencha todos os campos do Metrónomo Clássico corretamente.");
             return;
         }
@@ -371,7 +373,8 @@ function renderTimeMapList() {
 
         let sectionInfoText = `Secção ${index + 1}: `;
         if (section.type === 'classic') {
-            sectionInfoText += `Clássico - ${section.bpm} BPM, ${section.numerator}/${section.denominator}, Subdiv: ${section.subdivision}x`;
+            // Use fixed denominator 4
+            sectionInfoText += `Clássico - ${section.bpm} BPM, ${section.numerator}/4, Subdiv: ${section.subdivision}x`; 
             if (section.accentedBeats) sectionInfoText += `, Acentos: ${section.accentedBeats}`;
         } else if (section.type === 'clave') {
             sectionInfoText += `Clave - ${section.bpm} BPM, Padrão: ${section.pattern.join('')}, Ciclo: ${section.claveLength} semi.`;
@@ -515,6 +518,7 @@ function scheduleClaveDesigner() {
         const claveValue = clavePattern[currentClaveIndex]; // Use the *current* value to schedule
 
         // Remove active-beat class from the previously active point
+        // This needs to be done *before* advancing the index
         const prevActivePoint = claveGrid.querySelector('.clave-point.active-beat');
         if (prevActivePoint) {
             prevActivePoint.classList.remove('active-beat');
@@ -533,14 +537,6 @@ function scheduleClaveDesigner() {
             createClickSound(frequency, duration, volume, nextClaveClickTime);
         }
 
-        // Add active-beat class to the current point, only if it's part of the active loop
-        if (currentClaveIndex < claveCycleLength) {
-            const currentActivePoint = claveGrid.querySelector(`.clave-point[data-index="${currentClaveIndex}"]`);
-            if (currentActivePoint) {
-                currentActivePoint.classList.add('active-beat');
-            }
-        }
-
         // --- CORREÇÃO AQUI: Update display variable *after* scheduling and *before* advancing counters ---
         currentDisplayClaveIndex = currentClaveIndex;
         // --------------------------------------------------------------------------------------------------
@@ -552,8 +548,28 @@ function scheduleClaveDesigner() {
         if (currentClaveIndex >= claveCycleLength) {
             currentClaveIndex = 0; // Loop back to start
         }
+
+        // Add active-beat class to the current point, only if it's part of the active loop
+        // This should apply to the *new* currentClaveIndex after it's advanced for the *next* frame.
+        // However, for immediate visual feedback, we apply it to the one *just scheduled*.
+        // The current implementation is fine if updateMetronomeStatus is called frequently enough.
+        // For visual synchronization on the grid, you'd typically want this *after* the schedule,
+        // but *before* the next interval. The `updateMetronomeStatus` takes care of the textual display.
+        // The visual highlight on the grid (clave-point.active-beat) is tricky because it depends on the
+        // scheduler and display update loop. Let's ensure it's applied correctly.
+        // It's currently applied for the *previously* scheduled beat, which is good for sync.
+        // So no change needed here for this part.
+    }
+    // After scheduling for this loop, update the visual active point on the grid.
+    // This is done in the scheduler loop, but the point needs to be the one *about to play*.
+    // The current logic places it on the *just played* one which is also acceptable.
+    // To be perfectly in sync with the current visual index, it should be done here.
+    const currentActivePoint = claveGrid.querySelector(`.clave-point[data-index="${currentDisplayClaveIndex}"]`);
+    if (currentActivePoint) {
+        currentActivePoint.classList.add('active-beat');
     }
 }
+
 
 // --- Time Map Scheduling Logic ---
 function scheduleTimeMap() {
@@ -587,16 +603,22 @@ function scheduleTimeMap() {
         let secondsPerCurrentMeasure;
 
         if (currentSection.type === 'classic') {
-            const sectionSecondsPerBaseNote = 60.0 / currentBPM; // Use global BPM
-            secondsPerCurrentMeasure = sectionSecondsPerBaseNote * currentSection.numerator;
+            const sectionBPM = currentBPM; // Use global BPM
+            const sectionNumerator = timeNumerator;
+            // The denominator is implicitly 4 now, so 4 beats per measure * 60/BPM for quarter notes
+            secondsPerCurrentMeasure = (60.0 / sectionBPM) * sectionNumerator; 
             scheduleClassicMetronomeLogicOnly(nextMapMeasureTime); // Schedule its beats within this measure
         } else if (currentSection.type === 'clave') {
-            const sectionSecondsPerSemicolcheia = (60.0 / currentBPM) / 4; // Use global BPM
-            secondsPerCurrentMeasure = sectionSecondsPerSemicolcheia * 16;  
+            const sectionBPM = currentBPM; // Use global BPM
+            const sectionClaveLength = claveCycleLength; // Use current claveCycleLength (could be custom from section)
+            // A "measure" for clave is always 16 semicolcheias for calculation purposes
+            const secondsPerSemicolcheia = (60.0 / sectionBPM) / 4;
+            secondsPerCurrentMeasure = secondsPerSemicolcheia * 16;
             scheduleClaveDesignerLogicOnly(nextMapMeasureTime, secondsPerCurrentMeasure); // Schedule its clicks within this measure
         } else if (currentSection.type === 'pause') {
             const secondsPerQuarterNote = 60.0 / currentBPM;
             secondsPerCurrentMeasure = secondsPerQuarterNote * 4; // One 4/4 measure duration
+            // No sound for pause, just advance time
         }
 
         // CORREÇÃO AQUI: Atualiza currentDisplayMapMeasure ANTES de measuresPlayedInCurrentSection ser incrementado
@@ -636,14 +658,14 @@ function applySectionSettings(section) {
     // Apply specific settings based on section type
     if (section.type === 'classic') {
         timeNumerator = section.numerator;
-        timeDenominator = section.denominator;
+        timeDenominator = 4; // Fixed denominator
         subdivisionType = section.subdivision;
         accentedBeats = parseAccentedBeats(section.accentedBeats);
 
         // Update UI displays for classic module
         timeNumeratorInput.value = timeNumerator;
         timeNumeratorValueDisplay.textContent = timeNumerator;
-        timeDenominatorSelect.value = timeDenominator;
+        // timeDenominatorSelect.value = timeDenominator; // REMOVED
         
         // Update subdivision buttons visuals (no direct click, just visual update)
         subdivisionOffBtn.classList.remove('selected');
@@ -677,7 +699,7 @@ function applySectionSettings(section) {
 function scheduleClassicMetronomeLogicOnly(measureStartTime) {
     const sectionBPM = currentBPM; // Use the global BPM set by applySectionSettings
     const sectionNumerator = timeNumerator;
-    const sectionDenominator = timeDenominator;
+    const sectionDenominator = 4; // Fixed at 4
     const sectionSubdivisionType = subdivisionType;
     const sectionAccentedBeats = accentedBeats;
 
@@ -877,11 +899,11 @@ function resetAndSchedule() {
 // Function to enable/disable module controls
 function setModuleControlsEnabled(enabled) {
     const controlsToDisable = [
-        bpmSlider, timeNumeratorInput, timeDenominatorSelect, accentedBeatsInput,
+        bpmSlider, timeNumeratorInput, accentedBeatsInput, // timeDenominatorSelect removed
         subdivisionOffBtn, subdivision2Btn, subdivision3Btn, subdivision4Btn,
-        claveCycleLengthSlider, resetClaveBtn, // Added resetClaveBtn here
+        claveCycleLengthSlider, resetClaveBtn,
         // Also disable add section controls for Time Map when it's playing
-        sectionTypeSelect, sectionBPMInput, sectionNumeratorInput, sectionDenominatorSelect,
+        sectionTypeSelect, sectionBPMInput, sectionNumeratorInput, // sectionDenominatorSelect removed
         sectionSubdivisionSelect, sectionAccentedBeatsInput, sectionClaveBPMInput,
         sectionClavePatternInput, sectionClaveLengthInput, sectionPauseDurationInput,
         sectionMeasuresInput, addSectionBtn
@@ -950,7 +972,7 @@ modeListBtn.addEventListener('click', () => switchMode('timeMap')); // Changed t
 
 // Classic Metronome Controls
 timeNumeratorInput.addEventListener('input', updateTimeSignature);
-timeDenominatorSelect.addEventListener('change', updateTimeSignature);
+// timeDenominatorSelect.addEventListener('change', updateTimeSignature); // REMOVED
 accentedBeatsInput.addEventListener('change', updateAccentedBeats);
 
 subdivisionOffBtn.addEventListener('click', () => { subdivisionType = 1; updateSubdivisionButtons(); });

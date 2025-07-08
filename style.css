@@ -19,6 +19,7 @@ body {
 
 header {
     display: grid;
+    /* Alterado para 3 colunas para acomodar os dois botões nas extremidades */
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     margin-bottom: 20px;
@@ -27,6 +28,7 @@ header {
 }
 
 header h1 {
+    /* Ocupa as 3 colunas para permanecer centrado */
     grid-column: 1 / 4;
     text-align: center;
     margin: 0;
@@ -39,10 +41,11 @@ header h1 {
 }
 
 .instructions-btn {
+    /* Mantém-se na terceira coluna, alinhado à direita */
     grid-column: 3 / 4;
     justify-self: end;
     z-index: 1;
-    
+
     padding: 10px 18px;
     font-size: 0.95em;
     font-weight: bold;
@@ -61,26 +64,53 @@ header h1 {
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
 }
 
+/* NOVO: Estilos para o botão Metrónomo */
+.metronome-btn {
+    /* Posiciona na primeira coluna, alinhado à esquerda */
+    grid-column: 1 / 2;
+    justify-self: start;
+    z-index: 1;
+
+    padding: 10px 18px;
+    font-size: 0.95em;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: linear-gradient(45deg, #3498db, #2980b9); /* Mesmos estilos que o instructions-btn */
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.metronome-btn:hover {
+    background: linear-gradient(45deg, #2980b9, #3498db);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+}
+
 @media (max-width: 600px) {
     header {
+        /* Em ecrãs pequenos, volta a 1 coluna e os botões serão empilhados */
         grid-template-columns: 1fr;
         gap: 15px;
         padding: 0 10px;
     }
 
     header h1 {
-        grid-column: 1 / 2;
+        grid-column: 1 / 2; /* Ocupa a única coluna */
         text-align: center;
         font-size: 1.8em;
     }
-    
-    .instructions-btn {
-        grid-column: 1 / 2;
-        justify-self: center;
+
+    .instructions-btn,
+    .metronome-btn { /* Aplica a ambos os botões */
+        grid-column: 1 / 2; /* Ocupa a única coluna */
+        justify-self: center; /* Centraliza os botões */
         padding: 8px 15px;
         font-size: 0.85em;
-        width: fit-content;
-        margin: 0 auto;
+        width: fit-content; /* Ajusta a largura ao conteúdo */
+        margin: 0 auto; /* Centraliza os botões que estão empilhados */
     }
 }
 
@@ -479,8 +509,9 @@ input[type="range"]::-moz-range-thumb {
         text-align: center;
         font-size: 1.8em;
     }
-    
-    .instructions-btn {
+
+    .instructions-btn,
+    .metronome-btn { /* Aplica a ambos os botões */
         grid-column: 1 / 2;
         justify-self: center;
         padding: 8px 15px;
@@ -521,7 +552,7 @@ input[type="range"]::-moz-range-thumb {
         gap: 10px;
         margin-bottom: 10px;
     }
-    
+
     .control-row:last-child {
         margin-bottom: 0;
     }
@@ -554,7 +585,7 @@ input[type="range"]::-moz-range-thumb {
         box-sizing: border-box;
         margin-top: 5px;
     }
-    
+
     .control-row[style="justify-content: center;"] {
         flex-direction: column;
         align-items: center;
@@ -579,7 +610,7 @@ input[type="range"]::-moz-range-thumb {
         padding: 10px;
         max-height: 200px;
     }
-    
+
     .file-cell {
         padding: 12px;
         font-size: 0.85em;
@@ -590,7 +621,7 @@ input[type="range"]::-moz-range-thumb {
         right: 5px;
         font-size: 1em;
     }
-    
+
     .loop-list-container {
         padding: 8px;
     }
@@ -659,4 +690,23 @@ input[type="range"]::-moz-range-thumb {
         padding: 10px 15px;
         font-size: 14px;
     }
+}
+
+.back-to-app-button {
+    display: block;
+    width: fit-content;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.back-to-app-button:hover {
+    background-color: #0056b3;
+    cursor: pointer;
 }

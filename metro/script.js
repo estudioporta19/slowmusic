@@ -17,8 +17,12 @@ let subdivisionType = 1; // 1 = none, 2 = 8th notes, 3 = 12th notes (triplets), 
 let accentedBeats = new Set(); // Set of beats to accent (e.g., {3, 5, 7})
 
 let nextClassicClickTime = 0.0;
-let currentClassicBeat = 0; // Current beat within the measure (0-indexed)
-let currentClassicSubdivision = 0; // Current subdivision within the beat (0-indexed)
+let currentClassicBeat = 0; // Current beat within the measure (0-indexed) - represents NEXT beat to be scheduled
+let currentClassicSubdivision = 0; // Current subdivision within the beat (0-indexed) - represents NEXT subdivision to be scheduled
+
+// --- NEW: Variables for display that reflect the *last* beat/subdivision played ---
+let currentDisplayClassicBeat = 0;
+let currentDisplayClassicSubdivision = 0;
 
 // --- Clave Designer Module State ---
 const CLAVE_OFF = 0;
@@ -28,7 +32,10 @@ const CLAVE_BEAT_2 = 2; // Medium click type for Clave Designer
 let clavePattern = new Array(16).fill(CLAVE_OFF); // 16 semicolches grid
 let claveCycleLength = 16; // User-defined length for the clave pattern loop (1 to 16)
 let nextClaveClickTime = 0.0;
-let currentClaveIndex = 0; // Current index in the 16-semicolcheia pattern
+let currentClaveIndex = 0; // Current index in the 16-semicolcheia pattern - represents NEXT index to be scheduled
+
+// --- NEW: Variable for clave display ---
+let currentDisplayClaveIndex = 0;
 
 // --- Time Map Module State ---
 let timeMap = []; // Array to store time map sections
@@ -373,25 +380,27 @@ function renderTimeMapList() {
 function updateMetronomeStatus() {
     if (isPlaying) {
         if (activeMode === 'classic') {
-            metronomeStatusDisplay.textContent = `Clássico: ${currentClassicBeat + 1}/${timeNumerator} BPM: ${currentBPM}`;
+            // Use display variables that reflect the *last* beat scheduled
+            metronomeStatusDisplay.textContent = `Clássico: ${currentDisplayClassicBeat + 1}/${timeNumerator} BPM: ${currentBPM}`;
             if (subdivisionType > 1) {
-                metronomeStatusDisplay.textContent += `.${currentClassicSubdivision + 1}`;
+                metronomeStatusDisplay.textContent += `.${currentDisplayClassicSubdivision + 1}`;
             }
         } else if (activeMode === 'clave') {
-            metronomeStatusDisplay.textContent = `Clave: ${currentClaveIndex + 1}/${claveCycleLength} BPM: ${currentBPM}`;
+            // Use display variable that reflects the *last* index scheduled
+            metronomeStatusDisplay.textContent = `Clave: ${currentDisplayClaveIndex + 1}/${claveCycleLength} BPM: ${currentBPM}`;
         } else if (activeMode === 'timeMap') {
             const currentSection = timeMap[currentMapSectionIndex];
             if (currentSection) {
                 let sectionInfo = `Mapa: Secção ${currentMapSectionIndex + 1}/${timeMap.length} (${measuresPlayedInCurrentSection + 1}/${currentSection.measures})`;
                 if (currentSection.type === 'classic') {
-                    sectionInfo += ` | Clássico: ${currentClassicBeat + 1}/${timeNumerator} BPM: ${currentBPM}`;
-                    if (subdivisionType > 1) {
-                        sectionInfo += `.${currentClassicSubdivision + 1}`;
-                    }
+                    // For Time Map's Classic section, simplify display, only show section info and BPM.
+                    // Individual beat tracking within a measure is too complex without a separate visual loop.
+                    sectionInfo += ` | Tipo: Clássico | BPM: ${currentBPM}`;
                 } else if (currentSection.type === 'clave') {
-                    sectionInfo += ` | Clave: ${currentClaveIndex + 1}/${claveCycleLength} BPM: ${currentBPM}`;
+                    // For Time Map's Clave section, simplify display, only show section info and BPM.
+                    sectionInfo += ` | Tipo: Clave | BPM: ${currentBPM}`;
                 } else if (currentSection.type === 'pause') {
-                    sectionInfo += ` | Pausa`;
+                    sectionInfo += ` | Tipo: Pausa`;
                 }
                 metronomeStatusDisplay.textContent = sectionInfo;
             } else {
@@ -407,11 +416,16 @@ function updateMetronomeStatus() {
 
 function scheduler() {
     if (activeMode === 'classic') {
+        // Before scheduleClassicMetronome advances, copy the current state for display
+        currentDisplayClassicBeat = currentClassicBeat;
+        currentDisplayClassicSubdivision = currentClassicSubdivision;
         scheduleClassicMetronome();
     } else if (activeMode === 'clave') {
+        currentDisplayClaveIndex = currentClaveIndex;
         scheduleClaveDesigner();
     } else if (activeMode === 'timeMap') {
         scheduleTimeMap();
+        // Time map's specific display update handled within scheduleTimeMap and updateMetronomeStatus
     }
     
     updateMetronomeStatus();
@@ -427,9 +441,13 @@ function scheduleClassicMetronome() {
         let volume;
         let duration = 0.03;
 
-        const isMainBeat = currentClassicSubdivision === 0;
-        const isFirstBeatOfMeasure = currentClassicBeat === 0 && currentClassicSubdivision === 0;
-        const isUserAccentedBeat = accentedBeats.has(currentClassicBeat) && isMainBeat;
+        // currentClassicBeat and currentClassicSubdivision refer to the NEXT click
+        const beatToPlay = currentClassicBeat; // Use the *current* value to schedule
+        const subdivisionToPlay = currentClassicSubdivision;
+
+        const isMainBeat = subdivisionToPlay === 0;
+        const isFirstBeatOfMeasure = beatToPlay === 0 && subdivisionToPlay === 0;
+        const isUserAccentedBeat = accentedBeats.has(beatToPlay) && isMainBeat;
 
         if (isFirstBeatOfMeasure) {
             frequency = 1000;
@@ -449,6 +467,7 @@ function scheduleClassicMetronome() {
         
         createClickSound(frequency, duration, volume, nextClassicClickTime);
 
+        // ADVANCE THE COUNTERS FOR THE NEXT CLICK TO BE SCHEDULED
         nextClassicClickTime += secondsPerSubdivisionBeat;
         currentClassicSubdivision++;
         
@@ -456,11 +475,12 @@ function scheduleClassicMetronome() {
             currentClassicSubdivision = 0;
             currentClassicBeat++;
             if (currentClassicBeat >= timeNumerator) {
-                currentClassicBeat = 0; // Reset measure
-                // Notify time map that a measure has completed
-                if (isMapPlaying) {
-                    measuresPlayedInCurrentSection++;
-                }
+                currentClassicBeat = 0; // Reset measure to 0 (for the next measure's beat 1)
+                // This is for measure advancement in Classic mode itself.
+                // It's not directly tied to TimeMap's measuresPlayedInCurrentSection here,
+                // only in scheduleTimeMap which calls scheduleClassicMetronomeLogicOnly.
+                // The `isMapPlaying` check here is redundant if `scheduleClassicMetronomeLogicOnly`
+                // doesn't update global counts. Let's remove it for clarity.
             }
         }
     }
@@ -475,9 +495,10 @@ function scheduleClaveDesigner() {
         let volume = 0.0;
         let duration = 0.03;
 
-        const claveValue = clavePattern[currentClaveIndex];
+        const claveValue = clavePattern[currentClaveIndex]; // Use the *current* value to schedule
 
         // Remove active-beat class from the previously active point
+        // This visual update is best managed here for the direct Clave mode.
         const prevActivePoint = claveGrid.querySelector('.clave-point.active-beat');
         if (prevActivePoint) {
             prevActivePoint.classList.remove('active-beat');
@@ -504,63 +525,12 @@ function scheduleClaveDesigner() {
             }
         }
 
+        // ADVANCE THE COUNTERS FOR THE NEXT CLICK TO BE SCHEDULED
         nextClaveClickTime += secondsPerSemicolcheia;
         currentClaveIndex++;
         
         if (currentClaveIndex >= claveCycleLength) {
             currentClaveIndex = 0; // Loop back to start
-            // If the clave module is being driven by the time map, signal a measure completion
-            if (isMapPlaying) {
-                // A 'measure' in clave mode is defined by the number of 'timeNumerator' beats * (16 / timeDenominator) semicolches.
-                // However, for simplicity and integration with TimeMap's "measures",
-                // we'll assume a "measure" in clave mode is effectively 16 semicolches (a 4/4 equivalent).
-                // Or, more accurately, we need to know how many actual beats of the classic metronome correspond to a claveCycleLength.
-                // This implies clave mode also needs a "time signature" or a way to define what a "measure" is.
-                // For now, let's assume a "measure" in clave mode means the clave pattern has played N times
-                // where N * claveCycleLength / 16 (semicolches in a 4/4) == 1 measure.
-                // This is a simplification. A proper solution would be to define a time signature for Clave Designer too,
-                // or define measure length in semicolches for the map.
-
-                // For now, let's consider claveCycleLength as a "measure" completion for time map purposes if it completes a 'full' 16-semicolcheia cycle.
-                // This needs more thought for truly flexible clave measures.
-                // For now, let's make it simpler: a "measure" in clave is when 16 semicolches pass (equivalent to a 4/4 measure).
-                // This means the clave pattern can be shorter, but the time map progresses by 4/4 measures.
-                // If claveCycleLength is always less than 16, then a 'measure' for time map purposes is still based on 16 semicolches.
-                // This implies that the actual 'measure' in clave mode is fixed at 16 semicolches for map progression.
-
-                // Let's refine: For TimeMap, a 'measure' is defined as the time it takes for `timeNumerator` beats, where each beat
-                // is `timeDenominator` in value. For Clave, there's no inherent time signature.
-                // To make TimeMap consistent, we need to know how many semicolches are in a TimeMap "measure".
-                // Let's assume a TimeMap "measure" is always equivalent to a 4/4 measure (16 semicolches).
-                // So, if currentClaveIndex loops back and (currentClaveIndex % 16 == 0), then it's a measure.
-                // This means 'measuresPlayedInCurrentSection' should increment every 16 semicolches for clave mode in time map.
-
-                // This is a crucial point: How do we define "measures" for a Clave section in TimeMap?
-                // The current setup assumes "measures" means `timeNumerator` beats where each beat is a `timeDenominator`.
-                // Clave doesn't have `timeNumerator` or `timeDenominator`.
-                // For the purpose of the Time Map, let's implicitly assume a "measure" is a 4/4 equivalent (16 semicolcheias).
-                // So, a `claveCycleLength` will loop, and after 16 semicolcheias have passed, we increment `measuresPlayedInCurrentSection`.
-                
-                // Track accumulated semicolches for measure completion in Time Map
-                // This requires a separate counter, or a re-evaluation of how 'measures' are tracked for clave.
-                // For now, let's leave measuresPlayedInCurrentSection increment based on ClassicMetronome's currentClassicBeat advancing to 0.
-                // This means the clave will play, but the Time Map will only advance its measure count based on a virtual 4/4 measure.
-
-                // A better approach: The Time Map should define its measures based on *time duration* or a fixed 4/4.
-                // Let's make it simple for now: `measuresPlayedInCurrentSection` is only incremented by `scheduleClassicMetronome`
-                // and for `pause` sections, and for `clave` sections, it advances once every `16` semicolches.
-                // This implies a measure in clave mode is 16 semicolches.
-
-                // To fix this:
-                // We need `secondsPerMeasure` for *each type of section* to track measures.
-                // For Classic: `secondsPerMeasure = secondsPerBaseNote * timeNumerator`
-                // For Clave: We need to define what a "measure" is. Let's make it fixed at a 4/4 (16 semicolches).
-                // `secondsPerMeasure = secondsPerSemicolcheia * 16`
-                // For Pause: `secondsPerMeasure` is essentially the pause duration itself.
-
-                // This logic implies we need a 'nextMeasureTime' for the Time Map *independent* of the individual module scheduling.
-                // Let's adapt scheduleTimeMap for this.
-            }
         }
     }
 }
@@ -603,14 +573,12 @@ function scheduleTimeMap() {
             scheduleClassicMetronomeLogicOnly(nextMapMeasureTime); // Schedule its beats within this measure
         } else if (currentSection.type === 'clave') {
             const sectionSecondsPerSemicolcheia = (60.0 / currentBPM) / 4; // Use global BPM
-            // For clave, a "measure" in the map is defined as 16 semicolches for now for consistency
+            // For clave, a "measure" in the map is defined as 16 semicolches for consistency
             secondsPerCurrentMeasure = sectionSecondsPerSemicolcheia * 16; 
             // The clave designer will handle its internal clicks based on the calculated currentBPM
             scheduleClaveDesignerLogicOnly(nextMapMeasureTime, secondsPerCurrentMeasure); // Schedule its clicks within this measure
         } else if (currentSection.type === 'pause') {
             // For pause, we need to know the duration of a standard 4/4 measure at the current BPM to scale the pause.
-            // This is a design choice: should pause duration be fixed seconds, or tied to a conceptual measure length?
-            // Let's tie it to a 4/4 measure equivalent at current BPM for musical context.
             const secondsPerQuarterNote = 60.0 / currentBPM;
             secondsPerCurrentMeasure = secondsPerQuarterNote * 4; // One 4/4 measure duration
             // No clicks for pause
@@ -628,7 +596,7 @@ function scheduleTimeMap() {
             currentClassicBeat = 0;
             currentClassicSubdivision = 0;
             currentClaveIndex = 0;
-            // Clear any active-beat highlights on clave grid
+            // Clear any active-beat highlights on clave grid (important for switching out of clave)
             const prevActivePoint = claveGrid.querySelector('.clave-point.active-beat');
             if (prevActivePoint) {
                 prevActivePoint.classList.remove('active-beat');
@@ -682,75 +650,66 @@ function applySectionSettings(section) {
         
     } else if (section.type === 'pause') {
         // Pause has no sound settings, its duration is handled by the Time Map scheduler itself.
-        // Ensure no clicks from other modules during pause.
-        // This is implicitly handled by `scheduleTimeMap` not calling `createClickSound` for pause.
     }
 }
 
 // Simplified scheduling for individual modules when driven by TimeMap
 // These functions don't manage `next...ClickTime` or `current...Beat/Index` or `measuresPlayedInCurrentSection`
 // They just schedule clicks for *one measure* at a given `startTime`.
-// Depois (corrigido):
-// scheduleClassicMetronome - Pequena alteração para manter o currentClassicBeat como o TEMPO ATUAL
-function scheduleClassicMetronome() {
-    const secondsPerBaseNote = 60.0 / currentBPM;
-    const secondsPerSubdivisionBeat = secondsPerBaseNote / subdivisionType;
+function scheduleClassicMetronomeLogicOnly(measureStartTime) {
+    const sectionBPM = currentBPM; // Use the global BPM set by applySectionSettings
+    const sectionNumerator = timeNumerator;
+    const sectionDenominator = timeDenominator;
+    const sectionSubdivisionType = subdivisionType;
+    const sectionAccentedBeats = accentedBeats;
 
-    while (nextClassicClickTime < audioContext.currentTime + scheduleAheadTime) {
-        let frequency;
-        let volume;
-        let duration = 0.03;
+    const secondsPerBaseNote = 60.0 / sectionBPM;
+    // This is the correct variable name, defined locally in this function
+    const secondsPerSubdivisionBeat = secondsPerBaseNote / sectionSubdivisionType; 
 
-        // currentClassicBeat e currentClassicSubdivision referem-se ao próximo clique
-        const beatToPlay = currentClassicBeat;
-        const subdivisionToPlay = currentClassicSubdivision;
+    for (let beat = 0; beat < sectionNumerator; beat++) {
+        for (let subd = 0; subd < sectionSubdivisionType; subd++) {
+            let clickTime = measureStartTime + (beat * secondsPerBaseNote) + (subd * secondsPerSubdivisionBeat); 
+            
+            let frequency;
+            let volume;
+            let duration = 0.03;
 
-        const isMainBeat = subdivisionToPlay === 0;
-        const isFirstBeatOfMeasure = beatToPlay === 0 && subdivisionToPlay === 0;
-        const isUserAccentedBeat = accentedBeats.has(beatToPlay) && isMainBeat;
+            const isMainBeat = subd === 0;
+            const isFirstBeatOfMeasure = beat === 0 && subd === 0;
+            const isUserAccentedBeat = sectionAccentedBeats.has(beat) && isMainBeat;
 
-        if (isFirstBeatOfMeasure) {
-            frequency = 1000;
-            volume = 0.9;
-            duration = 0.05;
-        } else if (isUserAccentedBeat) {
-            frequency = 880;
-            volume = 0.8;
-            duration = 0.04;
-        } else if (isMainBeat) {
-            frequency = 700;
-            volume = 0.6;
-        } else {
-            frequency = 500;
-            volume = 0.4;
-        }
-        
-        createClickSound(frequency, duration, volume, nextClassicClickTime);
-
-        // AVANÇA OS CONTADORES APÓS AGENDAR O CLIQUE ATUAL
-        nextClassicClickTime += secondsPerSubdivisionBeat;
-        currentClassicSubdivision++;
-        
-        if (currentClassicSubdivision >= subdivisionType) {
-            currentClassicSubdivision = 0;
-            currentClassicBeat++;
-            if (currentClassicBeat >= timeNumerator) {
-                currentClassicBeat = 0; // Reset measure
-                // Notify time map that a measure has completed (only in time map mode)
-                if (isMapPlaying && activeMode === 'timeMap') { // Added check for activeMode === 'timeMap'
-                    measuresPlayedInCurrentSection++;
-                }
+            if (isFirstBeatOfMeasure) {
+                frequency = 1000;
+                volume = 0.9;
+                duration = 0.05;
+            } else if (isUserAccentedBeat) {
+                frequency = 880;
+                volume = 0.8;
+                duration = 0.04;
+            } else if (isMainBeat) {
+                frequency = 700;
+                volume = 0.6;
+            } else {
+                frequency = 500;
+                volume = 0.4;
             }
+            createClickSound(frequency, duration, volume, clickTime);
         }
     }
 }
-function scheduleClaveDesignerLogicOnly(startTime, measureDuration) {
-    const sectionSecondsPerSemicolcheia = (60.0 / currentBPM) / 4;
-    const totalSemicolchesInMeasure = Math.round(measureDuration / sectionSecondsPerSemicolcheia); // Should be 16
+
+function scheduleClaveDesignerLogicOnly(measureStartTime, measureDuration) {
+    const sectionBPM = currentBPM; // Use global BPM
+    const sectionClavePattern = clavePattern;
+    const sectionClaveLength = claveCycleLength;
+
+    const secondsPerSemicolcheia = (60.0 / sectionBPM) / 4;
+    const totalSemicolchesInMeasure = Math.round(measureDuration / secondsPerSemicolcheia); // Should be 16
 
     for (let i = 0; i < totalSemicolchesInMeasure; i++) {
-        const patternIndex = i % claveCycleLength; // Loop through the clave pattern
-        const claveValue = clavePattern[patternIndex];
+        const patternIndex = i % sectionClaveLength;
+        const claveValue = sectionClavePattern[patternIndex];
         
         let frequency;
         let volume = 0.0;
@@ -766,20 +725,8 @@ function scheduleClaveDesignerLogicOnly(startTime, measureDuration) {
         }
         
         if (volume > 0.0) {
-            createClickSound(frequency, duration, volume, startTime + (i * sectionSecondsPerSemicolcheia));
+            createClickSound(frequency, duration, volume, measureStartTime + (i * secondsPerSemicolcheia));
         }
-
-        // Visual feedback for clave in map mode
-        // This needs a separate loop to update in real-time, similar to classic.
-        // For now, the `active-beat` is managed by `scheduleClaveDesigner` itself
-        // but it will be overwritten by `scheduleTimeMap` in the current setup.
-        // We might need to rethink `scheduleClaveDesigner` to be entirely driven by `nextClaveClickTime`
-        // or have a visual-only loop for clave when map is active.
-        // Let's keep `currentClaveIndex` and its visual update in the main `scheduler` loop for now.
-        // This implies that `scheduleClaveDesignerLogicOnly` won't update `currentClaveIndex` visuals.
-        // We need to manage `currentClaveIndex` from `scheduleTimeMap` if we want visual feedback during map playback.
-        // For simplicity for this implementation, real-time visual beat highlighting for Classic/Clave *during Time Map playback*
-        // will be limited to the status text.
     }
 }
 
@@ -810,13 +757,18 @@ async function startMetronome() {
     // Reset next click times and current indices based on active mode
     if (activeMode === 'classic') {
         nextClassicClickTime = audioContext.currentTime;
-        currentClassicBeat = 0;
+        currentClassicBeat = 0; // Ensures it starts at 0 (for 1st beat)
         currentClassicSubdivision = 0;
+        // Also reset display variables
+        currentDisplayClassicBeat = 0;
+        currentDisplayClassicSubdivision = 0;
         isMapPlaying = false;
         setModuleControlsEnabled(true);
     } else if (activeMode === 'clave') {
         nextClaveClickTime = audioContext.currentTime;
-        currentClaveIndex = 0;
+        currentClaveIndex = 0; // Ensures it starts at 0 (for 1st index)
+        // Also reset display variable
+        currentDisplayClaveIndex = 0;
         isMapPlaying = false;
         setModuleControlsEnabled(true);
     } else if (activeMode === 'timeMap') {
@@ -853,6 +805,11 @@ function stopMetronome() {
     currentClassicBeat = 0;
     currentClassicSubdivision = 0;
     currentClaveIndex = 0;
+    // Reset display variables
+    currentDisplayClassicBeat = 0;
+    currentDisplayClassicSubdivision = 0;
+    currentDisplayClaveIndex = 0;
+
 
     // Reset time map counters
     currentMapSectionIndex = 0;
@@ -1024,82 +981,3 @@ document.addEventListener('DOMContentLoaded', () => {
     switchMode('classic');
     updateMetronomeStatus();
 });
-
-// Helper functions for scheduling logic for Time Map
-// These are simplified versions of the main schedule functions,
-// only responsible for *generating clicks for one measure* at a given time.
-// They do NOT manage internal beat counters or advance 'nextClickTime'.
-function scheduleClassicMetronomeLogicOnly(measureStartTime) {
-    const sectionBPM = currentBPM; // Use the global BPM set by applySectionSettings
-    const sectionNumerator = timeNumerator;
-    const sectionDenominator = timeDenominator;
-    const sectionSubdivisionType = subdivisionType;
-    const sectionAccentedBeats = accentedBeats;
-
-    const secondsPerBaseNote = 60.0 / sectionBPM;
-    // This is the correct variable name, defined locally in this function
-    const secondsPerSubdivisionBeat = secondsPerBaseNote / sectionSubdivisionType; 
-
-    for (let beat = 0; beat < sectionNumerator; beat++) {
-        for (let subd = 0; subd < sectionSubdivisionType; subd++) {
-            // FIX IS HERE: Changed 'sectionSecondsPerSubdivisionBeat' to 'secondsPerSubdivisionBeat'
-            let clickTime = measureStartTime + (beat * secondsPerBaseNote) + (subd * secondsPerSubdivisionBeat); 
-            
-            let frequency;
-            let volume;
-            let duration = 0.03;
-
-            const isMainBeat = subd === 0;
-            const isFirstBeatOfMeasure = beat === 0 && subd === 0;
-            const isUserAccentedBeat = sectionAccentedBeats.has(beat) && isMainBeat;
-
-            if (isFirstBeatOfMeasure) {
-                frequency = 1000;
-                volume = 0.9;
-                duration = 0.05;
-            } else if (isUserAccentedBeat) {
-                frequency = 880;
-                volume = 0.8;
-                duration = 0.04;
-            } else if (isMainBeat) {
-                frequency = 700;
-                volume = 0.6;
-            } else {
-                frequency = 500;
-                volume = 0.4;
-            }
-            createClickSound(frequency, duration, volume, clickTime);
-        }
-    }
-}
-
-function scheduleClaveDesignerLogicOnly(measureStartTime, measureDuration) {
-    const sectionBPM = currentBPM; // Use global BPM
-    const sectionClavePattern = clavePattern;
-    const sectionClaveLength = claveCycleLength;
-
-    const secondsPerSemicolcheia = (60.0 / sectionBPM) / 4;
-    const totalSemicolchesInMeasure = Math.round(measureDuration / secondsPerSemicolcheia); // Should be 16
-
-    for (let i = 0; i < totalSemicolchesInMeasure; i++) {
-        const patternIndex = i % sectionClaveLength;
-        const claveValue = sectionClavePattern[patternIndex];
-        
-        let frequency;
-        let volume = 0.0;
-        let duration = 0.03;
-
-        if (claveValue === CLAVE_BEAT_1) {
-            frequency = 250;
-            volume = 0.7;
-            duration = 0.05;
-        } else if (claveValue === CLAVE_BEAT_2) {
-            frequency = 180;
-            volume = 0.5;
-        }
-        
-        if (volume > 0.0) {
-            createClickSound(frequency, duration, volume, measureStartTime + (i * secondsPerSemicolcheia));
-        }
-    }
-}

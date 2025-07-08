@@ -161,7 +161,7 @@ input[type="range"]::-webkit-slider-thumb {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-input[type="text"], select {
+input[type="text"], input[type="number"], select {
     width: calc(100% - 20px); /* Adjust for padding */
     padding: 8px 10px;
     border-radius: 5px;
@@ -348,8 +348,100 @@ hr {
     margin-top: 10px;
 }
 
+/* Time Map Module Styles */
+.time-map-controls {
+    background-color: #5c7490;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.time-map-controls h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.section-config-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px dashed #7f8c8d;
+    border-radius: 5px;
+    background-color: #4a607a;
+}
+
+.section-config-group.hidden {
+    display: none;
+}
+
+#addSectionBtn {
+    width: auto;
+    margin-top: 15px;
+    align-self: center; /* Center button within flex container */
+    background: linear-gradient(45deg, #1abc9c, #16a085);
+}
+
+.time-map-sections-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.time-map-section-item {
+    background-color: #5c7490;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+    border-left: 5px solid #1abc9c; /* Visual indicator for sections */
+}
+
+.time-map-section-item.active {
+    border-left: 5px solid #f39c12; /* Active section highlight */
+    background-color: #6c757d;
+    transform: scale(1.02);
+    transition: transform 0.1s ease;
+}
+
+.section-info {
+    flex-grow: 1;
+    font-size: 1.1em;
+    color: #ecf0f1;
+}
+
+.section-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap; /* Allow buttons to wrap */
+}
+
+.section-buttons button {
+    padding: 8px 12px;
+    font-size: 0.9em;
+    background: linear-gradient(45deg, #e67e22, #d35400); /* Orange for edit/delete */
+}
+
+.section-buttons button.delete-btn {
+    background: linear-gradient(45deg, #e74c3c, #c0392b); /* Red for delete */
+}
+
+.section-buttons button:hover {
+    transform: translateY(-1px);
+}
+
 @media (max-width: 768px) {
-    .controls-grid {
+    .controls-grid, .section-config-group {
         grid-template-columns: 1fr; /* Single column on smaller screens */
     }
     .clave-grid {
@@ -367,6 +459,14 @@ hr {
         width: 100%; /* Full width on small screens */
         max-width: none;
     }
+    .time-map-section-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .section-buttons {
+        width: 100%;
+        justify-content: flex-end;
+    }
 }
 
 @media (max-width: 480px) {
@@ -383,5 +483,9 @@ hr {
     .global-controls button, .mode-selector button {
         font-size: 0.9em;
         padding: 8px 15px;
+    }
+    .section-buttons button {
+        padding: 6px 10px;
+        font-size: 0.8em;
     }
 }

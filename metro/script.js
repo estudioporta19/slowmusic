@@ -242,19 +242,23 @@ function renderClaveGrid() {
         point.addEventListener('click', () => {
             // Only allow clicking on active points and if not playing map
             if (i < claveCycleLength && !isMapPlaying) {
+                // --- FIX: Update clavePattern *before* updating classes ---
                 if (clavePattern[i] === CLAVE_OFF) {
                     clavePattern[i] = CLAVE_BEAT_1;
-                    point.classList.remove('beat-0');
-                    point.classList.add('beat-1');
-                    point.textContent = '1';
                 } else if (clavePattern[i] === CLAVE_BEAT_1) {
                     clavePattern[i] = CLAVE_BEAT_2;
-                    point.classList.remove('beat-1');
+                } else {
+                    clavePattern[i] = CLAVE_OFF;
+                }
+                // --- Now update the visual classes based on the new value ---
+                point.classList.remove('beat-0', 'beat-1', 'beat-2'); // Remove all first
+                if (clavePattern[i] === CLAVE_BEAT_1) {
+                    point.classList.add('beat-1');
+                    point.textContent = '1';
+                } else if (clavePattern[i] === CLAVE_BEAT_2) {
                     point.classList.add('beat-2');
                     point.textContent = '•';
                 } else {
-                    clavePattern[i] = CLAVE_OFF;
-                    point.classList.remove('beat-2');
                     point.classList.add('beat-0');
                     point.textContent = '';
                 }
@@ -304,10 +308,15 @@ function addSection() {
         }
     } else if (type === 'clave') {
         section.bpm = parseInt(sectionClaveBPMInput.value);
-        section.pattern = sectionClavePatternInput.value.split('').map(Number); // Convert string to array of numbers
+        // Ensure the pattern is exactly 16 numbers, fill with 0 if shorter
+        let patternInput = sectionClavePatternInput.value.split('').map(Number);
+        if (patternInput.length > 16) patternInput = patternInput.slice(0, 16);
+        while (patternInput.length < 16) patternInput.push(0); // Pad with 0s if shorter than 16
+        section.pattern = patternInput;
+
         section.claveLength = parseInt(sectionClaveLengthInput.value);
-        if (isNaN(section.bpm) || section.pattern.length !== 16 || section.pattern.some(isNaN) || isNaN(section.claveLength)) {
-            alert("Por favor, preencha todos os campos do Clave Designer corretamente (padrão com 16 dígitos).");
+        if (isNaN(section.bpm) || section.pattern.some(isNaN) || isNaN(section.claveLength) || section.claveLength < 1 || section.claveLength > 16) {
+            alert("Por favor, preencha todos os campos do Clave Designer corretamente (padrão com 16 dígitos, ciclo entre 1 e 16).");
             return;
         }
     } else if (type === 'pause') {
@@ -390,6 +399,7 @@ function updateMetronomeStatus() {
         } else if (activeMode === 'timeMap') {
             const currentSection = timeMap[currentMapSectionIndex];
             if (currentSection) {
+                // --- FIX: Display current measure correctly (add 1) ---
                 let sectionInfo = `Mapa: Secção ${currentMapSectionIndex + 1}/${timeMap.length} (${measuresPlayedInCurrentSection + 1}/${currentSection.measures})`;
                 if (currentSection.type === 'classic') {
                     sectionInfo += ` | Tipo: Clássico | BPM: ${currentBPM}`;
@@ -758,6 +768,8 @@ async function startMetronome() {
         currentClaveIndex = 0; // Ensures it starts at 0 (for 1st index)
         // Set display variable to initial state for the first index
         currentDisplayClaveIndex = 0;
+        // Ensure the clave grid is rendered with the correct pattern
+        renderClaveGrid(); // Important for visual sync on start
         isMapPlaying = false;
         setModuleControlsEnabled(true);
     } else if (activeMode === 'timeMap') {
@@ -811,6 +823,8 @@ function stopMetronome() {
     if (activePoint) {
         activePoint.classList.remove('active-beat');
     }
+    // Re-render clave grid to clear all active highlights in case stop happens mid-beat
+    renderClaveGrid(); 
     renderTimeMapList(); // Clear active section highlight
 
     // Re-enable individual module controls
@@ -959,8 +973,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAccentedBeats(); // Initialize accented beats
 
     // Initial display updates for Clave Designer
-    updateClaveCycleLength(); // This also calls renderClaveGrid()
     initializeClavePatternDefault(); // Set a default pattern for Clave Designer
+    updateClaveCycleLength(); // This also calls renderClaveGrid() and ensures initial rendering
 
     // Initial display updates for Time Map
     showTimeMapSectionConfig(); // Show correct config panel for default type

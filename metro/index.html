@@ -4,146 +4,162 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metrónomo Avançado</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>Metrónomo Avançado</h1>
+    <h1>Metrónomo Avançado</h1>
+
+    <div class="container">
+        
+        <div class="global-bpm-control">
+            <label for="bpmSlider">BPM: <span id="bpmValue" class="value-display">120</span></label>
+            <input type="range" id="bpmSlider" min="40" max="320" value="120">
+        </div>
+
+        <hr>
+
+        <div class="mode-selector">
+            <button id="modeClassicBtn" class="selected">Metrónomo Clássico</button>
+            <button id="modeClaveBtn">Clave Designer</button>
+            <button id="modeListBtn">Mapa de Tempo</button>
+        </div>
+
+        <hr>
+
+        <div class="metronome-status" id="metronomeStatus"></div>
+
         <div class="global-controls">
-            <button id="playPauseBtn" class="control-button play-pause-button">▶️ Iniciar</button>
-            <button id="stopBtn" class="control-button stop-button">⏹️ Parar</button>
+            <button id="playPauseBtn">▶️ Iniciar</button>
+            <button id="stopBtn">⏹️ Parar</button>
         </div>
+        
         <a href="https://estudioporta19.github.io/slowmusic/" class="back-to-app-button">Voltar à Aplicação</a>
-    </header>
 
-    <main>
-        <div class="metronome-modes">
-            <button id="modeClassicBtn" class="mode-button selected">Clássico</button>
-            <button id="modeClaveBtn" class="mode-button">Clave Designer</button>
-            <button id="modeListBtn" class="mode-button">Mapa de Tempo</button>
-        </div>
-
-        <div id="classicMetronomeModule" class="module-container active-module">
+        <div id="classicMetronomeModule" class="module-group active-module">
             <h2>Metrónomo Clássico</h2>
-            <div class="controls-group">
-                <label for="bpmSlider">BPM: <span id="bpmValue">120</span></label>
-                <input type="range" id="bpmSlider" min="20" max="300" value="120">
-            </div>
-
-            <div class="controls-group">
-                <label for="timeNumerator">Compasso: <span id="timeNumeratorValue">4</span> / 4</label>
-                <input type="number" id="timeNumerator" min="1" max="16" value="4">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label for="timeNumerator">Compasso: <span id="timeNumeratorValue" class="value-display">4</span> / 4</label>
+                    <input type="range" id="timeNumerator" min="1" max="16" value="4">
                 </div>
 
-            <div class="controls-group">
-                <label>Subdivisão:</label>
-                <div class="subdivision-buttons">
-                    <button id="subdivisionOffBtn" class="subdivision-button selected">Off</button>
-                    <button id="subdivision2Btn" class="subdivision-button">2x</button>
-                    <button id="subdivision3Btn" class="subdivision-button">3x</button>
-                    <button id="subdivision4Btn" class="subdivision-button">4x</button>
-                </div>
-            </div>
-
-            <div class="controls-group">
-                <label for="accentedBeats">Acentuar Batidas (Ex: 2,4):</label>
-                <input type="text" id="accentedBeats" placeholder="2,4">
-            </div>
-        </div>
-
-        <div id="claveDesignerModule" class="module-container hidden">
-            <h2>Clave Designer</h2>
-            <div class="controls-group">
-                <label for="bpmSlider">BPM: <span id="bpmValue">120</span></label>
-                <input type="range" id="bpmSlider" min="20" max="300" value="120">
-            </div>
-            
-            <div class="clave-grid-container">
-                <div id="claveGrid" class="clave-grid">
+                <div class="control-group">
+                    <label>Subdivisões:</label>
+                    <div class="subdivision-controls">
+                        <button id="subdivisionOffBtn" class="selected">OFF</button>
+                        <button id="subdivision2Btn">2x</button>
+                        <button id="subdivision3Btn">3x</button>
+                        <button id="subdivision4Btn">4x</button>
                     </div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="accentedBeats">Acentuar (Ex: 3, 5)</label>
+                    <input type="text" id="accentedBeats" placeholder="Ex: 3, 5, 7">
+                    <small>Tempos a acentuar (separados por vírgulas). O 1º tempo é sempre acentuado.</small>
+                </div>
             </div>
-            <div class="controls-group">
-                <label for="claveCycleLength">Ciclo da Clave (Semicolcheias): <span id="claveCycleLengthValue">16</span></label>
-                <input type="range" id="claveCycleLength" min="1" max="16" value="16">
-            </div>
-            <button id="resetClaveBtn" class="control-button">Resetar Clave</button>
         </div>
 
-        <div id="timeMapModule" class="module-container hidden">
+        
+        <div id="claveDesignerModule" class="module-group hidden-module">
+            <h2>Clave Designer</h2>
+            <div class="clave-designer-container">
+                <div class="clave-designer-header">
+                    <h3>Padrão Personalizado</h3>
+                    <div class="control-group clave-cycle-control">
+                        <label for="claveCycleLength">Duração do Ciclo (1-16 semicolcheias): <span id="claveCycleLengthValue" class="value-display">16</span></label>
+                        <input type="range" id="claveCycleLength" min="1" max="16" value="16">
+                        <button id="resetClaveBtn" class="control-button">Limpar Grelha / Reset</button> 
+                    </div>
+                </div>
+                <div class="clave-grid" id="claveGrid">
+                    
+                </div>
+                <div class="clave-info">
+                    Clique nos pontos para alternar o som: <span style="color:#e74c3c;">Forte</span>, <span style="color:#f39c12;">Médio</span>, <span style="color:#6c757d;">Desligado</span>.<br>
+                    Cada bloco representa uma semicolcheia.
+                </div>
+            </div>
+        </div>
+
+        
+        <div id="timeMapModule" class="module-group hidden-module">
             <h2>Mapa de Tempo</h2>
-            <div class="time-map-builder">
+            <div class="time-map-controls">
                 <h3>Adicionar Nova Secção</h3>
-                <div class="controls-group">
+                <div class="control-group">
                     <label for="sectionType">Tipo de Secção:</label>
                     <select id="sectionType">
-                        <option value="classic">Clássico</option>
-                        <option value="clave">Clave</option>
+                        <option value="classic">Metrónomo Clássico</option>
+                        <option value="clave">Clave Designer</option>
                         <option value="pause">Pausa</option>
                     </select>
                 </div>
 
-                <div id="timeMapClassicControls" class="section-config-panel">
-                    <div class="controls-group">
+                <div id="timeMapClassicControls" class="section-config-group">
+                    <div class="control-group">
                         <label for="sectionBPM">BPM:</label>
-                        <input type="number" id="sectionBPM" value="120" min="20" max="300">
+                        <input type="number" id="sectionBPM" min="40" max="320" value="120">
                     </div>
-                    <div class="controls-group">
-                        <label for="sectionNumerator">Compasso:</label>
-                        <input type="number" id="sectionNumerator" value="4" min="1" max="16"> / 4
-                        </div>
-                    <div class="controls-group">
-                        <label for="sectionSubdivision">Subdivisão:</label>
+                    <div class="control-group">
+                        <label for="sectionNumerator">Tempos:</label>
+                        <input type="number" id="sectionNumerator" min="1" max="16" value="4"> / 4
+                    </div>
+                    <div class="control-group">
+                        <label for="sectionSubdivision">Subdivisões:</label>
                         <select id="sectionSubdivision">
-                            <option value="1">Off</option>
+                            <option value="1">OFF</option>
                             <option value="2">2x</option>
                             <option value="3">3x</option>
                             <option value="4">4x</option>
                         </select>
                     </div>
-                    <div class="controls-group">
-                        <label for="sectionAccentedBeats">Acentuar Batidas (Ex: 2,4):</label>
-                        <input type="text" id="sectionAccentedBeats" placeholder="2,4">
+                    <div class="control-group">
+                        <label for="sectionAccentedBeats">Acentuar (Ex: 3,5):</label>
+                        <input type="text" id="sectionAccentedBeats" placeholder="Ex: 3, 5">
                     </div>
                 </div>
 
-                <div id="timeMapClaveControls" class="section-config-panel hidden">
-                    <div class="controls-group">
+                <div id="timeMapClaveControls" class="section-config-group hidden">
+                    <div class="control-group">
                         <label for="sectionClaveBPM">BPM:</label>
-                        <input type="number" id="sectionClaveBPM" value="120" min="20" max="300">
+                        <input type="number" id="sectionClaveBPM" min="40" max="320" value="120">
                     </div>
-                    <div class="controls-group">
-                        <label for="sectionClavePattern">Padrão da Clave (16 dígitos 0/1/2):</label>
-                        <input type="text" id="sectionClavePattern" value="1000100010001000" maxlength="16">
+                    <div class="control-group">
+                        <label>Padrão Clave (16 semicolcheias):</label>
+                        <input type="text" id="sectionClavePattern" placeholder="1000100010001000">
+                        <small>1=forte, 2=médio, 0=desligado. 16 dígitos.</small>
                     </div>
-                    <div class="controls-group">
-                        <label for="sectionClaveLength">Ciclo (1-16 semicolcheias):</label>
-                        <input type="number" id="sectionClaveLength" value="16" min="1" max="16">
+                    <div class="control-group">
+                        <label for="sectionClaveLength">Duração Ciclo (semicolcheias):</label>
+                        <input type="number" id="sectionClaveLength" min="1" max="16" value="16">
                     </div>
                 </div>
 
-                <div id="timeMapPauseControls" class="section-config-panel hidden">
-                    <div class="controls-group">
-                        <label for="sectionPauseDuration">Duração da Pausa (compassos):</label>
-                        <input type="number" id="sectionPauseDuration" value="4" min="1">
+                <div id="timeMapPauseControls" class="section-config-group hidden">
+                    <div class="control-group">
+                        <label for="sectionPauseDuration">Duração Pausa (compassos):</label>
+                        <input type="number" id="sectionPauseDuration" min="1" value="4">
                     </div>
                 </div>
-                
-                <div class="controls-group">
+
+                <div class="control-group">
                     <label for="sectionMeasures">Duração da Secção (compassos):</label>
-                    <input type="number" id="sectionMeasures" value="4" min="1">
+                    <input type="number" id="sectionMeasures" min="1" value="4">
                 </div>
-                <button id="addSectionBtn" class="control-button">Adicionar Secção</button>
+
+                <button id="addSectionBtn">Adicionar Secção</button>
             </div>
 
             <h3>Secções do Mapa</h3>
             <ul id="timeMapSectionsList" class="time-map-sections-list">
                 </ul>
         </div>
-    </main>
-
-    <footer>
-        <p>Status: <span id="metronomeStatus"></span></p>
-    </footer>
+    </div>
 
     <script src="script.js"></script>
 </body>

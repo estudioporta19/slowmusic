@@ -7,12 +7,15 @@ let intervalId; // ID for the setInterval loop
 
 let activeMode = 'classic'; // 'classic', 'clave', 'list' (future)
 
+// --- GLOBAL BPM State ---
+let currentBPM = 120; // BPM is now global
+
 // --- Classic Metronome Module State ---
-let currentBPM = 120;
 let timeNumerator = 4; // Top number of time signature (e.g., 4 in 4/4)
 let timeDenominator = 4; // Bottom number of time signature (e.g., 4 in 4/4)
 let subdivisionType = 1; // 1 = none, 2 = 8th notes, 3 = 12th notes (triplets), 4 = 16th notes
 let compoundSubdivisions = []; // e.g., [4, 3] for 7/4. Empty if simple time.
+let accentedBeats = new Set(); // NEW: Set of beats to accent (e.g., {3, 5, 7})
 
 let nextClassicClickTime = 0.0;
 let currentClassicBeat = 0; // Current beat within the measure (0-indexed)
@@ -24,11 +27,15 @@ const CLAVE_BEAT_1 = 1; // Strong click type for Clave Designer
 const CLAVE_BEAT_2 = 2; // Medium click type for Clave Designer
 
 let clavePattern = new Array(16).fill(CLAVE_OFF); // 16 semicolches grid
-let claveCycleLength = 16; // NEW: User-defined length for the clave pattern loop (1 to 16)
+let claveCycleLength = 16; // User-defined length for the clave pattern loop (1 to 16)
 let nextClaveClickTime = 0.0;
 let currentClaveIndex = 0; // Current index in the 16-semicolcheia pattern
 
 // --- DOM Elements ---
+// Global BPM Control
+const bpmSlider = document.getElementById('bpmSlider');
+const bpmValueDisplay = document.getElementById('bpmValue');
+
 // Mode Selector Buttons
 const modeClassicBtn = document.getElementById('modeClassicBtn');
 const modeClaveBtn = document.getElementById('modeClaveBtn');
@@ -40,13 +47,12 @@ const claveDesignerModule = document.getElementById('claveDesignerModule');
 const listMetronomeModule = document.getElementById('listMetronomeModule');
 
 // Classic Metronome Controls
-const bpmSlider = document.getElementById('bpmSlider');
-const bpmValueDisplay = document.getElementById('bpmValue');
 const timeNumeratorInput = document.getElementById('timeNumerator');
 const timeNumeratorValueDisplay = document.getElementById('timeNumeratorValue');
 const timeDenominatorSelect = document.getElementById('timeDenominator');
 const compoundSubdivisionsInput = document.getElementById('compoundSubdivisions');
 const compoundTimeGroup = document.getElementById('compoundTimeGroup');
+const accentedBeatsInput = document.getElementById('accentedBeats'); // NEW
 
 const subdivisionOffBtn = document.getElementById('subdivisionOffBtn');
 const subdivision2Btn = document.getElementById('subdivision2Btn');
@@ -55,8 +61,8 @@ const subdivision4Btn = document.getElementById('subdivision4Btn');
 
 // Clave Designer Controls
 const claveGrid = document.getElementById('claveGrid');
-const claveCycleLengthSlider = document.getElementById('claveCycleLength'); // NEW
-const claveCycleLengthValueDisplay = document.getElementById('claveCycleLengthValue'); // NEW
+const claveCycleLengthSlider = document.getElementById('claveCycleLength');
+const claveCycleLengthValueDisplay = document.getElementById('claveCycleLengthValue');
 
 // Global Controls
 const metronomeStatusDisplay = document.getElementById('metronomeStatus');
@@ -97,13 +103,14 @@ function createClickSound(frequency, duration, volume, startTime) {
     };
 }
 
-// --- UI Update & Logic Functions (Classic Metronome) ---
-
+// --- UI Update & Logic Functions (Global BPM) ---
 function updateBPMDisplay() {
     currentBPM = parseInt(bpmSlider.value);
     bpmValueDisplay.textContent = currentBPM;
     resetAndSchedule();
 }
+
+// --- UI Update & Logic Functions (Classic Metronome) ---
 
 function updateTimeSignature() {
     timeNumerator = parseInt(timeNumeratorInput.value);
@@ -133,8 +140,23 @@ function parseCompoundSubdivisions() {
         compoundSubdivisions = parts;
     } else {
         compoundSubdivisions = [];
-        alert('Formato de compasso composto inválido. Use "4+3" e garanta que a soma é igual ao número de tempos.');
+        alert('Formato de compasso composto inválido. Use apenas números inteiros e garanta que a soma é igual ao número de tempos.');
         compoundSubdivisionsInput.value = '';
+    }
+    resetAndSchedule();
+}
+
+function parseAccentedBeats() {
+    const input = accentedBeatsInput.value.trim();
+    accentedBeats.clear(); // Clear previous accents
+    if (!input) {
+        return;
+    }
+    const parts = input.split(',').map(p => parseInt(p.trim()));
+    for (const beat of parts) {
+        if (!isNaN(beat) && beat > 1 && beat <= timeNumerator) { // Beat must be > 1 and within measure
+            accentedBeats.add(beat - 1); // Store as 0-indexed
+        }
     }
     resetAndSchedule();
 }
@@ -277,6 +299,7 @@ function scheduleClassicMetronome() {
         // Determine if it's a downbeat, strong accent, or subdivision
         const isMainBeat = currentClassicSubdivision === 0;
         const isFirstBeatOfMeasure = currentClassicBeat === 0 && currentClassicSubdivision === 0;
+        const isUserAccentedBeat = accentedBeats.has(currentClassicBeat) && isMainBeat; // NEW
 
         let isCompoundAccent = false;
         if (compoundSubdivisions.length > 0) {
@@ -298,6 +321,10 @@ function scheduleClassicMetronome() {
         } else if (isCompoundAccent) {
             frequency = 880; // High pitch for compound accents
             volume = 0.8;
+            duration = 0.04;
+        } else if (isUserAccentedBeat) { // NEW: User-defined accents
+            frequency = 800; // Slightly lower than compound accent, but still distinct
+            volume = 0.75;
             duration = 0.04;
         } else if (isMainBeat) {
             frequency = 700; // Medium pitch for other main beats
@@ -484,16 +511,19 @@ function switchMode(newMode) {
 
 // --- Event Listeners ---
 
+// Global BPM Control
+bpmSlider.addEventListener('input', updateBPMDisplay);
+
 // Mode Selector Buttons
 modeClassicBtn.addEventListener('click', () => switchMode('classic'));
 modeClaveBtn.addEventListener('click', () => switchMode('clave'));
 modeListBtn.addEventListener('click', () => switchMode('list'));
 
 // Classic Metronome Controls
-bpmSlider.addEventListener('input', updateBPMDisplay);
 timeNumeratorInput.addEventListener('input', updateTimeSignature);
 timeDenominatorSelect.addEventListener('change', updateTimeSignature);
 compoundSubdivisionsInput.addEventListener('change', parseCompoundSubdivisions);
+accentedBeatsInput.addEventListener('change', parseAccentedBeats); // NEW
 
 subdivisionOffBtn.addEventListener('click', () => { subdivisionType = 1; updateSubdivisionButtons(); });
 subdivision2Btn.addEventListener('click', () => { subdivisionType = 2; updateSubdivisionButtons(); });
@@ -522,15 +552,18 @@ document.addEventListener('keydown', (e) => {
 
 // --- Initialization on Page Load ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Initial display updates for Classic Metronome
+    // Initial display updates for BPM (now global)
     updateBPMDisplay();
+
+    // Initial display updates for Classic Metronome
     updateTimeSignature();
     updateSubdivisionButtons();
+    parseAccentedBeats(); // Initialize accented beats
 
     // Initial display updates for Clave Designer
     updateClaveCycleLength(); // This also calls renderClaveGrid()
     initializeClavePatternDefault(); // Set a default pattern for Clave Designer
-    renderClaveGrid(); // Ensure grid is rendered initially
+    // renderClaveGrid() is called by updateClaveCycleLength()
 
     // Set initial active mode (Classic Metronome)
     switchMode('classic');

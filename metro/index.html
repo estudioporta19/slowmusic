@@ -24,7 +24,7 @@
         <div class="mode-selector">
             <button id="modeClassicBtn" class="selected">Metrónomo Clássico</button>
             <button id="modeClaveBtn">Clave Designer</button>
-            <button id="modeListBtn" disabled>Metrónomo de Lista (Em Breve)</button>
+            <button id="modeListBtn" disabled>Mapa de Tempo (Em Breve)</button>
         </div>
 
         <hr>
@@ -61,16 +61,9 @@
                 </div>
                 
                 <div class="control-group">
-                    <label for="accentedBeats">Acentuar Tempos (Exceto 1º)</label>
+                    <label for="accentedBeats">Acentuar Tempos (Ex: 3, 5)</label>
                     <input type="text" id="accentedBeats" placeholder="Ex: 3, 5, 7">
-                    <small>Tempos a acentuar (separados por vírgulas)</small>
-                </div>
-
-                <div class="control-group" id="compoundTimeGroup">
-                    <label>Compasso Composto (Ex: 4+3)</label>
-                    <input type="text" id="compoundSubdivisions" placeholder="Ex: 4+3 ou 3+4">
-                    <small>Define acentos fortes para agrupamentos irregulares.</small>
-                    <small style="color: yellow;">(Ex: 2.5+1.5 não suportado ainda. Apenas inteiros)</small>
+                    <small>Tempos a acentuar (separados por vírgulas). O 1º tempo é sempre acentuado.</small>
                 </div>
             </div>
         </div>
@@ -98,7 +91,7 @@
 
         
         <div id="listMetronomeModule" class="module-group hidden-module">
-            <h2>Metrónomo de Lista</h2>
+            <h2>Mapa de Tempo</h2>
             <p>Este módulo está em desenvolvimento. Permitirá sequenciar diferentes configurações de metrónomo e padrões de clave.</p>
             
         </div>
@@ -109,7 +102,7 @@
 
         <div class="global-controls">
             <button id="playPauseBtn">▶️ Iniciar</button>
-            <button id="stopBtn">⏹️️ Parar</button>
+            <button id="stopBtn">⏹️ Parar</button>
         </div>
     </div>
 

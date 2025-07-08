@@ -27,6 +27,49 @@
         -webkit-text-fill-color: transparent;
         background-clip: text;
     }
+/* Estilos para o Botão de Instruções */
+.instructions-btn {
+    /* Geralmente, este botão fica no canto, então vamos dar-lhe um posicionamento flexível */
+    margin-left: auto; /* Empurra o botão para a direita se estiver num container flex */
+    padding: 10px 18px; /* Preenchimento interno */
+    font-size: 0.95em; /* Tamanho da fonte ligeiramente menor */
+    font-weight: bold; /* Negrito */
+    border: none; /* Sem borda */
+    border-radius: 8px; /* Cantos arredondados */
+    cursor: pointer; /* Cursor de clique */
+    transition: all 0.3s ease; /* Transição suave para hover */
+
+    /* Cores e gradiente */
+    background: linear-gradient(45deg, #3498db, #2980b9); /* Azul agradável */
+    color: white; /* Texto branco */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Sombra para profundidade */
+}
+
+.instructions-btn:hover {
+    background: linear-gradient(45deg, #2980b9, #3498db); /* Inverte o gradiente no hover */
+    transform: translateY(-2px); /* Efeito de ligeiro levantamento */
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3); /* Sombra mais pronunciada */
+}
+
+/* Se o seu header for um container flex, isto ajuda a alinhar o botão */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Espaça o título e o botão */
+    margin-bottom: 20px; /* Margem inferior para separar do resto */
+    flex-wrap: wrap; /* Permite que os itens quebrem para a linha seguinte em ecrãs pequenos */
+}
+
+/* Para o caso de ecrãs muito pequenos, ajuste o tamanho da fonte do título */
+@media (max-width: 600px) {
+    header h1 {
+        font-size: 1.8em; /* Reduz o tamanho do título em ecrãs pequenos */
+    }
+    .instructions-btn {
+        padding: 8px 15px; /* Ajusta o padding do botão */
+        font-size: 0.85em; /* Ajusta o tamanho da fonte do botão */
+    }
+}
     
     .file-input-container {
         margin-bottom: 30px;

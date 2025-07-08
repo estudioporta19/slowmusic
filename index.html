@@ -11,8 +11,7 @@
     <div class="container">
         <header>
             <h1>🎵 Music Practice Buddy</h1>
-            <button class="action-btn instructions-btn" onclick="window.location.href='instructions.html'">Instruções</button>
-        </header>
+            <button class="action-btn instructions-btn" id="instructionsBtn">Instruções</button> </header>
         <div class="file-input-container">
             <input type="file" id="audioFile" class="file-input" accept="audio/*" multiple>
             <label for="audioFile" class="file-label">📁 Selecionar Ficheiros de Áudio</label>
@@ -37,8 +36,7 @@
                     <label>Velocidade:</label>
                     <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1">
                     <span id="speedValue" class="value-display">1.0x</span>
-                    <button class="reset-btn" onclick="resetSpeed()">Reset</button>
-                </div>
+                    <button class="reset-btn" id="resetSpeedBtn">Reset</button> </div>
             </div>
 
             <div class="control-group">
@@ -47,8 +45,7 @@
                     <label>Pitch:</label>
                     <input type="range" id="pitchSlider" min="-12" max="12" step="1" value="0">
                     <span id="pitchValue" class="value-display">0 meios tons</span>
-                    <button class="reset-btn" onclick="resetPitch()">Reset</button>
-                </div>
+                    <button class="reset-btn" id="resetPitchBtn">Reset</button> </div>
             </div>
 
             <div class="control-group">
@@ -62,38 +59,22 @@
                 <div class="control-row">
                     <label>Início (A):</label>
                     <span id="loopAValue" class="value-display">00:00.000</span>
-                    <button class="fine-tune-btn" onclick="adjustLoopA(-0.05)">-0.05s</button>
-                    <button class="fine-tune-btn" onclick="adjustLoopA(0.05)">+0.05s</button>
-                    <button class="fine-tune-btn" onclick="adjustLoopA(-0.01)">-0.01s</button>
-                    <button class="fine-tune-btn" onclick="adjustLoopA(0.01)">+0.01s</button>
-                    <button class="reset-btn" onclick="setLoopA()">Definir A</button>
-                    <button class="reset-btn" onclick="resetLoopA()">Reset A</button>
-                </div>
+                    <button class="fine-tune-btn" id="adjustALeftBtn">-0.05s</button> <button class="fine-tune-btn" id="adjustARightBtn">+0.05s</button> <button class="fine-tune-btn" id="adjustASmallLeftBtn">-0.01s</button> <button class="fine-tune-btn" id="adjustASmallRightBtn">+0.01s</button> <button class="reset-btn" id="setLoopABtn">Definir A</button> <button class="reset-btn" id="resetALoopBtn">Reset A</button> </div>
                 <div class="control-row">
                     <label>Fim (B):</label>
                     <span id="loopBValue" class="value-display">00:00.000</span>
-                    <button class="fine-tune-btn" onclick="adjustLoopB(-0.05)">-0.05s</button>
-                    <button class="fine-tune-btn" onclick="adjustLoopB(0.05)">+0.05s</button>
-                    <button class="fine-tune-btn" onclick="adjustLoopB(-0.01)">-0.01s</button>
-                    <button class="fine-tune-btn" onclick="adjustLoopB(0.01)">+0.01s</button>
-                    <button class="reset-btn" onclick="setLoopB()">Definir B</button>
-                    <button class="reset-btn" onclick="resetLoopB()">Reset B</button>
-                </div>
+                    <button class="fine-tune-btn" id="adjustBLeftBtn">-0.05s</button> <button class="fine-tune-btn" id="adjustBRightBtn">+0.05s</button> <button class="fine-tune-btn" id="adjustBSmallLeftBtn">-0.01s</button> <button class="fine-tune-btn" id="adjustBSmallRightBtn">+0.01s</button> <button class="reset-btn" id="setLoopBBtn">Definir B</button> <button class="reset-btn" id="resetBLoopBtn">Reset B</button> </div>
                 <div class="control-row" style="justify-content: center;">
-                    <button id="toggleLoopBtn" class="play-btn" style="background: linear-gradient(45deg, #6c757d, #5a6268);" onclick="toggleLoop()">Loop OFF ❌</button>
-                </div>
+                    <button id="toggleLoopBtn" class="play-btn" style="background: linear-gradient(45deg, #6c757d, #5a6268);">Loop OFF ❌</button> </div>
             </div>
 
             <div class="control-group">
                 <h3>🔖 Marcadores de Secções</h3>
                 <div class="control-row" style="margin-bottom: 10px;">
                     <input type="text" id="markerNameInput" placeholder="Nome do marcador (ex: Refrão)" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-size: 1em;">
-                    <button id="addMarkerBtn" class="play-btn" style="background: linear-gradient(45deg, #28a745, #218838); padding: 10px 20px;" onclick="addMarker()">➕ Adicionar Marcador</button>
-                </div>
+                    <button id="addMarkerBtn" class="play-btn" style="background: linear-gradient(45deg, #28a745, #218838); padding: 10px 20px;">➕ Adicionar Marcador</button> </div>
                 <div class="control-row" style="justify-content: center; margin-bottom: 10px;">
-                    <button class="nav-marker-btn" onclick="navigateToPreviousMarker()">◀️ Anterior</button>
-                    <button class="nav-marker-btn" onclick="navigateToNextMarker()">Próximo ▶️</button>
-                </div>
+                    <button class="nav-marker-btn" id="navigatePreviousMarkerBtn">◀️ Anterior</button> <button class="nav-marker-btn" id="navigateNextMarkerBtn">Próximo ▶️</button> </div>
                 <div class="marker-list-container" style="max-height: 150px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; padding: 10px; background: rgba(255, 255, 255, 0.05);">
                     <ul id="markersList" style="list-style: none; padding: 0; margin: 0;">
                         <li style="color: rgba(255,255,255,0.7); text-align: center; padding: 10px;">Nenhum marcador guardado ainda.</li>
@@ -105,8 +86,7 @@
                 <h3>💾 Loops Guardados</h3>
                 <div class="control-row" style="margin-bottom: 10px;">
                     <input type="text" id="loopNameInput" placeholder="Nome do loop (ex: Refrão, Solo)" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-size: 1em;">
-                    <button id="saveLoopBtn" class="play-btn" style="background: linear-gradient(45deg, #007bff, #0056b3); padding: 10px 20px;" onclick="saveCurrentLoop()">💾 Guardar Loop</button>
-                </div>
+                    <button id="saveLoopBtn" class="play-btn" style="background: linear-gradient(45deg, #007bff, #0056b3); padding: 10px 20px;">💾 Guardar Loop</button> </div>
                 <div class="loop-list-container" style="max-height: 200px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; padding: 10px; background: rgba(255, 255, 255, 0.05);">
                     <ul id="savedLoopsList" style="list-style: none; padding: 0; margin: 0;">
                         <li style="color: rgba(255,255,255,0.7); text-align: center; padding: 10px;">Nenhum loop guardado ainda.</li>
@@ -114,9 +94,7 @@
                 </div>
             </div>
             <div class="playback-controls">
-                <button id="playBtn" class="play-btn" onclick="togglePlayback()">▶️ Reproduzir</button>
-                <button id="stopBtn" class="play-btn" onclick="stopPlayback()">⏹️ Parar</button>
-            </div>
+                <button id="playBtn" class="play-btn">▶️ Reproduzir</button> <button id="stopBtn" class="play-btn">⏹️ Parar</button> </div>
         </div>
     </div>
     <script src="main.js"></script>

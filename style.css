@@ -18,18 +18,19 @@ body {
 }
 
 header {
+    /* Define 2 linhas no grid */
     display: grid;
-    /* Alterado para 3 colunas para acomodar os dois botões nas extremidades */
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: 1fr; /* Uma única coluna */
+    grid-template-rows: auto auto; /* Duas linhas automáticas: uma para o h1, outra para o wrapper de botões */
     align-items: center;
     margin-bottom: 20px;
-    gap: 10px;
+    gap: 10px; /* Espaço entre as linhas do grid (h1 e botões) */
     position: relative;
 }
 
 header h1 {
-    /* Ocupa as 3 colunas para permanecer centrado */
-    grid-column: 1 / 4;
+    grid-column: 1 / 2; /* Ocupa a 1ª coluna */
+    grid-row: 1 / 2; /* Ocupa a 1ª linha */
     text-align: center;
     margin: 0;
     padding: 0;
@@ -40,12 +41,20 @@ header h1 {
     background-clip: text;
 }
 
-.instructions-btn {
-    /* Mantém-se na terceira coluna, alinhado à direita */
-    grid-column: 3 / 4;
-    justify-self: end;
-    z-index: 1;
+/* NOVO: Estilos para o wrapper dos botões no cabeçalho */
+.header-buttons-wrapper {
+    grid-column: 1 / 2; /* Ocupa a 1ª coluna */
+    grid-row: 2 / 3; /* Ocupa a 2ª linha */
+    display: flex; /* Torna-se um flex container para os botões */
+    justify-content: space-between; /* Espaça os botões para as extremidades */
+    align-items: center;
+    width: 100%; /* Ocupa a largura total da coluna do grid */
+    padding: 0 5px; /* Pequeno padding para as extremidades, se quiser um pequeno respiro */
+    box-sizing: border-box; /* Garante que o padding não adicione largura extra */
+}
 
+/* Estilos base para todos os botões de ação do cabeçalho (Metrónomo e Instruções) */
+.action-btn {
     padding: 10px 18px;
     font-size: 0.95em;
     font-weight: bold;
@@ -56,61 +65,45 @@ header h1 {
     background: linear-gradient(45deg, #3498db, #2980b9);
     color: white;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0; /* Impede que os botões encolham demasiado */
 }
 
-.instructions-btn:hover {
+.action-btn:hover {
     background: linear-gradient(45deg, #2980b9, #3498db);
     transform: translateY(-2px);
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* NOVO: Estilos para o botão Metrónomo */
-.metronome-btn {
-    /* Posiciona na primeira coluna, alinhado à esquerda */
-    grid-column: 1 / 2;
-    justify-self: start;
-    z-index: 1;
+/* Não precisamos mais de regras de grid específicas para .instructions-btn e .metronome-btn aqui,
+   pois o .header-buttons-wrapper já faz o espaçamento com flexbox.
+   Mantemos as classes apenas para identificação e, se desejar, estilos muito específicos no futuro. */
+/* .instructions-btn { } */
+/* .metronome-btn { } */
 
-    padding: 10px 18px;
-    font-size: 0.95em;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background: linear-gradient(45deg, #3498db, #2980b9); /* Mesmos estilos que o instructions-btn */
-    color: white;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-.metronome-btn:hover {
-    background: linear-gradient(45deg, #2980b9, #3498db);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
-}
 
 @media (max-width: 600px) {
     header {
-        /* Em ecrãs pequenos, volta a 1 coluna e os botões serão empilhados */
-        grid-template-columns: 1fr;
-        gap: 15px;
+        /* Em ecrãs pequenos, o layout de grid já se adapta.
+           A div `header-buttons-wrapper` vai para a 2ª linha por padrão. */
+        gap: 15px; /* Aumenta o espaçamento entre h1 e a div de botões */
         padding: 0 10px;
     }
 
     header h1 {
-        grid-column: 1 / 2; /* Ocupa a única coluna */
-        text-align: center;
         font-size: 1.8em;
     }
 
-    .instructions-btn,
-    .metronome-btn { /* Aplica a ambos os botões */
-        grid-column: 1 / 2; /* Ocupa a única coluna */
-        justify-self: center; /* Centraliza os botões */
+    .header-buttons-wrapper {
+        flex-direction: column; /* Empilha os botões verticalmente em ecrãs pequenos */
+        gap: 10px; /* Espaço entre os botões empilhados */
+        padding: 0; /* Remove padding lateral quando empilhado para ocupar 100% */
+    }
+
+    .action-btn { /* Aplica a ambos os botões */
+        width: 100%; /* Faz com que os botões ocupem a largura total */
+        box-sizing: border-box; /* Inclui padding na largura */
         padding: 8px 15px;
         font-size: 0.85em;
-        width: fit-content; /* Ajusta a largura ao conteúdo */
-        margin: 0 auto; /* Centraliza os botões que estão empilhados */
     }
 }
 
@@ -499,25 +492,27 @@ input[type="range"]::-moz-range-thumb {
     }
 
     header {
+        /* Permite que o h1 e a div de botões empilhem, já definido antes */
         grid-template-columns: 1fr;
         gap: 15px;
         padding: 0 10px;
     }
 
     header h1 {
-        grid-column: 1 / 2;
-        text-align: center;
         font-size: 1.8em;
     }
 
-    .instructions-btn,
-    .metronome-btn { /* Aplica a ambos os botões */
-        grid-column: 1 / 2;
-        justify-self: center;
+    .header-buttons-wrapper {
+        flex-direction: column; /* Empilha os botões verticalmente em ecrãs pequenos */
+        gap: 10px; /* Espaço entre os botões empilhados */
+        padding: 0; /* Remove padding lateral quando empilhado para ocupar 100% */
+    }
+
+    .action-btn { /* Aplica a ambos os botões */
+        width: 100%; /* Faz com que os botões ocupem a largura total */
+        box-sizing: border-box; /* Inclui padding na largura */
         padding: 8px 15px;
         font-size: 0.85em;
-        width: fit-content;
-        margin: 0 auto;
     }
 
     /* --- AJUSTES ESPECÍFICOS PARA OS BOTÕES DE SELEÇÃO/FECHAR FICHEIROS EM TELAS PEQUENAS --- */
@@ -584,11 +579,6 @@ input[type="range"]::-moz-range-thumb {
         width: 100%;
         box-sizing: border-box;
         margin-top: 5px;
-    }
-
-    .control-row[style="justify-content: center;"] {
-        flex-direction: column;
-        align-items: center;
     }
 
     .playback-controls {

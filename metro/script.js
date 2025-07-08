@@ -5,9 +5,7 @@ let lookahead = 25.0; // milliseconds: How often to call the scheduler (25ms)
 let scheduleAheadTime = 0.1; // seconds: How far ahead to schedule audio (100ms)
 let intervalId; // ID for the setInterval loop
 
-// --- Module Toggles ---
-let classicMetronomeEnabled = true;
-let claveDesignerEnabled = true;
+let activeMode = 'classic'; // 'classic', 'clave', 'list' (future)
 
 // --- Classic Metronome Module State ---
 let currentBPM = 120;
@@ -21,18 +19,27 @@ let currentClassicBeat = 0; // Current beat within the measure (0-indexed)
 let currentClassicSubdivision = 0; // Current subdivision within the beat (0-indexed)
 
 // --- Clave Designer Module State ---
-let syncClaveWithClassic = true; // New: Flag to sync Clave Designer with Classic Metronome's measure length
-let totalSemicolchesPerMeasure = 16; // The length of one measure in semicolches from Classic Metronome
-
 const CLAVE_OFF = 0;
 const CLAVE_BEAT_1 = 1; // Strong click type for Clave Designer
 const CLAVE_BEAT_2 = 2; // Medium click type for Clave Designer
 
 let clavePattern = new Array(16).fill(CLAVE_OFF); // 16 semicolches grid
+let claveCycleLength = 16; // NEW: User-defined length for the clave pattern loop (1 to 16)
 let nextClaveClickTime = 0.0;
 let currentClaveIndex = 0; // Current index in the 16-semicolcheia pattern
 
 // --- DOM Elements ---
+// Mode Selector Buttons
+const modeClassicBtn = document.getElementById('modeClassicBtn');
+const modeClaveBtn = document.getElementById('modeClaveBtn');
+const modeListBtn = document.getElementById('modeListBtn');
+
+// Module Containers
+const classicMetronomeModule = document.getElementById('classicMetronomeModule');
+const claveDesignerModule = document.getElementById('claveDesignerModule');
+const listMetronomeModule = document.getElementById('listMetronomeModule');
+
+// Classic Metronome Controls
 const bpmSlider = document.getElementById('bpmSlider');
 const bpmValueDisplay = document.getElementById('bpmValue');
 const timeNumeratorInput = document.getElementById('timeNumerator');
@@ -44,16 +51,17 @@ const compoundTimeGroup = document.getElementById('compoundTimeGroup');
 const subdivisionOffBtn = document.getElementById('subdivisionOffBtn');
 const subdivision2Btn = document.getElementById('subdivision2Btn');
 const subdivision3Btn = document.getElementById('subdivision3Btn');
-const subdivision4Btn = document.getElementById('subdivision4Btn'); // New: 4x subdivision
+const subdivision4Btn = document.getElementById('subdivision4Btn');
 
-const mainMetronomeToggle = document.getElementById('mainMetronomeToggle');
-const claveDesignerToggle = document.getElementById('claveDesignerToggle');
+// Clave Designer Controls
+const claveGrid = document.getElementById('claveGrid');
+const claveCycleLengthSlider = document.getElementById('claveCycleLength'); // NEW
+const claveCycleLengthValueDisplay = document.getElementById('claveCycleLengthValue'); // NEW
+
+// Global Controls
 const metronomeStatusDisplay = document.getElementById('metronomeStatus');
 const playPauseBtn = document.getElementById('playPauseBtn');
 const stopBtn = document.getElementById('stopBtn');
-
-const claveGrid = document.getElementById('claveGrid');
-const syncClaveWithClassicCheckbox = document.getElementById('syncClaveWithClassic');
 
 
 // --- Audio Generation Functions ---
@@ -102,18 +110,6 @@ function updateTimeSignature() {
     timeNumeratorValueDisplay.textContent = timeNumerator;
     timeDenominator = parseInt(timeDenominatorSelect.value);
     
-    // Determine the type of beat (e.g., 4 for quarter note, 8 for eighth note)
-    const beatsPerWholeNote = timeDenominator; // How many of the specified note value fit in a whole note
-    // For example, if timeDenominator is 4 (quarter note), one beat is 1/4 of a whole note.
-    // We need to calculate how many semicolches are in one *beat* of the time signature.
-    // A semicolcheia is 1/16 of a whole note.
-    // Semicolches per beat = (1 / timeDenominator) / (1 / 16) = 16 / timeDenominator
-    // Example: 4/4 -> 16/4 = 4 semicolches per beat.
-    // Example: 6/8 -> 16/8 = 2 semicolches per beat.
-
-    // Calculate total semicolches in the measure for Clave Designer sync
-    totalSemicolchesPerMeasure = timeNumerator * (16 / timeDenominator);
-
     // Show/hide compound time input based on numerator
     if (timeNumerator > 4 && timeNumerator !== 6 && timeNumerator !== 9 && timeNumerator !== 12) { // Typically irregular meters
         compoundTimeGroup.style.display = 'flex';
@@ -124,8 +120,6 @@ function updateTimeSignature() {
     }
 
     resetAndSchedule();
-    // Re-render clave grid to potentially adjust its visual length/markers
-    renderClaveGrid();
 }
 
 function parseCompoundSubdivisions() {
@@ -159,38 +153,14 @@ function updateSubdivisionButtons() {
     resetAndSchedule();
 }
 
-// --- UI Update & Logic Functions (Global) ---
+// --- UI Update & Logic Functions (Clave Designer) ---
 
-function updateModuleToggles() {
-    mainMetronomeToggle.classList.toggle('selected', classicMetronomeEnabled);
-    mainMetronomeToggle.textContent = classicMetronomeEnabled ? 'Metrónomo Clássico: ON ✅' : 'Metrónomo Clássico: OFF ❌';
-
-    claveDesignerToggle.classList.toggle('selected', claveDesignerEnabled);
-    claveDesignerToggle.textContent = claveDesignerEnabled ? 'Clave Designer: ON ✅' : 'Clave Designer: OFF ❌';
-
+function updateClaveCycleLength() {
+    claveCycleLength = parseInt(claveCycleLengthSlider.value);
+    claveCycleLengthValueDisplay.textContent = claveCycleLength;
+    renderClaveGrid(); // Re-render to show active/inactive points
     resetAndSchedule();
 }
-
-function updateMetronomeStatus() {
-    if (isPlaying) {
-        let statusText = '';
-        if (classicMetronomeEnabled) {
-            statusText += `Clássico: ${currentClassicBeat + 1}/${timeNumerator}`;
-            if (subdivisionType > 1) {
-                statusText += `.${currentClassicSubdivision + 1}`;
-            }
-        }
-        if (claveDesignerEnabled) {
-            if (statusText) statusText += ' | ';
-            statusText += `Clave: ${currentClaveIndex + 1}/${syncClaveWithClassic ? totalSemicolchesPerMeasure : 16}`;
-        }
-        metronomeStatusDisplay.textContent = statusText;
-    } else {
-        metronomeStatusDisplay.textContent = '';
-    }
-}
-
-// --- Clave Designer Logic ---
 
 // Initializes the clave pattern with default strong beats based on 4/4 (for 16 semicolches)
 function initializeClavePatternDefault() {
@@ -222,32 +192,33 @@ function renderClaveGrid() {
             point.textContent = '';
         }
 
-        // Visually gray out points beyond the current measure length if synced
-        if (syncClaveWithClassic && i >= totalSemicolchesPerMeasure) {
-            point.style.opacity = '0.3';
-            point.style.pointerEvents = 'none'; // Make them unclickable
+        // Visually gray out points beyond the current claveCycleLength
+        if (i >= claveCycleLength) {
+            point.classList.add('inactive-clave-point');
         } else {
-            point.style.opacity = '1';
-            point.style.pointerEvents = 'auto';
+            point.classList.remove('inactive-clave-point');
         }
 
         // Toggle pattern value on click
         point.addEventListener('click', () => {
-            if (clavePattern[i] === CLAVE_OFF) {
-                clavePattern[i] = CLAVE_BEAT_1;
-                point.classList.remove('beat-0');
-                point.classList.add('beat-1');
-                point.textContent = '1';
-            } else if (clavePattern[i] === CLAVE_BEAT_1) {
-                clavePattern[i] = CLAVE_BEAT_2;
-                point.classList.remove('beat-1');
-                point.classList.add('beat-2');
-                point.textContent = '•';
-            } else {
-                clavePattern[i] = CLAVE_OFF;
-                point.classList.remove('beat-2');
-                point.classList.add('beat-0');
-                point.textContent = '';
+            // Only allow clicking on active points
+            if (i < claveCycleLength) {
+                if (clavePattern[i] === CLAVE_OFF) {
+                    clavePattern[i] = CLAVE_BEAT_1;
+                    point.classList.remove('beat-0');
+                    point.classList.add('beat-1');
+                    point.textContent = '1';
+                } else if (clavePattern[i] === CLAVE_BEAT_1) {
+                    clavePattern[i] = CLAVE_BEAT_2;
+                    point.classList.remove('beat-1');
+                    point.classList.add('beat-2');
+                    point.textContent = '•';
+                } else {
+                    clavePattern[i] = CLAVE_OFF;
+                    point.classList.remove('beat-2');
+                    point.classList.add('beat-0');
+                    point.textContent = '';
+                }
             }
         });
 
@@ -255,16 +226,37 @@ function renderClaveGrid() {
     }
 }
 
+// --- Global UI Update (Status Display) ---
+function updateMetronomeStatus() {
+    if (isPlaying) {
+        let statusText = '';
+        if (activeMode === 'classic') {
+            statusText += `Clássico: ${currentClassicBeat + 1}/${timeNumerator}`;
+            if (subdivisionType > 1) {
+                statusText += `.${currentClassicSubdivision + 1}`;
+            }
+        } else if (activeMode === 'clave') {
+            statusText += `Clave: ${currentClaveIndex + 1}/${claveCycleLength}`;
+        } else if (activeMode === 'list') {
+            statusText += `Lista: (Em Breve)`;
+        }
+        metronomeStatusDisplay.textContent = statusText;
+    } else {
+        metronomeStatusDisplay.textContent = '';
+    }
+}
+
 // --- Main Scheduling Loop ---
 
 function scheduler() {
-    // Call individual module schedulers if enabled
-    if (classicMetronomeEnabled) {
+    // Only schedule the active module
+    if (activeMode === 'classic') {
         scheduleClassicMetronome();
-    }
-    if (claveDesignerEnabled) {
+    } else if (activeMode === 'clave') {
         scheduleClaveDesigner();
     }
+    // No scheduling for 'list' mode yet, as it's not implemented
+    
     updateMetronomeStatus(); // Update the UI status display
 }
 
@@ -335,8 +327,6 @@ function scheduleClassicMetronome() {
 function scheduleClaveDesigner() {
     const secondsPerSemicolcheia = (60.0 / currentBPM) / 4; // One semicolcheia duration based on BPM (quarter note basis)
 
-    const actualClaveLoopLength = syncClaveWithClassic ? totalSemicolchesPerMeasure : 16;
-
     while (nextClaveClickTime < audioContext.currentTime + scheduleAheadTime) {
         let frequency;
         let volume = 0.0;
@@ -359,12 +349,13 @@ function scheduleClaveDesigner() {
             volume = 0.5;
         }
         
-        if (volume > 0.0) { // Only play if a sound is defined
+        // Only play sound if the current index is within the active cycle length
+        if (currentClaveIndex < claveCycleLength && volume > 0.0) {
             createClickSound(frequency, duration, volume, nextClaveClickTime);
         }
 
         // Add active-beat class to the current point, only if it's part of the active loop
-        if (currentClaveIndex < actualClaveLoopLength) {
+        if (currentClaveIndex < claveCycleLength) {
             const currentActivePoint = claveGrid.querySelector(`.clave-point[data-index="${currentClaveIndex}"]`);
             if (currentActivePoint) {
                 currentActivePoint.classList.add('active-beat');
@@ -375,21 +366,17 @@ function scheduleClaveDesigner() {
         nextClaveClickTime += secondsPerSemicolcheia;
         currentClaveIndex++;
         
-        if (currentClaveIndex >= actualClaveLoopLength) {
+        // Loop back to start if we exceed the defined cycle length
+        if (currentClaveIndex >= claveCycleLength) {
             currentClaveIndex = 0; // Loop back to start
         }
     }
 }
 
-// --- Global Metronome Controls ---
+// --- Global Metronome Controls (Play/Pause/Stop) ---
 
 async function startMetronome() {
     if (isPlaying) return;
-
-    if (!classicMetronomeEnabled && !claveDesignerEnabled) {
-        alert('Por favor, ative o Metrónomo Clássico ou o Clave Designer para iniciar.');
-        return;
-    }
 
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -409,18 +396,20 @@ async function startMetronome() {
     isPlaying = true;
     playPauseBtn.textContent = '⏸️ Pausar';
 
-    // Reset next click times and current indices for both modules
-    nextClassicClickTime = audioContext.currentTime;
-    currentClassicBeat = 0;
-    currentClassicSubdivision = 0;
-
-    nextClaveClickTime = audioContext.currentTime;
-    currentClaveIndex = 0;
+    // Reset next click times and current indices for the active module
+    if (activeMode === 'classic') {
+        nextClassicClickTime = audioContext.currentTime;
+        currentClassicBeat = 0;
+        currentClassicSubdivision = 0;
+    } else if (activeMode === 'clave') {
+        nextClaveClickTime = audioContext.currentTime;
+        currentClaveIndex = 0;
+    }
 
     updateMetronomeStatus();
 
     intervalId = setInterval(scheduler, lookahead);
-    console.log('Metronome started.');
+    console.log('Metronome started in mode:', activeMode);
 }
 
 function stopMetronome() {
@@ -459,28 +448,60 @@ function resetAndSchedule() {
     }
 }
 
+// --- Mode Switching Logic ---
+function switchMode(newMode) {
+    if (activeMode === newMode) return; // Already in this mode
+
+    stopMetronome(); // Stop any currently playing metronome
+
+    // Hide all modules
+    classicMetronomeModule.classList.remove('active-module');
+    claveDesignerModule.classList.remove('active-module');
+    listMetronomeModule.classList.remove('active-module');
+
+    // Remove 'selected' class from all mode buttons
+    modeClassicBtn.classList.remove('selected');
+    modeClaveBtn.classList.remove('selected');
+    modeListBtn.classList.remove('selected');
+
+    // Show the new active module and mark its button as selected
+    if (newMode === 'classic') {
+        classicMetronomeModule.classList.add('active-module');
+        modeClassicBtn.classList.add('selected');
+    } else if (newMode === 'clave') {
+        claveDesignerModule.classList.add('active-module');
+        modeClaveBtn.classList.add('selected');
+    } else if (newMode === 'list') {
+        listMetronomeModule.classList.add('active-module');
+        modeListBtn.classList.add('selected');
+    }
+
+    activeMode = newMode;
+    console.log('Switched to mode:', activeMode);
+    // No need to call resetAndSchedule() here, as startMetronome() will be called manually by user
+}
+
+
 // --- Event Listeners ---
+
+// Mode Selector Buttons
+modeClassicBtn.addEventListener('click', () => switchMode('classic'));
+modeClaveBtn.addEventListener('click', () => switchMode('clave'));
+modeListBtn.addEventListener('click', () => switchMode('list'));
 
 // Classic Metronome Controls
 bpmSlider.addEventListener('input', updateBPMDisplay);
 timeNumeratorInput.addEventListener('input', updateTimeSignature);
 timeDenominatorSelect.addEventListener('change', updateTimeSignature);
-compoundSubdivisionsInput.addEventListener('change', parseCompoundSubdivisions); // Use 'change' to parse when focus leaves
+compoundSubdivisionsInput.addEventListener('change', parseCompoundSubdivisions);
 
 subdivisionOffBtn.addEventListener('click', () => { subdivisionType = 1; updateSubdivisionButtons(); });
 subdivision2Btn.addEventListener('click', () => { subdivisionType = 2; updateSubdivisionButtons(); });
 subdivision3Btn.addEventListener('click', () => { subdivisionType = 3; updateSubdivisionButtons(); });
-subdivision4Btn.addEventListener('click', () => { subdivisionType = 4; updateSubdivisionButtons(); }); // New: 4x
+subdivision4Btn.addEventListener('click', () => { subdivisionType = 4; updateSubdivisionButtons(); });
 
-// Module Toggles
-mainMetronomeToggle.addEventListener('click', () => {
-    classicMetronomeEnabled = !classicMetronomeEnabled;
-    updateModuleToggles();
-});
-claveDesignerToggle.addEventListener('click', () => {
-    claveDesignerEnabled = !claveDesignerEnabled;
-    updateModuleToggles();
-});
+// Clave Designer Controls
+claveCycleLengthSlider.addEventListener('input', updateClaveCycleLength);
 
 // Global Play/Stop
 playPauseBtn.addEventListener('click', toggleMetronome);
@@ -498,22 +519,20 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Clave Designer Sync Toggle
-syncClaveWithClassicCheckbox.addEventListener('change', () => {
-    syncClaveWithClassic = syncClaveWithClassicCheckbox.checked;
-    renderClaveGrid(); // Re-render grid to show/hide inactive points
-    resetAndSchedule();
-});
-
 
 // --- Initialization on Page Load ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Initial display updates
+    // Initial display updates for Classic Metronome
     updateBPMDisplay();
-    updateTimeSignature(); // This also calculates totalSemicolchesPerMeasure
+    updateTimeSignature();
     updateSubdivisionButtons();
-    updateModuleToggles();
+
+    // Initial display updates for Clave Designer
+    updateClaveCycleLength(); // This also calls renderClaveGrid()
     initializeClavePatternDefault(); // Set a default pattern for Clave Designer
-    renderClaveGrid(); // Render the Clave Designer grid
+    renderClaveGrid(); // Ensure grid is rendered initially
+
+    // Set initial active mode (Classic Metronome)
+    switchMode('classic');
     updateMetronomeStatus();
 });

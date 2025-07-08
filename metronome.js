@@ -1,51 +1,50 @@
 // --- Variáveis Globais do Metrónomo ---
 let audioContext;
-let isPlaying = false;
+
+// Estado geral
+let isPlaying = false; // Indica se qualquer um dos metrónomos está a tocar
+let lookahead = 25.0; // mseg: Quanto tempo para olhar à frente no agendamento
+let scheduleAheadTime = 0.1; // Segundos: Quantos segundos para agendar no futuro
+let intervalId; // ID do setInterval para o loop de agendamento principal
+
+// --- Metrónomo Principal (Tradicional) ---
+let mainMetronomeEnabled = true; // Permite ligar/desligar o metrónomo principal
 let currentBPM = 120;
 let beatsPerMeasure = 4; // Tempos por compasso (ex: 4 para 4/4)
 let subdivision = 1; // 1 = sem subdivisão, 2 = 8as, 3 = 12as
 
-let nextClickTime = 0.0; // Próximo tempo de agendamento em segundos do AudioContext
-let currentPatternIndex = 0; // NOVO: Índice atual no clavePattern (0 a 15)
-let scheduleAheadTime = 0.1; // Quantos segundos para agendar no futuro
-let lookahead = 25.0; // mseg: Quanto tempo para olhar à frente
-let intervalId; // ID do setInterval para o agendamento
+let nextMainClickTime = 0.0; // Próximo tempo de agendamento para o metrónomo principal
+let currentMainBeat = 0; // Batida atual no compasso (0-indexado)
+let currentMainSubdivision = 0; // Subdivisão atual dentro da batida (0-indexado)
+
+// --- Clave Designer ---
+let claveDesignerEnabled = true; // Permite ligar/desligar o clave designer
+
+let nextClaveClickTime = 0.0; // Próximo tempo de agendamento para o Clave Designer
+let currentClaveIndex = 0; // Índice atual no clavePattern (0 a 15)
 
 // Array para o Clave Designer: 16 elementos representando semicolcheias
 // 0: Off, 1: Beat 1 (Forte), 2: Beat 2 (Médio)
 const CLAVE_OFF = 0;
-const CLAVE_BEAT_1 = 1; // Para a batida principal do tempo (ex: o 1 no 1-2-3-4)
-const CLAVE_BEAT_2 = 2; // Para outras batidas ou subdivisões marcadas
+const CLAVE_BEAT_1 = 1; // Som forte para a clave
+const CLAVE_BEAT_2 = 2; // Som médio para a clave
 
 let clavePattern = []; // Inicializado em initializeClavePattern
 
-// Ajusta o padrão padrão para ser flexível com beatsPerMeasure
-function initializeClavePattern() {
-    clavePattern = new Array(16).fill(CLAVE_OFF); // Começa com tudo off
-    // Define a primeira batida de cada tempo como CLAVE_BEAT_1 ou CLAVE_BEAT_2
-    const semicolchesPerBeat = 16 / beatsPerMeasure; // Ex: 16/4 = 4 semicolches por batida
-
-    for (let i = 0; i < beatsPerMeasure; i++) {
-        const startIndex = Math.floor(i * semicolchesPerBeat);
-        if (i === 0) {
-            // A primeira batida do compasso é sempre a mais forte
-            clavePattern[startIndex] = CLAVE_BEAT_1;
-        } else {
-            // As outras batidas principais do compasso são CLAVE_BEAT_2
-            clavePattern[startIndex] = CLAVE_BEAT_2;
-        }
-    }
-}
-// initializeClavePattern(); // Chamada inicial movida para DOMContentLoaded para garantir elementos carregados
 
 // --- Elementos do DOM ---
 const bpmSlider = document.getElementById('bpmSlider');
 const bpmValueDisplay = document.getElementById('bpmValue');
 const beatsPerMeasureSlider = document.getElementById('beatsPerMeasureSlider');
 const beatsPerMeasureValueDisplay = document.getElementById('beatsPerMeasureValue');
+
 const subdivisionOffBtn = document.getElementById('subdivisionOffBtn');
 const subdivision2Btn = document.getElementById('subdivision2Btn');
 const subdivision3Btn = document.getElementById('subdivision3Btn');
+
+const mainMetronomeToggle = document.getElementById('mainMetronomeToggle'); // NOVO: Toggle para o Metrónomo Principal
+const claveDesignerToggle = document.getElementById('claveDesignerToggle'); // NOVO: Toggle para o Clave Designer
+
 const metronomeStatusDisplay = document.getElementById('metronomeStatus');
 const playPauseBtn = document.getElementById('playPauseBtn');
 const stopBtn = document.getElementById('stopBtn');
@@ -55,23 +54,23 @@ const claveGrid = document.getElementById('claveGrid');
 // --- Funções de Criação de Som (Web Audio API) ---
 
 // Gera um som de clique simples usando um OscillatorNode
-function createClickSound(frequency, duration, volume) {
+function createClickSound(frequency, duration, volume, startTime) {
     if (!audioContext) return;
 
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
     oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(frequency, startTime);
 
-    gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+    gainNode.gain.setValueAtTime(volume, startTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
 
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + duration);
+    oscillator.start(startTime);
+    oscillator.stop(startTime + duration);
 
     oscillator.onended = () => {
         oscillator.disconnect();
@@ -84,12 +83,8 @@ function createClickSound(frequency, duration, volume) {
 function updateBPMDisplay() {
     currentBPM = parseInt(bpmSlider.value);
     bpmValueDisplay.textContent = currentBPM;
-    // Se estiver a tocar, reinicia o agendamento para aplicar o novo BPM
-    if (isPlaying) {
-        clearInterval(intervalId);
-        nextClickTime = audioContext.currentTime; // Reinicia o tempo para o próximo clique
-        currentPatternIndex = 0; // Reinicia o padrão para evitar saltos estranhos
-        intervalId = setInterval(scheduler, lookahead);
+    if (isPlaying) { // Se estiver a tocar, reinicia o agendamento
+        resetAndSchedule();
     }
 }
 
@@ -99,11 +94,8 @@ function updateBeatsPerMeasureDisplay() {
     // Quando os tempos por compasso mudam, o padrão do clave designer pode precisar ser re-inicializado
     initializeClavePattern();
     renderClaveGrid(); // Re-renderiza a grelha
-    if (isPlaying) { // Se o metrónomo estiver a tocar, reinicia para aplicar o novo compasso
-        clearInterval(intervalId);
-        nextClickTime = audioContext.currentTime;
-        currentPatternIndex = 0;
-        intervalId = setInterval(scheduler, lookahead);
+    if (isPlaying) { // Se estiver a tocar, reinicia o agendamento
+        resetAndSchedule();
     }
 }
 
@@ -116,26 +108,39 @@ function updateSubdivisionButtons() {
     else if (subdivision === 2) subdivision2Btn.classList.add('selected');
     else if (subdivision === 3) subdivision3Btn.classList.add('selected');
 
-    // Se estiver a tocar, reinicia o agendamento para aplicar a nova subdivisão
+    if (isPlaying && mainMetronomeEnabled) {
+        resetAndSchedule();
+    }
+}
+
+function updateMetronomeToggles() {
+    mainMetronomeToggle.textContent = mainMetronomeEnabled ? 'Metrónomo: ON ✅' : 'Metrónomo: OFF ❌';
+    mainMetronomeToggle.style.background = mainMetronomeEnabled ? 'linear-gradient(45deg, #1abc9c, #16a085)' : 'linear-gradient(45deg, #6c757d, #5a6268)';
+
+    claveDesignerToggle.textContent = claveDesignerEnabled ? 'Clave Designer: ON ✅' : 'Clave Designer: OFF ❌';
+    claveDesignerToggle.style.background = claveDesignerEnabled ? 'linear-gradient(45deg, #1abc9c, #16a085)' : 'linear-gradient(45deg, #6c757d, #5a6268)';
+
+    // Se estiver a tocar, reinicia o agendamento para refletir as mudanças
     if (isPlaying) {
-        clearInterval(intervalId);
-        nextClickTime = audioContext.currentTime;
-        currentPatternIndex = 0;
-        intervalId = setInterval(scheduler, lookahead);
+        resetAndSchedule();
     }
 }
 
 function updateMetronomeStatus() {
     if (isPlaying) {
-        // Calcula a batida principal e subdivisão para exibição de status
-        const semicolchesPerBeat = 16 / beatsPerMeasure;
-        const currentPrimaryBeat = Math.floor(currentPatternIndex / semicolchesPerBeat) + 1;
-        
-        // Calcula a subdivisão atual dentro da batida principal
-        const currentSubBeatIndex = currentPatternIndex % semicolchesPerBeat;
-        const subIndexInDisplay = Math.floor(currentSubBeatIndex / (semicolchesPerBeat / subdivision)) + 1;
-
-        metronomeStatusDisplay.textContent = `Compasso: ${currentPrimaryBeat}/${beatsPerMeasure} Batida: ${subIndexInDisplay}/${subdivision}`;
+        // Exibição mais complexa para mostrar ambas as camadas
+        let statusText = '';
+        if (mainMetronomeEnabled) {
+            statusText += `M: ${currentMainBeat + 1}/${beatsPerMeasure}`;
+            if (subdivision > 1) {
+                statusText += `.${currentMainSubdivision + 1}`;
+            }
+        }
+        if (claveDesignerEnabled) {
+            if (statusText) statusText += ' | ';
+            statusText += `C: ${currentClaveIndex + 1}/16`;
+        }
+        metronomeStatusDisplay.textContent = statusText;
     } else {
         metronomeStatusDisplay.textContent = '';
     }
@@ -143,15 +148,29 @@ function updateMetronomeStatus() {
 
 // --- Clave Designer ---
 
+// Inicializa o padrão da clave com as batidas principais
+function initializeClavePattern() {
+    clavePattern = new Array(16).fill(CLAVE_OFF); // Começa com tudo off
+    const semicolchesPerBeat = 16 / beatsPerMeasure;
+
+    for (let i = 0; i < beatsPerMeasure; i++) {
+        const startIndex = Math.floor(i * semicolchesPerBeat);
+        if (i === 0) {
+            clavePattern[startIndex] = CLAVE_BEAT_1;
+        } else {
+            clavePattern[startIndex] = CLAVE_BEAT_2;
+        }
+    }
+}
+
 function renderClaveGrid() {
-    claveGrid.innerHTML = ''; // Limpa a grelha existente
+    claveGrid.innerHTML = '';
 
     for (let i = 0; i < 16; i++) {
         const point = document.createElement('div');
         point.classList.add('clave-point');
-        point.dataset.index = i; // Armazena o índice para referência
+        point.dataset.index = i;
 
-        // Define a classe visual com base no padrão
         if (clavePattern[i] === CLAVE_BEAT_1) {
             point.classList.add('beat-1');
             point.textContent = '1';
@@ -163,20 +182,19 @@ function renderClaveGrid() {
             point.textContent = '';
         }
 
-        // Lógica para alternar o estado do ponto ao clicar
         point.addEventListener('click', () => {
             if (clavePattern[i] === CLAVE_OFF) {
-                clavePattern[i] = CLAVE_BEAT_1; // Off -> Forte
+                clavePattern[i] = CLAVE_BEAT_1;
                 point.classList.remove('beat-0');
                 point.classList.add('beat-1');
                 point.textContent = '1';
             } else if (clavePattern[i] === CLAVE_BEAT_1) {
-                clavePattern[i] = CLAVE_BEAT_2; // Forte -> Médio
+                clavePattern[i] = CLAVE_BEAT_2;
                 point.classList.remove('beat-1');
                 point.classList.add('beat-2');
                 point.textContent = '•';
             } else {
-                clavePattern[i] = CLAVE_OFF; // Médio -> Off
+                clavePattern[i] = CLAVE_OFF;
                 point.classList.remove('beat-2');
                 point.classList.add('beat-0');
                 point.textContent = '';
@@ -188,31 +206,71 @@ function renderClaveGrid() {
 }
 
 
-// --- Funções de Controlo do Metrónomo ---
+// --- Funções de Agendamento ---
 
-// Função principal de agendamento do metrónomo
+// Agendador principal que chama os agendadores das duas camadas
 function scheduler() {
-    // Enquanto houver eventos para agendar (no futuro próximo)
-    while (nextClickTime < audioContext.currentTime + scheduleAheadTime) {
-        let frequency = 440; // Frequência padrão (A4)
-        let volume = 0.0; // Começa com volume 0 e ajusta se for para tocar
+    if (mainMetronomeEnabled) {
+        scheduleMainMetronome();
+    }
+    if (claveDesignerEnabled) {
+        scheduleClaveDesigner();
+    }
+    updateMetronomeStatus(); // Atualiza o status visual
+}
 
-        const claveValue = clavePattern[currentPatternIndex];
+// Agendador para o Metrónomo Principal
+function scheduleMainMetronome() {
+    // Calcula a duração de uma subdivisão na batida principal
+    const secondsPerBeat = 60.0 / currentBPM;
+    const secondsPerSubdivision = secondsPerBeat / subdivision;
 
-        if (claveValue === CLAVE_BEAT_1) {
-            frequency = 880; // Tom mais alto
-            volume = 0.8;
-        } else if (claveValue === CLAVE_BEAT_2) {
-            frequency = 440;
-            volume = 0.6;
-        } else { // CLAVE_OFF
-            volume = 0.0; // Garante que não toca som
+    while (nextMainClickTime < audioContext.currentTime + scheduleAheadTime) {
+        let frequency;
+        let volume;
+        let duration = 0.03; // Duração do clique
+
+        if (currentMainSubdivision === 0) { // Batida principal ou primeira subdivisão
+            if (currentMainBeat === 0) { // Primeira batida do compasso
+                frequency = 1000; // Som mais agudo e forte
+                volume = 0.9;
+                duration = 0.05;
+            } else { // Outras batidas principais
+                frequency = 800; // Som médio
+                volume = 0.7;
+            }
+        } else { // Subdivisões
+            frequency = 600; // Som mais suave
+            volume = 0.5;
         }
 
-        // Toca o som APENAS se o volume for maior que 0
-        if (volume > 0.0) {
-            createClickSound(frequency, 0.05, volume); // Toca o som agendado
+        createClickSound(frequency, duration, volume, nextMainClickTime);
+
+        // Avança para a próxima subdivisão
+        nextMainClickTime += secondsPerSubdivision;
+        currentMainSubdivision++;
+        if (currentMainSubdivision >= subdivision) {
+            currentMainSubdivision = 0;
+            currentMainBeat++;
+            if (currentMainBeat >= beatsPerMeasure) {
+                currentMainBeat = 0; // Reinicia o compasso
+            }
         }
+    }
+}
+
+// Agendador para o Clave Designer
+function scheduleClaveDesigner() {
+    // Calcula a duração de cada semicolcheia (1/4 de semínima)
+    const secondsPerSeminima = 60.0 / currentBPM; // Duração de uma semínima
+    const secondsPerSemicolcheia = secondsPerSeminima / 4; // Duração de uma semicolcheia
+
+    while (nextClaveClickTime < audioContext.currentTime + scheduleAheadTime) {
+        let frequency;
+        let volume = 0.0; // Assume volume 0, só ativa se houver som
+        let duration = 0.03;
+
+        const claveValue = clavePattern[currentClaveIndex];
 
         // Remove o indicador visual da batida anterior
         const prevActivePoint = claveGrid.querySelector('.clave-point.active-beat');
@@ -220,59 +278,45 @@ function scheduler() {
             prevActivePoint.classList.remove('active-beat');
         }
 
-        // Adiciona o indicador visual à batida atual
-        const currentActivePoint = claveGrid.querySelector(`.clave-point[data-index="${currentPatternIndex}"]`);
+        if (claveValue === CLAVE_BEAT_1) {
+            frequency = 300; // Som grave e forte para a clave
+            volume = 0.7;
+            duration = 0.05;
+        } else if (claveValue === CLAVE_BEAT_2) {
+            frequency = 200; // Som grave e médio para a clave
+            volume = 0.5;
+        }
+
+        if (volume > 0.0) { // Só toca se houver som definido no padrão
+            createClickSound(frequency, duration, volume, nextClaveClickTime);
+        }
+
+        // Adiciona o indicador visual à batida atual do clave designer
+        const currentActivePoint = claveGrid.querySelector(`.clave-point[data-index="${currentClaveIndex}"]`);
         if (currentActivePoint) {
             currentActivePoint.classList.add('active-beat');
         }
 
-        advanceMetronomeTime(); // Prepara para a próxima semicolcheia
+        // Avança para a próxima semicolcheia no padrão do clave designer
+        nextClaveClickTime += secondsPerSemicolcheia;
+        currentClaveIndex++;
+        if (currentClaveIndex >= 16) {
+            currentClaveIndex = 0; // Reinicia o padrão
+        }
     }
 }
 
-// Avança a lógica do metrónomo para a próxima "semicolcheia" baseada no BPM e subdivisão
-function advanceMetronomeTime() {
-    // Calcula a duração de uma semicolcheia (1/16 de um compasso de 4/4)
-    // Se o BPM é 120, há 2 batidas por segundo.
-    // Em 4/4, 1 batida = 1 semínima.
-    // 1 semínima = 4 semicolcheias.
-    // Segundos por semínima = 60 / BPM.
-    // Segundos por semicolcheia = (60 / BPM) / 4.
-    const secondsPerSemicolcheia = (60.0 / currentBPM) / 4;
-    
-    // A subdivisão afeta quantas "sub-batidas" existem por cada batida principal.
-    // O Clave Designer já opera em semicolcheias. Se tivermos subdivisão 2x,
-    // significa que queremos 2 "cliques" para cada batida principal.
-    // Se a subdivisão for 3x, queremos 3 cliques.
-    // Isso afeta a cadência com que percorremos o `clavePattern`.
-    
-    // Ajustamos a cadência de avanço do 'nextClickTime' e do 'currentPatternIndex'
-    // com base na subdivisão e nos tempos por compasso.
-    
-    // Total de 'clicks' que o metrónomo fará por compasso base (semicolcheias)
-    const totalPatternLength = 16; // O nosso clavePattern tem 16 posições
 
-    // O "intervalo" de tempo que cada posição do padrão representa.
-    // Se subdivision=1, um avanço é 1 semicolcheia.
-    // Se subdivision=2, um avanço é 1 semicolcheia / 2 (para adicionar cliques no meio).
-    // Se subdivision=3, um avanço é 1 semicolcheia / 3 (para adicionar cliques no meio).
-    const actualSecondsPerClick = secondsPerSemicolcheia / subdivision;
-
-    nextClickTime += actualSecondsPerClick; // Avança o tempo de agendamento
-
-    // Avança o índice do padrão
-    currentPatternIndex++;
-    if (currentPatternIndex >= totalPatternLength) {
-        currentPatternIndex = 0; // Reinicia o padrão
-    }
-    updateMetronomeStatus();
-}
-
+// --- Funções de Controlo Principal do Metrónomo ---
 
 async function startMetronome() {
     if (isPlaying) return;
 
-    // Inicializa ou retoma o AudioContext
+    if (!mainMetronomeEnabled && !claveDesignerEnabled) {
+        alert('Por favor, ative o Metrónomo Principal ou o Clave Designer para iniciar.');
+        return;
+    }
+
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         console.log('AudioContext Metrónomo inicializado. Estado:', audioContext.state);
@@ -290,13 +334,18 @@ async function startMetronome() {
 
     isPlaying = true;
     playPauseBtn.textContent = '⏸️ Pausar';
-    nextClickTime = audioContext.currentTime; // Começa a agendar a partir de agora
-    currentPatternIndex = 0; // Garante que começa do início do padrão
-    updateMetronomeStatus(); // Atualiza o status inicial
 
-    // Inicia o loop de agendamento
-    // O scheduler é chamado a cada 'lookahead' milissegundos para agendar cliques futuros.
-    // Isso garante agendamento preciso sem usar setTimeout/setInterval para cada clique.
+    // Reinicia os tempos e índices de ambas as camadas
+    nextMainClickTime = audioContext.currentTime;
+    currentMainBeat = 0;
+    currentMainSubdivision = 0;
+
+    nextClaveClickTime = audioContext.currentTime;
+    currentClaveIndex = 0;
+
+    updateMetronomeStatus();
+
+    // Inicia o loop de agendamento principal
     intervalId = setInterval(scheduler, lookahead);
     console.log('Metrónomo iniciado.');
 }
@@ -306,10 +355,11 @@ function stopMetronome() {
 
     isPlaying = false;
     clearInterval(intervalId); // Para o loop de agendamento
+
     playPauseBtn.textContent = '▶️ Iniciar';
-    updateMetronomeStatus(); // Limpa o status
-    
-    // Remove o indicador visual da batida
+    updateMetronomeStatus();
+
+    // Remove indicadores visuais
     const activePoint = claveGrid.querySelector('.clave-point.active-beat');
     if (activePoint) {
         activePoint.classList.remove('active-beat');
@@ -318,7 +368,6 @@ function stopMetronome() {
     console.log('Metrónomo parado.');
 }
 
-// NOVO: Função para alternar o metrónomo
 function toggleMetronome() {
     if (isPlaying) {
         stopMetronome();
@@ -327,6 +376,13 @@ function toggleMetronome() {
     }
 }
 
+// Reinicia o agendamento (chamado após mudanças em BPM, compasso, etc.)
+function resetAndSchedule() {
+    if (isPlaying) {
+        stopMetronome(); // Para o agendador atual
+        startMetronome(); // Inicia um novo agendador com os novos parâmetros
+    }
+}
 
 // --- Event Listeners ---
 
@@ -337,8 +393,19 @@ subdivisionOffBtn.addEventListener('click', () => { subdivision = 1; updateSubdi
 subdivision2Btn.addEventListener('click', () => { subdivision = 2; updateSubdivisionButtons(); });
 subdivision3Btn.addEventListener('click', () => { subdivision = 3; updateSubdivisionButtons(); });
 
-playPauseBtn.addEventListener('click', toggleMetronome); // Usa a nova função de toggle
+mainMetronomeToggle.addEventListener('click', () => {
+    mainMetronomeEnabled = !mainMetronomeEnabled;
+    updateMetronomeToggles();
+});
+
+claveDesignerToggle.addEventListener('click', () => {
+    claveDesignerEnabled = !claveDesignerEnabled;
+    updateMetronomeToggles();
+});
+
+playPauseBtn.addEventListener('click', toggleMetronome);
 stopBtn.addEventListener('click', stopMetronome);
+
 
 // NOVO: Event Listener para a tecla Espaço
 document.addEventListener('keydown', (e) => {
@@ -356,11 +423,37 @@ document.addEventListener('keydown', (e) => {
 
 // --- Inicialização ao Carregar a Página ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Adiciona os novos toggles ao HTML se não existirem
+    const metronomeControlsDiv = document.querySelector('.metronome-controls');
+    if (!document.getElementById('mainMetronomeToggle')) {
+        const mainToggle = document.createElement('button');
+        mainToggle.id = 'mainMetronomeToggle';
+        mainToggle.textContent = 'Metrónomo: ON ✅';
+        mainToggle.className = 'toggle-btn'; // Adiciona uma classe para styling futuro se quiseres
+        mainToggle.addEventListener('click', () => {
+            mainMetronomeEnabled = !mainMetronomeEnabled;
+            updateMetronomeToggles();
+        });
+        metronomeControlsDiv.insertBefore(mainToggle, playPauseBtn);
+        mainMetronomeToggle = mainToggle; // Atualiza a referência DOM global
+    }
+    if (!document.getElementById('claveDesignerToggle')) {
+        const claveToggle = document.createElement('button');
+        claveToggle.id = 'claveDesignerToggle';
+        claveToggle.textContent = 'Clave Designer: ON ✅';
+        claveToggle.className = 'toggle-btn';
+        claveToggle.addEventListener('click', () => {
+            claveDesignerEnabled = !claveDesignerEnabled;
+            updateMetronomeToggles();
+        });
+        metronomeControlsDiv.insertBefore(claveToggle, playPauseBtn);
+        claveDesignerToggle = claveToggle; // Atualiza a referência DOM global
+    }
+
+    // Inicializa o estado visual dos controlos
     updateBPMDisplay();
     updateBeatsPerMeasureDisplay(); // Isto chama initializeClavePattern() e renderClaveGrid()
     updateSubdivisionButtons();
+    updateMetronomeToggles(); // Garante que os toggles estão corretos no início
     updateMetronomeStatus();
-    // renderClaveGrid(); // Já é chamado por updateBeatsPerMeasureDisplay
-    initializeClavePattern(); // Garante que o padrão é inicializado antes de qualquer uso
-    renderClaveGrid(); // Renderiza a grelha inicial no carregamento
 });

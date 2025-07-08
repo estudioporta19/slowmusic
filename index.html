@@ -362,86 +362,70 @@
     
 </head>
 <body>
-    <div class="container">
-        <h1>🎵 Music Practice Buddy</h1>
+    <div id="appContainer"> <h1>🎵 Music Practice Buddy</h1>
         
-        <div class="file-input-container">
-            <input type="file" id="audioFile" class="file-input" accept="audio/*" multiple>
-            <label for="audioFile" class="file-label">📁 Selecionar Ficheiros de Áudio</label>
-        </div>
-        
-        <div id="fileListContainer" class="file-list-container" style="display: none;">
-            </div>
-
-        <div id="fileInfo" class="file-info" style="display: none;">
-            <div id="fileName"></div>
-            <div id="loadingStatus" class="loading">A carregar...</div>
-        </div>
-        
-        <div id="controls" class="controls">
-            <div class="control-group">
-                <h3>🏃 Controlo de Velocidade</h3>
-                <div class="control-row">
-                    <label>Velocidade:</label>
-                    <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1">
-                    <span id="speedValue" class="value-display">1.0x</span>
-                    <button class="reset-btn" onclick="resetSpeed()">Reset</button>
-                </div>
+        <div id="fileSelection" class="panel">
+            <h2>Ficheiros de Áudio</h2> <div class="file-input-container">
+                <input type="file" id="audioFile" class="file-input" accept="audio/*" multiple>
+                <label for="audioFile" class="file-label">📁 Selecionar Ficheiros de Áudio</label>
             </div>
             
-            <div class="control-group">
-                <h3>🎼 Controlo de Pitch</h3>
-                <div class="control-row">
-                    <label>Pitch:</label>
-                    <input type="range" id="pitchSlider" min="-12" max="12" step="1" value="0">
-                    <span id="pitchValue" class="value-display">0 meios tons</span>
-                    <button class="reset-btn" onclick="resetPitch()">Reset</button>
-                </div>
+            <div id="fileListContainer" class="file-list-container" style="display: none;">
             </div>
 
-            <div class="control-group">
-                <h3>🔄 Controlo de Loop</h3>
-                <div class="waveform-container" style="position: relative; width: 100%; height: 120px; background-color: rgba(255, 255, 255, 0.08); border-radius: 10px; margin-bottom: 15px; overflow: hidden;">
-                    <canvas id="waveformCanvas" width="760" height="120" style="display: block;"></canvas>
-                    <div id="loopIndicatorA" class="loop-indicator" style="left: 0%; background-color: #4CAF50;"></div>
-                    <div id="loopIndicatorB" class="loop-indicator" style="left: 100%; background-color: #FF6B6B;"></div>
-                    <div id="playbackIndicator" class="loop-indicator" style="left: 0%; background-color: #ffffff; width: 2px; z-index: 10; opacity: 0.8;"></div>
-                </div>
-                <div class="control-row">
-                    <label>Início (A):</label>
-                    <span id="loopAValue" class="value-display">00:00.000</span>
-                    <button class="reset-btn" onclick="setLoopA()">Definir A</button>
-                    <button class="reset-btn" onclick="resetLoopA()">Reset A</button>
-                </div>
-                <div class="control-row">
-                    <label>Fim (B):</label>
-                    <span id="loopBValue" class="value-display">00:00.000</span>
-                    <button class="reset-btn" onclick="setLoopB()">Definir B</button>
-                    <button class="reset-btn" onclick="resetLoopB()">Reset B</button>
-                </div>
-                <div class="control-row" style="justify-content: center;">
-                    <button id="toggleLoopBtn" class="play-btn" style="background: linear-gradient(45deg, #6c757d, #5a6268);" onclick="toggleLoop()">Loop OFF ❌</button>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <h3>💾 Loops Guardados</h3>
-                <div class="control-row" style="margin-bottom: 10px;">
-                    <input type="text" id="loopNameInput" placeholder="Nome do loop (ex: Refrão, Solo)" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-size: 1em;">
-                    <button id="saveLoopBtn" class="play-btn" style="background: linear-gradient(45deg, #007bff, #0056b3); padding: 10px 20px;" onclick="saveCurrentLoop()">💾 Guardar Loop</button>
-                </div>
-                <div class="loop-list-container" style="max-height: 200px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; padding: 10px; background: rgba(255, 255, 255, 0.05);">
-                    <ul id="savedLoopsList" style="list-style: none; padding: 0; margin: 0;">
-                        <li style="color: rgba(255,255,255,0.7); text-align: center; padding: 10px;">Nenhum loop guardado ainda.</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="playback-controls">
-                <button id="playBtn" class="play-btn" onclick="togglePlayback()">▶️ Reproduzir</button>
-                <button id="stopBtn" class="play-btn" onclick="stopPlayback()">⏹️ Parar</button>
+            <div id="fileInfo" class="file-info" style="display: none;">
+                <div id="fileName"></div>
+                <div id="loadingStatus" class="loading">A carregar...</div>
             </div>
         </div>
-    </div>
+
+        <div id="controls" class="panel"> <h2>Controles de Reprodução</h2> <div class="control-group slider-group"> <label>Velocidade:</label>
+                <input type="range" id="speedSlider" min="0.5" max="2" step="0.1" value="1">
+                <span id="speedValue" class="value-display">1.0x</span>
+                <button class="reset-btn" onclick="resetSpeed()">Reset</button>
+            </div>
+            
+            <div class="control-group slider-group"> <label>Pitch:</label>
+                <input type="range" id="pitchSlider" min="-12" max="12" step="1" value="0">
+                <span id="pitchValue" class="value-display">0 meios tons</span>
+                <button class="reset-btn" onclick="resetPitch()">Reset</button>
+            </div>
+
+            <div id="waveformContainer"> <canvas id="waveformCanvas" width="760" height="150"></canvas> <div id="loopIndicatorA" class="loop-indicator"></div>
+                <div id="loopIndicatorB" class="loop-indicator"></div>
+                <div id="playbackIndicator" class="loop-indicator"></div>
+            </div>
+
+            <div class="button-group"> <button id="playBtn" onclick="togglePlayback()">▶️ Reproduzir</button>
+                <button id="stopBtn" onclick="stopPlayback()">⏹️ Parar</button>
+            </div>
+        </div>
+
+        <div id="loopControls" class="panel">
+            <h2>Controle de Loop</h2> <div class="slider-group"> <label>Início (A):</label>
+                <span id="loopAValue" class="loop-point-value">00:00.000</span>
+                <button class="reset-btn" onclick="setLoopA()">Definir A</button>
+                <button class="reset-btn" onclick="resetLoopA()">Reset A</button>
+            </div>
+            <div class="slider-group"> <label>Fim (B):</label>
+                <span id="loopBValue" class="loop-point-value">00:00.000</span>
+                <button class="reset-btn" onclick="setLoopB()">Definir B</button>
+                <button class="reset-btn" onclick="resetLoopB()">Reset B</button>
+            </div>
+            <div class="button-group"> <button id="toggleLoopBtn" style="background: linear-gradient(45deg, #6c757d, #5a6268);" onclick="toggleLoop()">Loop OFF ❌</button>
+            </div>
+        </div>
+
+        <div id="savedLoopsSection" class="panel">
+            <h2>Loops Guardados</h2> <div class="button-group"> <input type="text" id="loopNameInput" placeholder="Nome do loop (ex: Refrão, Solo)">
+                <button id="saveLoopBtn" onclick="saveCurrentLoop()">💾 Guardar Loop</button>
+            </div>
+            <ul id="savedLoopsList">
+                <li style="color: rgba(255,255,255,0.7); text-align: center; padding: 10px;">Nenhum loop guardado ainda.</li>
+            </ul>
+        </div>
+
+    </div> 
 
 <script>
     // --- Variáveis Globais (mantêm-se as mesmas) ---

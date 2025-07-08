@@ -1,4 +1,4 @@
-/* style.css - Proposta de Melhoria de Design */
+/* style.css - Proposta de Melhoria de Design (Versão Compactada e Reposicionada) */
 
 body {
     font-family: 'Roboto', sans-serif;
@@ -10,7 +10,7 @@ body {
     justify-content: flex-start;
     min-height: 100vh;
     margin: 0;
-    padding: 20px;
+    padding: 15px; /* Ligeiramente reduzido para compactar */
     box-sizing: border-box;
     font-size: 16px;
 }
@@ -42,33 +42,52 @@ h3 {
 
 /* Container Principal - Continua a ser a "caixa" principal, com mais destaque */
 .container {
-    background: rgba(255, 255, 255, 0.08); /* Ligeiramente mais transparente */
-    backdrop-filter: blur(15px); /* Mais blur para um efeito mais "vidro" */
-    border-radius: 25px; /* Ligeiramente mais arredondado */
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4); /* Sombra mais intensa para destacar */
-    padding: 35px; /* Mais padding interno para arejar */
-    max-width: 850px; /* Ligeiramente mais largo */
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    border-radius: 25px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+    padding: 30px; /* Padding ligeiramente reduzido para compactar */
+    max-width: 850px;
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 25px; /* Mais espaço entre as secções principais */
+    gap: 20px; /* Espaço entre as secções principais ligeiramente reduzido */
     box-sizing: border-box;
-    border: 1px solid rgba(255, 255, 255, 0.15); /* Borda mais suave */
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Global BPM Control - Mantenho um pouco de background para agrupamento */
-.global-bpm-control {
-    background: rgba(255, 255, 255, 0.05); /* Fundo muito subtil, quase invisível */
-    padding: 20px;
+/* NOVO: Wrapper para os elementos que ficam no topo */
+.top-controls-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column; /* Inicialmente em coluna, ajusta em media query */
+    align-items: center;
+    gap: 15px; /* Espaço entre os grupos principais */
+    margin-bottom: 25px; /* Espaço abaixo deste grupo superior */
+}
+
+/* Global BPM Control - Agrupado com o botão Play/Pause */
+.global-bpm-play-group {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Espaço entre slider e botão */
+    width: 100%; /* Ocupa a largura total para centralizar */
+    justify-content: center; /* Centraliza o conteúdo */
+}
+
+.global-bpm-control { /* Apenas o slider e o label */
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px; /* Padding reduzido para compactar */
     border-radius: 15px;
-    /* Removido box-shadow e border para reduzir a sensação de "caixa" */
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px; /* Espaçamento interno reduzido */
+    flex-grow: 1; /* Permite que o slider cresça */
+    max-width: 350px; /* Limite de largura para o slider */
 }
 .global-bpm-control label {
-    font-size: 1.2em; /* Ligeiramente maior */
+    font-size: 1.2em;
     font-weight: bold;
     color: white;
 }
@@ -83,48 +102,47 @@ h3 {
 .global-bpm-control input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 22px; /* Ligeiramente maior */
-    height: 22px; /* Ligeiramente maior */
+    width: 22px;
+    height: 22px;
     background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 3px 12px rgba(255, 107, 107, 0.5); /* Sombra mais pronunciada */
+    box-shadow: 0 3px 12px rgba(255, 107, 107, 0.5);
 }
 
-
-/* Modo Selector - Tabs */
+/* Modo Selector - Agora inclui o botão Home (Voltar à Aplicação) */
 .mode-selector {
     display: flex;
     justify-content: center;
-    gap: 15px; /* Mais espaço entre os botões */
-    margin-bottom: 25px; /* Mais margem inferior */
+    gap: 10px; /* Espaço entre os botões reduzido */
     flex-wrap: wrap;
+    width: 100%; /* Ocupa a largura total para centralizar */
 }
 
 .mode-selector button {
-    padding: 12px 22px; /* Ligeiramente maiores */
-    font-size: 1em; /* Ligeiramente maior */
+    padding: 10px 18px; /* Padding ligeiramente reduzido */
+    font-size: 0.95em; /* Ligeiramente menor */
     font-weight: bold;
     border: none;
-    border-radius: 10px; /* Mais arredondado */
+    border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
     background: linear-gradient(45deg, #3498db, #2980b9);
     color: white;
-    box-shadow: 0 5px 8px rgba(0, 0, 0, 0.25); /* Sombra mais visível */
+    box-shadow: 0 5px 8px rgba(0, 0, 0, 0.25);
     flex-shrink: 0;
 }
 
 .mode-selector button.selected {
     background: linear-gradient(45deg, #4CAF50, #45a049);
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5); /* Sombra mais forte */
-    transform: translateY(-3px); /* Mais "lift" */
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+    transform: translateY(-3px);
 }
 
 .mode-selector button:hover:not(.selected) {
     background: linear-gradient(45deg, #2980b9, #3498db);
     transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.35); /* Sombra mais forte */
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.35);
 }
 
 .mode-selector button:disabled {
@@ -138,10 +156,8 @@ h3 {
 
 /* Module Grouping & Visibility */
 .module-group {
-    /* Removido background, padding, border-radius, box-shadow e border */
-    /* Deixa o container principal definir o fundo e a "moldura" */
     display: none;
-    padding: 0; /* Remover padding aqui, o conteúdo interno terá seu próprio espaçamento */
+    padding: 0;
 }
 
 .module-group.active-module {
@@ -155,27 +171,26 @@ h3 {
 
 .controls-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* Ligeiramente mais largo */
-    gap: 20px; /* Mais espaço entre os grupos de controlo */
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Min-width das colunas ligeiramente reduzido */
+    gap: 18px; /* Espaço entre os grupos de controlo ligeiramente reduzido */
     width: 100%;
 }
 
-/* Control Group - Estes são os elementos que mais contribuíam para o "caixa dentro de caixa".
-   Vamos torná-los mais leves, focando em "separação" em vez de "background". */
+/* Control Group - Mais leve */
 .control-group {
-    background: none; /* Removido o background */
-    padding: 0; /* Removido o padding */
-    border-radius: 0; /* Removido border-radius */
+    background: none;
+    padding: 0;
+    border-radius: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px; /* Ligeiramente menor gap interno */
-    box-shadow: none; /* Removido box-shadow */
-    border: none; /* Removido border */
+    gap: 8px;
+    box-shadow: none;
+    border: none;
 }
 
 label {
-    font-size: 1em; /* Ligeiramente maior */
+    font-size: 1em;
     color: white;
     margin-bottom: 5px;
     text-align: center;
@@ -183,17 +198,17 @@ label {
 }
 
 small {
-    font-size: 0.78em; /* Ligeiramente maior */
-    color: rgba(255,255,255,0.75); /* Ligeiramente menos transparente para melhor legibilidade */
+    font-size: 0.78em;
+    color: rgba(255,255,255,0.75);
     text-align: center;
-    line-height: 1.4; /* Melhora a legibilidade */
+    line-height: 1.4;
 }
 
 input[type="range"] {
     width: 100%;
     -webkit-appearance: none;
-    height: 10px; /* Ligeiramente mais grosso */
-    background: rgba(255, 255, 255, 0.25); /* Ligeiramente menos transparente */
+    height: 10px;
+    background: rgba(255, 255, 255, 0.25);
     border-radius: 5px;
     outline: none;
     transition: opacity .2s;
@@ -202,65 +217,75 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 24px; /* Maior */
-    height: 24px; /* Maior */
+    width: 24px;
+    height: 24px;
     background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 3px 15px rgba(255, 107, 107, 0.6); /* Sombra mais pronunciada */
+    box-shadow: 0 3px 15px rgba(255, 107, 107, 0.6);
 }
 
 input[type="text"], input[type="number"], select {
     width: calc(100% - 20px);
-    padding: 12px; /* Mais padding para melhor toque */
-    border-radius: 12px; /* Mais arredondado */
-    border: 1px solid rgba(255, 255, 255, 0.25); /* Borda mais visível */
-    background-color: rgba(255, 255, 255, 0.12); /* Mais translúcido */
+    padding: 10px; /* Padding reduzido para compactar */
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.12);
     color: white;
-    font-size: 1em; /* Ligeiramente maior */
+    font-size: 1em;
     box-sizing: border-box;
     transition: all 0.2s ease;
+    /* Adicionado fallback para cor do texto se o gradiente não funcionar bem */
+    -webkit-text-fill-color: initial;
 }
 
 input[type="text"]:focus, input[type="number"]:focus, select:focus {
-    border-color: #8aff8a; /* Borda verde ao focar */
+    border-color: #8aff8a;
     box-shadow: 0 0 0 2px rgba(138, 255, 138, 0.3);
     outline: none;
 }
 
-
+/* ESTILO ORIGINAL DO SELECT MANTIDO */
 select {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
     background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
     background-repeat: no-repeat;
-    background-position: right 12px center; /* Ajustado */
-    background-size: 20px; /* Ligeiramente maior */
+    background-position: right 12px center;
+    background-size: 20px;
+    padding-right: 35px; /* Adiciona espaço para o ícone */
 }
 
 .value-display {
-    font-size: 1.1em; /* Ligeiramente maior */
+    font-size: 1.1em;
     font-weight: bold;
     color: #8aff8a;
-    background: rgba(255, 255, 255, 0.15); /* Mais translúcido */
-    padding: 6px 12px; /* Ligeiramente maior */
-    border-radius: 12px; /* Mais arredondado */
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: 12px;
 }
 
 button {
     background: linear-gradient(45deg, #3498db, #2980b9);
     color: white;
     border: none;
-    padding: 12px 22px; /* Mais padding para um aspeto mais "premium" */
-    border-radius: 10px; /* Mais arredondado */
+    padding: 12px 22px;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 1em; /* Ligeiramente maior */
+    font-size: 1em;
     transition: all 0.3s ease;
     box-shadow: 0 5px 8px rgba(0, 0, 0, 0.25);
     flex-grow: 1;
     white-space: nowrap;
 }
+
+button.play-pause-btn { /* Botão Play/Pause específico */
+    padding: 12px 25px; /* Pode ser ligeiramente maior para destaque */
+    font-size: 1.1em; /* Mais visível */
+    min-width: 120px; /* Garante tamanho mínimo */
+}
+
 
 button:hover {
     background: linear-gradient(45deg, #2980b9, #3498db);
@@ -284,35 +309,30 @@ button:disabled {
 
 hr {
     border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.15); /* Linha mais subtil */
-    margin: 30px 0; /* Mais espaço à volta */
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    margin: 30px 0;
 }
 
 /* Metronome Status Display */
 .metronome-status {
     text-align: center;
-    font-size: 1.5em; /* Ligeiramente maior */
+    font-size: 1.5em;
     font-weight: bold;
     color: #FF6B6B;
     min-height: 1.5em;
-    margin-top: 15px; /* Mais margem */
-    margin-bottom: 25px; /* Mais margem */
+    margin-top: 15px;
+    margin-bottom: 25px;
 }
 
-/* Global Controls (Play/Pause/Stop) */
+/* Global Controls (Play/Pause/Stop) - Removido pois está agrupado */
 .global-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px; /* Mais espaço entre os botões */
-    justify-content: center;
-    margin-top: 0;
-    margin-bottom: 35px; /* Mais margem inferior */
+    display: none; /* Esconde este grupo, pois o botão está agora com o slider */
 }
 
 /* Subdivision Controls */
 .subdivision-controls {
     display: flex;
-    gap: 10px; /* Mais espaço entre os botões */
+    gap: 10px;
     width: 100%;
     justify-content: center;
     flex-wrap: wrap;
@@ -321,20 +341,20 @@ hr {
     background: linear-gradient(45deg, #3498db, #2980b9);
     color: white;
     border: none;
-    padding: 8px 14px; /* Ligeiramente maiores */
+    padding: 8px 14px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 0.9em; /* Ligeiramente maior */
+    font-size: 0.9em;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 7px rgba(0, 0, 0, 0.2); /* Sombra mais visível */
+    box-shadow: 0 4px 7px rgba(0, 0, 0, 0.2);
     flex-grow: 0;
     flex-shrink: 1;
     white-space: nowrap;
 }
 .subdivision-controls button.selected {
     background: linear-gradient(45deg, #4CAF50, #45a049);
-    box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4); /* Sombra mais forte */
-    transform: translateY(-2px); /* Mais "lift" */
+    box-shadow: 0 6px 12px rgba(76, 175, 80, 0.4);
+    transform: translateY(-2px);
 }
 .subdivision-controls button:hover:not(.selected) {
     background: linear-gradient(45deg, #2980b9, #3498db);
@@ -342,7 +362,7 @@ hr {
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
 }
 .subdivision-controls button:active {
-    transform: translateY(1px); /* Maior movimento ao clicar */
+    transform: translateY(1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 .subdivision-controls button:disabled {
@@ -355,35 +375,34 @@ hr {
 
 /* Clave Designer */
 .clave-designer-container {
-    background: none; /* Removido background */
-    padding: 0; /* Removido padding */
-    border-radius: 0; /* Removido border-radius */
-    box-shadow: none; /* Removido box-shadow */
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
     text-align: center;
-    border: none; /* Removido border */
+    border: none;
 }
 
 .clave-designer-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px; /* Mais margem */
+    margin-bottom: 20px;
     flex-wrap: wrap;
-    gap: 15px; /* Mais espaço */
+    gap: 15px;
 }
 
 .clave-designer-header h3 {
     margin: 0;
-    font-size: 1.3em; /* Ligeiramente maior */
+    font-size: 1.3em;
     text-align: left;
 }
 
 .clave-cycle-control {
     flex-grow: 1;
-    max-width: 300px; /* Ligeiramente mais largo */
-    /* Podemos adicionar uma borda ou sombra leve aqui se quisermos agrupar visualmente */
-    padding: 15px; /* Adicionado padding para agrupar visualmente */
-    background: rgba(255, 255, 255, 0.05); /* Fundo subtil para este controlo específico */
+    max-width: 300px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -392,31 +411,32 @@ hr {
 .clave-grid {
     display: grid;
     grid-template-columns: repeat(16, 1fr);
-    gap: 6px; /* Mais espaço entre os pontos */
-    margin-top: 20px; /* Mais margem */
+    gap: 6px;
+    margin-top: 20px;
 }
 
+/* CORES DAS CÉLULAS DO CLAVE DESIGNER - MANTIDAS ORIGINAIS */
 .clave-point {
-    width: 35px; /* Ligeiramente maiores */
-    height: 35px; /* Ligeiramente maiores */
-    background-color: rgba(255, 255, 255, 0.15); /* Mais translúcido */
-    border-radius: 7px; /* Ligeiramente mais arredondado */
+    width: 35px;
+    height: 35px;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 7px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.85em; /* Ligeiramente maior */
+    font-size: 0.85em;
     font-weight: bold;
-    color: rgba(255, 255, 255, 0.85); /* Mais visível */
+    color: rgba(255, 255, 255, 0.85);
     transition: all 0.2s ease;
     user-select: none;
-    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.25); /* Sombra mais pronunciada */
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.25);
 }
 
 .clave-point:hover {
-    transform: translateY(-3px); /* Mais "lift" */
-    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35); /* Sombra mais forte */
-    background: rgba(255, 255, 255, 0.25); /* Mais brilhante no hover */
+    transform: translateY(-3px);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35);
+    background: rgba(255, 255, 255, 0.25);
 }
 
 .clave-point.beat-1 {
@@ -435,50 +455,50 @@ hr {
 
 /* Visual indicator for current beat */
 .clave-point.active-beat {
-    box-shadow: 0 0 0 4px #8aff8a; /* Borda mais espessa */
-    transform: scale(1.15); /* Mais scale */
+    box-shadow: 0 0 0 4px #8aff8a;
+    transform: scale(1.15);
 }
 
 .clave-point.inactive-clave-point {
-    opacity: 0.25; /* Mais transparente para os inativos */
+    opacity: 0.25;
     pointer-events: none;
-    background-color: rgba(255, 255, 255, 0.08); /* Mais escuro e transparente */
+    background-color: rgba(255, 255, 255, 0.08);
     box-shadow: none;
     transform: none;
 }
 
 
 .clave-info {
-    font-size: 0.85em; /* Ligeiramente maior */
+    font-size: 0.85em;
     color: rgba(255,255,255,0.75);
-    margin-top: 15px; /* Mais margem */
+    margin-top: 15px;
 }
 
 /* Time Map Module Styles */
 .time-map-controls {
-    background: none; /* Removido background */
-    padding: 0; /* Removido padding */
-    border-radius: 0; /* Removido border-radius */
-    margin-bottom: 25px; /* Mais margem */
-    box-shadow: none; /* Removido box-shadow */
-    border: none; /* Removido border */
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    margin-bottom: 25px;
+    box-shadow: none;
+    border: none;
 }
 
 .time-map-controls h3 {
     margin-top: 0;
-    margin-bottom: 20px; /* Mais margem */
+    margin-bottom: 20px;
     text-align: center;
 }
 
 .section-config-group {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Ligeiramente mais largo */
-    gap: 15px; /* Mais espaço */
-    margin-bottom: 20px; /* Mais margem */
-    padding: 15px; /* Mais padding */
-    border: 1px dashed rgba(255, 255, 255, 0.2); /* Borda mais suave e translúcida */
-    border-radius: 12px; /* Mais arredondado */
-    background-color: rgba(255, 255, 255, 0.06); /* Ligeiramente mais transparente */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.06);
 }
 
 /* Media Queries Consolidado e Melhorado */
@@ -493,6 +513,34 @@ hr {
     h1 { font-size: 2.2em; }
     h2 { font-size: 1.6em; }
     h3 { font-size: 1.1em; }
+
+    /* Ajuste para botões de modo e Home em linha única */
+    .mode-selector {
+        flex-direction: row; /* Garante que fiquem em linha */
+        flex-wrap: wrap; /* Permite quebras se não couberem */
+        justify-content: center;
+        gap: 8px; /* Reduz o gap entre os botões */
+    }
+    .mode-selector button {
+        padding: 10px 15px; /* Reduz padding em mobile */
+        font-size: 0.9em;
+    }
+
+    .global-bpm-play-group {
+        flex-direction: column; /* Em mobile, slider e botão ficam em coluna */
+        gap: 10px;
+    }
+    .global-bpm-control {
+        max-width: 100%; /* Ocupa largura total */
+    }
+    button.play-pause-btn {
+        width: 100%; /* Botão Play/Pause ocupa largura total */
+        max-width: 200px; /* Mas com limite para não ficar demasiado largo */
+        padding: 12px 20px;
+        font-size: 1em;
+    }
+
+
     .controls-grid {
         grid-template-columns: 1fr;
     }
@@ -522,7 +570,7 @@ hr {
         width: 100%;
         justify-content: flex-end;
     }
-    .mode-selector button, .global-controls button, .subdivision-controls button {
+    .subdivision-controls button {
         font-size: 0.95em;
         padding: 10px 18px;
     }
@@ -555,6 +603,25 @@ hr {
     h1 { font-size: 1.8em; }
     h2 { font-size: 1.4em; }
     h3 { font-size: 1em; }
+
+    .mode-selector {
+        gap: 6px; /* Ainda mais compacto em ecrãs pequenos */
+    }
+    .mode-selector button {
+        padding: 8px 12px;
+        font-size: 0.85em;
+    }
+    .global-bpm-play-group {
+        gap: 8px; /* Espaço entre slider e botão mais compacto */
+    }
+    .global-bpm-control {
+        padding: 12px;
+    }
+    button.play-pause-btn {
+        padding: 10px 18px;
+        font-size: 0.9em;
+    }
+
     .clave-grid {
         grid-template-columns: repeat(4, 1fr); /* 4 por linha */
         gap: 4px;
@@ -571,7 +638,7 @@ hr {
         grid-template-columns: 1fr; /* Coluna única em ecrãs muito pequenos */
         gap: 8px;
     }
-    .mode-selector button, .global-controls button, .subdivision-controls button {
+    .subdivision-controls button {
         font-size: 0.85em;
         padding: 8px 12px;
     }
@@ -599,9 +666,9 @@ hr {
     margin-top: 20px;
     align-self: center;
     background: linear-gradient(45deg, #4CAF50, #45a049);
-    padding: 14px 28px; /* Ligeiramente maior */
-    border-radius: 30px; /* Mais arredondado */
-    font-size: 17px; /* Ligeiramente maior */
+    padding: 14px 28px;
+    border-radius: 30px;
+    font-size: 17px;
     box-shadow: 0 5px 18px rgba(76, 175, 80, 0.4);
 }
 #addSectionBtn:hover {
@@ -616,46 +683,46 @@ hr {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 12px; /* Mais espaço */
+    gap: 12px;
 }
 
 .time-map-section-item {
-    background: rgba(255, 255, 255, 0.08); /* Mais translúcido */
-    padding: 18px; /* Mais padding */
-    border-radius: 12px; /* Mais arredondado */
+    background: rgba(255, 255, 255, 0.08);
+    padding: 18px;
+    border-radius: 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 15px; /* Mais espaço */
-    box-shadow: 0 7px 15px rgba(0, 0, 0, 0.25); /* Sombra mais pronunciada */
+    gap: 15px;
+    box-shadow: 0 7px 15px rgba(0, 0, 0, 0.25);
     flex-wrap: wrap;
-    border-left: 6px solid #8aff8a; /* Borda mais espessa */
+    border-left: 6px solid #8aff8a;
 }
 
 .time-map-section-item.active {
     border-left: 6px solid #FFD700;
-    background: rgba(255, 255, 255, 0.12); /* Mais brilhante quando ativo */
-    transform: scale(1.02); /* Mais scale */
+    background: rgba(255, 255, 255, 0.12);
+    transform: scale(1.02);
     transition: transform 0.15s ease;
 }
 
 .section-info {
     flex-grow: 1;
-    font-size: 1.05em; /* Ligeiramente maior */
+    font-size: 1.05em;
     color: white;
 }
 
 .section-buttons {
     display: flex;
-    gap: 10px; /* Mais espaço */
+    gap: 10px;
     flex-wrap: wrap;
 }
 
 .section-buttons button {
     background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
-    padding: 9px 16px; /* Ligeiramente maior */
-    font-size: 0.92em; /* Ligeiramente maior */
-    border-radius: 18px; /* Mais arredondado */
+    padding: 9px 16px;
+    font-size: 0.92em;
+    border-radius: 18px;
     box-shadow: 0 3px 12px rgba(255, 107, 107, 0.4);
 }
 
@@ -668,30 +735,7 @@ hr {
     box-shadow: 0 5px 18px rgba(255, 107, 107, 0.5);
 }
 
+/* O botão "Voltar à aplicação" foi movido para o .mode-selector, mas mantemos o estilo base se for necessário noutro lado */
 .back-to-app-button {
-    display: block;
-    width: fit-content;
-    margin: 25px auto; /* Mais margem */
-    background: linear-gradient(45deg, #3498db, #2980b9);
-    color: white;
-    text-decoration: none;
-    padding: 12px 22px; /* Consistente com outros botões */
-    border-radius: 10px; /* Consistente com outros botões */
-    text-align: center;
-    font-weight: bold;
-    font-size: 1em; /* Consistente */
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 8px rgba(0, 0, 0, 0.25);
-    cursor: pointer;
-}
-
-.back-to-app-button:hover {
-    background: linear-gradient(45deg, #2980b9, #3498db);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.35);
-}
-
-.back-to-app-button:active {
-    transform: translateY(0);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    display: none; /* Esconde o botão original, pois a funcionalidade é agora uma tab */
 }

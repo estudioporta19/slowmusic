@@ -5,50 +5,65 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start; /* Alinha ao topo em vez de centro para evitar excesso de espaço em alturas grandes */
     min-height: 100vh;
     margin: 0;
-    padding: 20px;
+    padding: 15px; /* Reduzir padding do body */
     box-sizing: border-box;
     font-size: 16px;
 }
 
-h1, h2, h3 {
+h1 {
     color: #ecf0f1;
-    margin-bottom: 20px;
+    margin-bottom: 15px; /* Reduzir margem */
     text-align: center;
+    font-size: 2.2em; /* Ligeiramente menor */
+}
+
+h2 {
+    color: #ecf0f1;
+    margin-bottom: 15px; /* Reduzir margem */
+    text-align: center;
+    font-size: 1.8em; /* Ligeiramente menor */
+}
+
+h3 {
+    color: #ecf0f1;
+    margin-bottom: 10px; /* Reduzir margem */
+    text-align: center;
+    font-size: 1.4em; /* Ligeiramente menor */
 }
 
 .container {
     background-color: #3b506b; /* Lighter background for main container */
     border-radius: 12px;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-    padding: 30px;
-    max-width: 900px;
+    padding: 25px; /* Reduzir padding do container */
+    max-width: 800px; /* Reduzir largura máxima */
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 25px; /* Increased gap for modules */
+    gap: 15px; /* Reduzir gap entre módulos */
     box-sizing: border-box;
 }
 
 /* Global BPM Control */
 .global-bpm-control {
     background-color: #4a607a;
-    padding: 15px;
+    padding: 12px; /* Reduzir padding */
     border-radius: 10px;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px; /* Reduzir gap */
 }
 .global-bpm-control label {
-    font-size: 1.2em;
+    font-size: 1.1em; /* Ligeiramente menor */
     font-weight: bold;
 }
 .global-bpm-control input[type="range"] {
-    width: 80%; /* Make BPM slider a bit wider */
+    width: 90%; /* Ajustar largura do slider */
 }
 
 
@@ -56,25 +71,25 @@ h1, h2, h3 {
 .mode-selector {
     display: flex;
     justify-content: center;
-    gap: 10px;
-    margin-bottom: 20px;
+    gap: 8px; /* Reduzir gap */
+    margin-bottom: 15px; /* Reduzir margem */
     flex-wrap: wrap;
 }
 
 .mode-selector button {
     background: linear-gradient(45deg, #34495e, #2c3e50); /* Darker button for modes */
     color: #ecf0f1;
-    padding: 12px 25px;
-    border-radius: 10px;
+    padding: 10px 20px; /* Reduzir padding */
+    border-radius: 8px; /* Ligeiramente menor border-radius */
     font-weight: bold;
-    font-size: 1.1em;
+    font-size: 1em; /* Ligeiramente menor */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .mode-selector button.selected {
     background: linear-gradient(45deg, #1abc9c, #16a085); /* Green when selected */
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3); /* Ligeiramente menor shadow */
+    transform: translateY(-1px);
 }
 
 .mode-selector button:hover:not(.selected) {
@@ -93,7 +108,7 @@ h1, h2, h3 {
 /* Module Grouping & Visibility */
 .module-group {
     background-color: #4a607a; /* Background for module sections */
-    padding: 20px;
+    padding: 18px; /* Reduzir padding */
     border-radius: 10px;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
     display: none; /* Hidden by default */
@@ -110,32 +125,32 @@ h1, h2, h3 {
 
 .controls-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Min width ligeiramente menor */
+    gap: 12px; /* Reduzir gap */
     width: 100%;
 }
 
 .control-group {
     background-color: #5c7490; /* Even lighter background for individual control groups */
-    padding: 15px;
+    padding: 12px; /* Reduzir padding */
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px; /* Reduzir gap */
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 label {
-    font-size: 1em;
+    font-size: 0.95em; /* Ligeiramente menor */
     color: #ecf0f1;
-    margin-bottom: 5px;
+    margin-bottom: 3px; /* Reduzir margem */
     text-align: center;
     display: block; /* Ensures label takes full width */
 }
 
 small {
-    font-size: 0.8em;
+    font-size: 0.75em; /* Ligeiramente menor */
     color: rgba(255,255,255,0.6);
     text-align: center;
 }
@@ -143,7 +158,7 @@ small {
 input[type="range"] {
     width: 100%;
     -webkit-appearance: none;
-    height: 8px;
+    height: 7px; /* Ligeiramente mais fino */
     background: #7f8c8d; /* Grey for slider track */
     border-radius: 5px;
     outline: none;
@@ -153,8 +168,8 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 20px;
-    height: 20px;
+    width: 18px; /* Ligeiramente menor */
+    height: 18px; /* Ligeiramente menor */
     background: #1abc9c; /* Green thumb */
     border-radius: 50%;
     cursor: pointer;
@@ -162,13 +177,13 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 input[type="text"], input[type="number"], select {
-    width: calc(100% - 20px); /* Adjust for padding */
-    padding: 8px 10px;
+    width: calc(100% - 16px); /* Ajustar para novo padding */
+    padding: 7px 8px; /* Reduzir padding */
     border-radius: 5px;
     border: 1px solid #7f8c8d;
     background-color: #ecf0f1;
     color: #2c3e50;
-    font-size: 1em;
+    font-size: 0.95em; /* Ligeiramente menor */
     box-sizing: border-box; /* Include padding in width */
 }
 
@@ -178,12 +193,12 @@ select {
     appearance: none;
     background-image: url('data:image/svg+xml;utf8,<svg fill="#2c3e50" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); /* Custom arrow */
     background-repeat: no-repeat;
-    background-position: right 8px center;
-    background-size: 16px;
+    background-position: right 6px center; /* Ajustar posição da seta */
+    background-size: 14px; /* Ajustar tamanho da seta */
 }
 
 .value-display {
-    font-size: 1.1em;
+    font-size: 1em; /* Ligeiramente menor */
     font-weight: bold;
     color: #1abc9c;
 }
@@ -192,12 +207,12 @@ button {
     background: linear-gradient(45deg, #3498db, #2980b9); /* Standard blue button */
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 9px 18px; /* Reduzir padding */
     border-radius: 8px;
     cursor: pointer;
-    font-size: 1em;
+    font-size: 0.95em; /* Ligeiramente menor */
     transition: background 0.3s ease, transform 0.1s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Ligeiramente menor shadow */
     flex-grow: 1; /* Allow buttons to grow in flexible containers */
     white-space: nowrap; /* Prevent text wrapping */
 }
@@ -208,8 +223,8 @@ button:hover {
 }
 
 button:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(0.5px); /* Ligeiramente menor movimento */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 button:disabled {
@@ -223,39 +238,41 @@ button:disabled {
 hr {
     border: none;
     border-top: 1px solid #5c7490;
-    margin: 20px 0;
+    margin: 15px 0; /* Reduzir margem */
 }
 
 /* Metronome Status Display */
 .metronome-status {
     text-align: center;
-    font-size: 1.5em;
+    font-size: 1.4em; /* Ligeiramente menor */
     font-weight: bold;
     color: #f39c12; /* Orange for status */
-    min-height: 1.5em;
-    margin-top: 10px;
+    min-height: 1.4em;
+    margin-top: 8px; /* Reduzir margem */
+    margin-bottom: 15px; /* Adicionar margem inferior para separar dos botões */
 }
 
 /* Global Controls (Play/Pause/Stop) */
 .global-controls {
     display: flex;
     flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    gap: 15px;
+    gap: 10px; /* Reduzir gap */
     justify-content: center;
-    margin-top: 20px;
+    margin-top: 0; /* Remove a margem superior já que movemos o elemento */
+    margin-bottom: 20px; /* Adicionar margem inferior para separar dos módulos */
 }
 
 /* Subdivision Controls */
 .subdivision-controls {
     display: flex;
-    gap: 5px;
+    gap: 4px; /* Reduzir gap */
     width: 100%;
     justify-content: center;
 }
 .subdivision-controls button {
     background: linear-gradient(45deg, #9b59b6, #8e44ad); /* Purple for subdivision buttons */
-    padding: 8px 15px; /* Slightly smaller padding */
-    font-size: 0.95em;
+    padding: 7px 12px; /* Reduzir padding */
+    font-size: 0.9em; /* Ligeiramente menor */
 }
 .subdivision-controls button.selected {
     background: linear-gradient(45deg, #1abc9c, #16a085); /* Green when selected */
@@ -264,7 +281,7 @@ hr {
 /* Clave Designer */
 .clave-designer-container {
     background-color: #5c7490;
-    padding: 20px;
+    padding: 18px; /* Reduzir padding */
     border-radius: 8px;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
     text-align: center;
@@ -274,39 +291,39 @@ hr {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 12px; /* Reduzir margem */
     flex-wrap: wrap; /* Allow wrapping */
-    gap: 10px;
+    gap: 8px; /* Reduzir gap */
 }
 
 .clave-designer-header h3 {
     margin: 0;
-    font-size: 1.2em;
+    font-size: 1.1em; /* Ligeiramente menor */
     text-align: left;
 }
 
 .clave-cycle-control {
     flex-grow: 1; /* Allow it to take available space */
-    max-width: 250px; /* Limit width */
+    max-width: 220px; /* Reduzir largura máxima */
 }
 
 .clave-grid {
     display: grid;
     grid-template-columns: repeat(16, 1fr); /* 16 columns for the 16 points */
-    gap: 5px;
-    margin-top: 15px;
+    gap: 4px; /* Reduzir gap */
+    margin-top: 12px; /* Reduzir margem */
 }
 
 .clave-point {
-    width: 30px; /* Point width */
-    height: 30px; /* Point height */
+    width: 28px; /* Ligeiramente menor */
+    height: 28px; /* Ligeiramente menor */
     background-color: #6c757d; /* Default (off) */
     border-radius: 4px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.8em;
+    font-size: 0.75em; /* Ligeiramente menor */
     font-weight: bold;
     color: rgba(255, 255, 255, 0.7);
     transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
@@ -314,7 +331,7 @@ hr {
 }
 
 .clave-point:hover {
-    transform: translateY(-1px);
+    transform: translateY(-0.5px); /* Ligeiramente menor movimento */
 }
 
 .clave-point.beat-1 { /* Strong beat */
@@ -331,44 +348,44 @@ hr {
 
 /* Visual indicator for current beat */
 .clave-point.active-beat {
-    box-shadow: 0 0 0 3px #1abc9c; /* Bright green ring */
-    transform: scale(1.1);
+    box-shadow: 0 0 0 2px #1abc9c; /* Ligeiramente mais fino */
+    transform: scale(1.08); /* Ligeiramente menor scale */
 }
 
 .clave-point.inactive-clave-point { /* For points outside the active cycle length */
-    opacity: 0.3;
+    opacity: 0.2; /* Mais transparente */
     pointer-events: none; /* Make them unclickable */
     background-color: #4a607a; /* Slightly darker gray */
 }
 
 
 .clave-info {
-    font-size: 0.9em;
+    font-size: 0.8em; /* Ligeiramente menor */
     color: rgba(255,255,255,0.7);
-    margin-top: 10px;
+    margin-top: 8px; /* Reduzir margem */
 }
 
 /* Time Map Module Styles */
 .time-map-controls {
     background-color: #5c7490;
-    padding: 20px;
+    padding: 18px; /* Reduzir padding */
     border-radius: 8px;
-    margin-bottom: 20px;
+    margin-bottom: 18px; /* Reduzir margem */
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .time-map-controls h3 {
     margin-top: 0;
-    margin-bottom: 15px;
+    margin-bottom: 12px; /* Reduzir margem */
     text-align: center;
 }
 
 .section-config-group {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 10px;
-    margin-bottom: 15px;
-    padding: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Min width ligeiramente menor */
+    gap: 8px; /* Reduzir gap */
+    margin-bottom: 12px; /* Reduzir margem */
+    padding: 8px; /* Reduzir padding */
     border: 1px dashed #7f8c8d;
     border-radius: 5px;
     background-color: #4a607a;
@@ -380,7 +397,7 @@ hr {
 
 #addSectionBtn {
     width: auto;
-    margin-top: 15px;
+    margin-top: 12px; /* Reduzir margem */
     align-self: center; /* Center button within flex container */
     background: linear-gradient(45deg, #1abc9c, #16a085);
 }
@@ -391,44 +408,44 @@ hr {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px; /* Reduzir gap */
 }
 
 .time-map-section-item {
     background-color: #5c7490;
-    padding: 15px;
+    padding: 12px; /* Reduzir padding */
     border-radius: 8px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    gap: 8px; /* Reduzir gap */
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); /* Ligeiramente menor shadow */
     flex-wrap: wrap; /* Allow wrapping on small screens */
-    border-left: 5px solid #1abc9c; /* Visual indicator for sections */
+    border-left: 4px solid #1abc9c; /* Ligeiramente mais fino */
 }
 
 .time-map-section-item.active {
-    border-left: 5px solid #f39c12; /* Active section highlight */
+    border-left: 4px solid #f39c12; /* Active section highlight */
     background-color: #6c757d;
-    transform: scale(1.02);
+    transform: scale(1.01); /* Ligeiramente menor scale */
     transition: transform 0.1s ease;
 }
 
 .section-info {
     flex-grow: 1;
-    font-size: 1.1em;
+    font-size: 1em; /* Ligeiramente menor */
     color: #ecf0f1;
 }
 
 .section-buttons {
     display: flex;
-    gap: 5px;
+    gap: 4px; /* Reduzir gap */
     flex-wrap: wrap; /* Allow buttons to wrap */
 }
 
 .section-buttons button {
-    padding: 8px 12px;
-    font-size: 0.9em;
+    padding: 7px 10px; /* Reduzir padding */
+    font-size: 0.85em; /* Ligeiramente menor */
     background: linear-gradient(45deg, #e67e22, #d35400); /* Orange for edit/delete */
 }
 
@@ -437,7 +454,7 @@ hr {
 }
 
 .section-buttons button:hover {
-    transform: translateY(-1px);
+    transform: translateY(-0.5px);
 }
 
 @media (max-width: 768px) {
@@ -446,10 +463,12 @@ hr {
     }
     .clave-grid {
         grid-template-columns: repeat(8, 1fr); /* 8 columns on smaller screens */
+        gap: 3px; /* Reduzir gap */
     }
     .clave-point {
-        width: 25px;
-        height: 25px;
+        width: 22px; /* Ligeiramente menor */
+        height: 22px; /* Ligeiramente menor */
+        font-size: 0.7em;
     }
     .clave-designer-header {
         flex-direction: column;
@@ -467,25 +486,51 @@ hr {
         width: 100%;
         justify-content: flex-end;
     }
+    /* Ajustes para botões e inputs em telas menores */
+    .mode-selector button, .global-controls button, .subdivision-controls button {
+        font-size: 0.9em;
+        padding: 7px 12px;
+    }
+    input[type="text"], input[type="number"], select {
+        font-size: 0.9em;
+        padding: 6px 8px;
+    }
+    .clave-info {
+        font-size: 0.75em;
+    }
+    .section-buttons button {
+        padding: 5px 8px;
+        font-size: 0.8em;
+    }
 }
 
 @media (max-width: 480px) {
     .clave-grid {
         grid-template-columns: repeat(4, 1fr); /* 4 columns on very small screens */
+        gap: 2px; /* Reduzir gap */
     }
     .clave-point {
-        width: 20px;
-        height: 20px;
+        width: 18px; /* Ligeiramente menor */
+        height: 18px; /* Ligeiramente menor */
+        font-size: 0.65em;
     }
     .container {
-        padding: 20px;
+        padding: 15px; /* Reduzir padding */
     }
-    .global-controls button, .mode-selector button {
-        font-size: 0.9em;
-        padding: 8px 15px;
+    /* Ajustes gerais de fonte e padding para telas muito pequenas */
+    body {
+        font-size: 15px;
     }
-    .section-buttons button {
-        padding: 6px 10px;
-        font-size: 0.8em;
+    h1 {
+        font-size: 2em;
+    }
+    h2 {
+        font-size: 1.6em;
+    }
+    h3 {
+        font-size: 1.2em;
+    }
+    .metronome-status {
+        font-size: 1.2em;
     }
 }

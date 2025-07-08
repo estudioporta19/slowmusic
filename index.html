@@ -79,6 +79,23 @@
             </div>
 
             <div class="control-group">
+                <h3>🔖 Marcadores de Secções</h3>
+                <div class="control-row" style="margin-bottom: 10px;">
+                    <input type="text" id="markerNameInput" placeholder="Nome do marcador (ex: Refrão)" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-size: 1em;">
+                    <button id="addMarkerBtn" class="play-btn" style="background: linear-gradient(45deg, #28a745, #218838); padding: 10px 20px;" onclick="addMarker()">➕ Adicionar Marcador</button>
+                </div>
+                <div class="control-row" style="justify-content: center; margin-bottom: 10px;">
+                    <button class="nav-marker-btn" onclick="navigateToPreviousMarker()">◀️ Anterior</button>
+                    <button class="nav-marker-btn" onclick="navigateToNextMarker()">Próximo ▶️</button>
+                </div>
+                <div class="marker-list-container" style="max-height: 150px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; padding: 10px; background: rgba(255, 255, 255, 0.05);">
+                    <ul id="markersList" style="list-style: none; padding: 0; margin: 0;">
+                        <li style="color: rgba(255,255,255,0.7); text-align: center; padding: 10px;">Nenhum marcador guardado ainda.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="control-group">
                 <h3>💾 Loops Guardados</h3>
                 <div class="control-row" style="margin-bottom: 10px;">
                     <input type="text" id="loopNameInput" placeholder="Nome do loop (ex: Refrão, Solo)" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-size: 1em;">

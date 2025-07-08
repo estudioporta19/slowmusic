@@ -35,24 +35,13 @@
             <button id="playPauseBtn">▶️ Iniciar</button>
             <button id="stopBtn">⏹️ Parar</button>
         </div>
+        
         <div id="classicMetronomeModule" class="module-group active-module">
             <h2>Metrónomo Clássico</h2>
             <div class="controls-grid">
                 <div class="control-group">
                     <label for="timeNumerator">Tempos: <span id="timeNumeratorValue" class="value-display">4</span></label>
                     <input type="range" id="timeNumerator" min="1" max="16" value="4">
-                </div>
-
-                <div class="control-group">
-                    <label for="timeDenominator">Tipo de tempo (Denominador):</label>
-                    <select id="timeDenominator">
-                        <option value="1">Inteira (1/1)</option>
-                        <option value="2">Mínima (1/2)</option>
-                        <option value="4" selected>Semínima (1/4)</option>
-                        <option value="8">Colcheia (1/8)</option>
-                        <option value="16">Semicolcheia (1/16)</option>
-                    </select>
-                    <small>Define o valor da batida principal.</small>
                 </div>
 
                 <div class="control-group">
@@ -66,7 +55,7 @@
                 </div>
                 
                 <div class="control-group">
-                    <label for="accentedBeats">Acentuar Tempos (Ex: 3, 5)</label>
+                    <label for="accentedBeats">Acentuar (Ex: 3, 5)</label>
                     <input type="text" id="accentedBeats" placeholder="Ex: 3, 5, 7">
                     <small>Tempos a acentuar (separados por vírgulas). O 1º tempo é sempre acentuado.</small>
                 </div>
@@ -119,16 +108,6 @@
                         <input type="number" id="sectionNumerator" min="1" max="16" value="4">
                     </div>
                     <div class="control-group">
-                        <label for="sectionDenominator">Denominador:</label>
-                        <select id="sectionDenominator">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="4" selected>4</option>
-                            <option value="8">8</option>
-                            <option value="16">16</option>
-                        </select>
-                    </div>
-                    <div class="control-group">
                         <label for="sectionSubdivision">Subdivisões:</label>
                         <select id="sectionSubdivision">
                             <option value="1">OFF</option>
@@ -138,7 +117,7 @@
                         </select>
                     </div>
                     <div class="control-group">
-                        <label for="sectionAccentedBeats">Acentuar Tempos (Ex: 3,5):</label>
+                        <label for="sectionAccentedBeats">Acentuar (Ex: 3,5):</label>
                         <input type="text" id="sectionAccentedBeats" placeholder="Ex: 3, 5">
                     </div>
                 </div>

@@ -690,13 +690,21 @@ function applySectionSettings(section) {
 // Simplified scheduling for individual modules when driven by TimeMap
 // These functions don't manage `next...ClickTime` or `current...Beat/Index` or `measuresPlayedInCurrentSection`
 // They just schedule clicks for *one measure* at a given `startTime`.
-function scheduleClassicMetronomeLogicOnly(startTime) {
-    const sectionSecondsPerBaseNote = 60.0 / currentBPM;
-    const sectionSecondsPerSubdivisionBeat = sectionSecondsPerBaseNote / subdivisionType;
+// Depois (corrigido):
+function scheduleClassicMetronomeLogicOnly(measureStartTime) {
+    const sectionBPM = currentBPM; // Use the global BPM set by applySectionSettings
+    const sectionNumerator = timeNumerator;
+    const sectionDenominator = timeDenominator;
+    const sectionSubdivisionType = subdivisionType;
+    const sectionAccentedBeats = accentedBeats;
 
-    for (let beat = 0; beat < timeNumerator; beat++) {
-        for (let subd = 0; subd < subdivisionType; subd++) {
-            let clickTime = startTime + (beat * sectionSecondsPerBaseNote) + (subd * sectionSecondsPerSubdivisionBeat);
+    const secondsPerBaseNote = 60.0 / sectionBPM;
+    // Mover a declaração para fora do loop interno, tornando-a acessível
+    const secondsPerSubdivisionBeat = secondsPerBaseNote / sectionSubdivisionType; // <-- MOVIDO PARA AQUI
+
+    for (let beat = 0; beat < sectionNumerator; beat++) {
+        for (let subd = 0; subd < sectionSubdivisionType; subd++) {
+            let clickTime = measureStartTime + (beat * secondsPerBaseNote) + (subd * secondsPerSubdivisionBeat); // <-- AGORA ESTÁ CERTO
             
             let frequency;
             let volume;
@@ -704,7 +712,7 @@ function scheduleClassicMetronomeLogicOnly(startTime) {
 
             const isMainBeat = subd === 0;
             const isFirstBeatOfMeasure = beat === 0 && subd === 0;
-            const isUserAccentedBeat = accentedBeats.has(beat) && isMainBeat;
+            const isUserAccentedBeat = sectionAccentedBeats.has(beat) && isMainBeat;
 
             if (isFirstBeatOfMeasure) {
                 frequency = 1000;
@@ -724,14 +732,7 @@ function scheduleClassicMetronomeLogicOnly(startTime) {
             createClickSound(frequency, duration, volume, clickTime);
         }
     }
-    // Update visual beat for Classic Metronome during Map playback
-    // This is tricky as we schedule a whole measure at once.
-    // Let's rely on updateMetronomeStatus for map mode for general status
-    // and rely on `active-beat` for Clave.
-    // For Classic, a real-time beat indicator would require a separate setTimeout/requestAnimationFrame loop.
-    // For now, the overall status text will suffice.
 }
-
 function scheduleClaveDesignerLogicOnly(startTime, measureDuration) {
     const sectionSecondsPerSemicolcheia = (60.0 / currentBPM) / 4;
     const totalSemicolchesInMeasure = Math.round(measureDuration / sectionSecondsPerSemicolcheia); // Should be 16

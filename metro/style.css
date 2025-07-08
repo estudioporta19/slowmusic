@@ -620,3 +620,23 @@ hr {
         font-size: 1.2em;
     }
 }
+/* style.css */
+
+.back-to-app-button {
+    display: block; /* Para ocupar a sua própria linha */
+    width: fit-content; /* Ajusta a largura ao conteúdo */
+    margin: 20px auto; /* Centraliza e adiciona espaço */
+    padding: 10px 20px;
+    background-color: #007bff; /* Um azul agradável */
+    color: white;
+    text-decoration: none; /* Remove o sublinhado do link */
+    border-radius: 5px;
+    text-align: center;
+    font-weight: bold;
+    transition: background-color 0.2s ease; /* Transição suave para o hover */
+}
+
+.back-to-app-button:hover {
+    background-color: #0056b3; /* Cor mais escura ao passar o rato */
+    cursor: pointer;
+}

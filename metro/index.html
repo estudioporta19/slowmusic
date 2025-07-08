@@ -70,24 +70,25 @@
 
         
         <div id="claveDesignerModule" class="module-group hidden-module">
-            <h2>Clave Designer</h2>
-            <div class="clave-designer-container">
-                <div class="clave-designer-header">
-                    <h3>Padrão Personalizado</h3>
-                    <div class="control-group clave-cycle-control">
-                        <label for="claveCycleLength">Duração do Ciclo (1-16 semicolcheias): <span id="claveCycleLengthValue" class="value-display">16</span></label>
-                        <input type="range" id="claveCycleLength" min="1" max="16" value="16">
-                    </div>
-                </div>
-                <div class="clave-grid" id="claveGrid">
-                    
-                </div>
-                <div class="clave-info">
-                    Clique nos pontos para alternar o som: <span style="color:#e74c3c;">Forte</span>, <span style="color:#f39c12;">Médio</span>, <span style="color:#6c757d;">Desligado</span>.<br>
-                    Cada bloco representa uma semicolcheia.
-                </div>
+    <h2>Clave Designer</h2>
+    <div class="clave-designer-container">
+        <div class="clave-designer-header">
+            <h3>Padrão Personalizado</h3>
+            <div class="control-group clave-cycle-control">
+                <label for="claveCycleLength">Duração do Ciclo (1-16 semicolcheias): <span id="claveCycleLengthValue" class="value-display">16</span></label>
+                <input type="range" id="claveCycleLength" min="1" max="16" value="16">
+                <button id="resetClaveBtn" class="control-button">Limpar Grelha / Reset</button> 
             </div>
         </div>
+        <div class="clave-grid" id="claveGrid">
+            
+        </div>
+        <div class="clave-info">
+            Clique nos pontos para alternar o som: <span style="color:#e74c3c;">Forte</span>, <span style="color:#f39c12;">Médio</span>, <span style="color:#6c757d;">Desligado</span>.<br>
+            Cada bloco representa uma semicolcheia.
+        </div>
+    </div>
+</div>
 
         
         <div id="timeMapModule" class="module-group hidden-module">
